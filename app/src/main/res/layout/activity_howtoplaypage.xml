@@ -2,379 +2,190 @@
 <LinearLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
-    xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    android:background="#0A1628"
     android:orientation="vertical">
 
-    <TextView
-        android:layout_width="match_parent"
-        android:layout_height="30dp"
-        android:background="#060F19"/>
-
+    <!-- Title Bar -->
     <LinearLayout
         android:layout_width="match_parent"
-        android:layout_height="52dp"
-        android:background="#060F19"
-        android:orientation="horizontal">
-
-        <TextView
-            android:id="@+id/textview19"
-            android:layout_width="10dp"
-            android:layout_height="wrap_content"/>
+        android:layout_height="56dp"
+        android:background="#0D1F3C"
+        android:gravity="center_vertical"
+        android:orientation="horizontal"
+        android:paddingHorizontal="12dp">
 
         <ImageView
             android:id="@+id/guide_back"
-            android:layout_width="30dp"
-            android:layout_height="30dp"
-            android:layout_gravity="center"
-            app:srcCompat="@drawable/ic_htp_back"/>
+            android:layout_width="32dp"
+            android:layout_height="32dp"
+            android:padding="4dp"
+            android:src="@drawable/ic_htp_back" />
 
         <TextView
-            android:layout_width="30dp"
-            android:layout_height="wrap_content"/>
-
-        <TextView
-            android:id="@+id/textview26"
-            android:layout_width="wrap_content"
+            android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:layout_gravity="center"
+            android:layout_marginStart="12dp"
+            android:layout_weight="1"
             android:text="@string/how"
             android:textColor="#E5E5E6"
             android:textSize="20sp"
-            android:textStyle="bold"/>
+            android:textStyle="bold" />
     </LinearLayout>
 
-    <LinearLayout
+    <!-- Content -->
+    <ScrollView
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:orientation="horizontal">
+        android:padding="16dp"
+        android:scrollbars="none">
 
-        <TextView
-            android:id="@+id/textview15"
-            android:layout_width="16dp"
-            android:layout_height="wrap_content"/>
-
-        <ScrollView
+        <LinearLayout
             android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:layout_weight="1"
-            android:scrollbars="none">
+            android:layout_height="wrap_content"
+            android:orientation="vertical">
 
+            <!-- Rule 1 -->
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:orientation="vertical">
+                android:layout_marginBottom="16dp"
+                android:background="@drawable/dialog_background"
+                android:elevation="4dp"
+                android:orientation="vertical"
+                android:padding="16dp">
 
                 <TextView
-                    android:id="@+id/textview28"
                     android:layout_width="match_parent"
-                    android:layout_height="56dp"
-                    android:gravity="center|left"
+                    android:layout_height="wrap_content"
+                    android:layout_marginBottom="8dp"
+                    android:text="1. 什么是数独"
+                    android:textColor="#8EC8F2"
+                    android:textSize="17sp"
+                    android:textStyle="bold" />
+
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
                     android:text="@string/how_1"
-                    android:textColor="#000000"
-                    android:textSize="16sp"/>
-
-                <androidx.constraintlayout.widget.ConstraintLayout
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content">
-
-                    <ImageView
-                        android:id="@+id/imageview3"
-                        android:layout_width="250dp"
-                        android:layout_height="250dp"
-                        android:foregroundGravity="fill"
-                        app:layout_constraintBottom_toBottomOf="parent"
-                        app:layout_constraintEnd_toEndOf="parent"
-                        app:layout_constraintStart_toStartOf="parent"
-                        app:layout_constraintTop_toTopOf="parent"
-                        app:srcCompat="@drawable/ic_htp_grid1"/>
-
-                    <TextView
-                        android:id="@+id/textview29"
-                        android:layout_width="82dp"
-                        android:layout_height="22dp"
-                        android:background="@drawable/ic_htp_grid_bg1"
-                        android:gravity="center"
-                        android:text="@string/blcok"
-                        android:textColor="#E5E5E6"
-                        android:textSize="15sp"
-                        android:textStyle="bold"
-                        app:layout_constraintBottom_toBottomOf="@id/imageview3"
-                        app:layout_constraintEnd_toEndOf="parent"
-                        app:layout_constraintHorizontal_bias="0.011"
-                        app:layout_constraintStart_toStartOf="parent"
-                        app:layout_constraintTop_toTopOf="@id/imageview3"
-                        app:layout_constraintVertical_bias="0.622"/>
-
-                    <TextView
-                        android:id="@+id/textview30"
-                        android:layout_width="60dp"
-                        android:layout_height="22dp"
-                        android:background="@drawable/ic_htp_grid_bg1"
-                        android:gravity="center"
-                        android:text="@string/row"
-                        android:textColor="#E5E5E6"
-                        android:textSize="15sp"
-                        android:textStyle="bold"
-                        app:layout_constraintBottom_toBottomOf="@id/imageview3"
-                        app:layout_constraintEnd_toEndOf="parent"
-                        app:layout_constraintHorizontal_bias="0.01"
-                        app:layout_constraintStart_toStartOf="parent"
-                        app:layout_constraintTop_toTopOf="@id/imageview3"
-                        app:layout_constraintVertical_bias="0.135"/>
-
-                    <TextView
-                        android:id="@+id/textview31"
-                        android:layout_width="18dp"
-                        android:layout_height="60dp"
-                        android:background="@drawable/ic_htp_grid_bg1"
-                        android:gravity="center"
-                        android:orientation="vertical"
-                        android:text="@string/col"
-                        android:textColor="#E5E5E6"
-                        android:textSize="15sp"
-                        android:textStyle="bold"
-                        app:layout_constraintBottom_toBottomOf="@id/imageview3"
-                        app:layout_constraintEnd_toEndOf="parent"
-                        app:layout_constraintHorizontal_bias="0.86"
-                        app:layout_constraintStart_toStartOf="parent"
-                        app:layout_constraintTop_toTopOf="@id/imageview3"
-                        app:layout_constraintVertical_bias="0.98"/>
-
-                </androidx.constraintlayout.widget.ConstraintLayout>
-
-                <TextView
-                    android:id="@+id/textview32"
-                    android:layout_width="match_parent"
-                    android:layout_height="56dp"
-                    android:gravity="center|left"
-                    android:text="@string/how_2"
-                    android:textColor="#000000"
-                    android:textSize="16sp"/>
-
-                <TextView
-                    android:id="@+id/textview34"
-                    android:layout_width="match_parent"
-                    android:layout_height="1dp" />
-
-                <TextView
-                    android:id="@+id/textview33"
-                    android:layout_width="match_parent"
-                    android:layout_height="56dp"
-                    android:gravity="center|left"
-                    android:text="@string/how_3"
-                    android:textColor="#000000"
-                    android:textSize="16sp"/>
-
-                <androidx.constraintlayout.widget.ConstraintLayout
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content">
-
-                    <ImageView
-                        android:id="@+id/imageview4"
-                        android:layout_width="250dp"
-                        android:layout_height="250dp"
-                        app:layout_constraintBottom_toBottomOf="parent"
-                        app:layout_constraintEnd_toEndOf="parent"
-                        app:layout_constraintStart_toStartOf="parent"
-                        app:layout_constraintTop_toTopOf="parent"
-                        app:layout_constraintHorizontal_bias="0.0"
-                        app:layout_constraintVertical_bias="1.0"
-                        app:srcCompat="@drawable/ic_htp_grid2"/>
-
-                    <TextView
-                        android:id="@+id/textview35"
-                        android:layout_width="65dp"
-                        android:layout_height="50dp"
-                        android:background="@drawable/ic_htp_grid_bg2"
-                        android:gravity="center"
-                        android:text="@string/rightrow"
-                        android:textColor="#FFFFFF"
-                        android:textSize="12sp"
-                        app:layout_constraintBottom_toBottomOf="parent"
-                        app:layout_constraintEnd_toEndOf="parent"
-                        app:layout_constraintHorizontal_bias="0.634"
-                        app:layout_constraintStart_toStartOf="parent"
-                        app:layout_constraintTop_toTopOf="parent"
-                        app:layout_constraintVertical_bias="0.345"/>
-
-                    <ImageView
-                        android:id="@+id/imageview5"
-                        android:layout_width="50dp"
-                        android:layout_height="50dp"
-                        app:layout_constraintBottom_toBottomOf="@id/imageview4"
-                        app:layout_constraintEnd_toEndOf="parent"
-                        app:layout_constraintStart_toStartOf="parent"
-                        app:layout_constraintTop_toTopOf="@id/imageview4"
-                        app:layout_constraintHorizontal_bias="0.315"
-                        app:layout_constraintVertical_bias="0.345"
-                        app:srcCompat="@drawable/ic_htp_grid_correct"/>
-                </androidx.constraintlayout.widget.ConstraintLayout>
-
-                <TextView
-                    android:id="@+id/textview36"
-                    android:layout_width="match_parent"
-                    android:layout_height="16dp" />
-
-                <androidx.constraintlayout.widget.ConstraintLayout
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content">
-
-                    <ImageView
-                        android:id="@+id/imageview6"
-                        android:layout_width="250dp"
-                        android:layout_height="250dp"
-                        tools:ignore="MissingConstraints"
-                        app:srcCompat="@drawable/ic_htp_grid3"/>
-
-                    <ImageView
-                        android:id="@+id/imageview7"
-                        android:layout_width="50dp"
-                        android:layout_height="50dp"
-                        app:layout_constraintBottom_toBottomOf="@id/imageview6"
-                        app:layout_constraintEnd_toEndOf="parent"
-                        app:layout_constraintStart_toStartOf="parent"
-                        app:layout_constraintTop_toTopOf="@id/imageview6"
-                        app:layout_constraintHorizontal_bias="0.411"
-                        app:layout_constraintVertical_bias="0.40"
-                        app:srcCompat="@drawable/ic_htp_grid_correct"/>
-
-                    <TextView
-                        android:id="@+id/textview37"
-                        android:layout_width="80dp"
-                        android:layout_height="50dp"
-                        android:background="@drawable/ic_htp_grid_bg2"
-                        android:gravity="center"
-                        android:text="@string/rightcol"
-                        android:textColor="#FFFFFF"
-                        android:textSize="12sp"
-                        app:layout_constraintBottom_toBottomOf="@id/imageview6"
-                        app:layout_constraintEnd_toEndOf="parent"
-                        app:layout_constraintStart_toStartOf="parent"
-                        app:layout_constraintTop_toTopOf="@id/imageview6"
-                        app:layout_constraintHorizontal_bias="0.73"
-                        app:layout_constraintVertical_bias="0.40"/>
-                </androidx.constraintlayout.widget.ConstraintLayout>
-
-                <TextView
-                    android:id="@+id/textview38"
-                    android:layout_width="match_parent"
-                    android:layout_height="16dp" />
-
-                <androidx.constraintlayout.widget.ConstraintLayout
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content">
-
-                    <ImageView
-                        android:id="@+id/imageview8"
-                        android:layout_width="250dp"
-                        android:layout_height="250dp"
-                        app:layout_constraintBottom_toBottomOf="parent"
-                        app:layout_constraintEnd_toEndOf="parent"
-                        app:layout_constraintStart_toStartOf="parent"
-                        app:layout_constraintTop_toTopOf="parent"
-                        app:layout_constraintHorizontal_bias="1.0"
-                        app:layout_constraintVertical_bias="0.0"
-                        app:srcCompat="@drawable/ic_htp_grid4"/>
-
-                    <ImageView
-                        android:id="@+id/imageview9"
-                        android:layout_width="50dp"
-                        android:layout_height="50dp"
-                        app:layout_constraintBottom_toBottomOf="@id/imageview8"
-                        app:layout_constraintEnd_toEndOf="parent"
-                        app:layout_constraintStart_toStartOf="parent"
-                        app:layout_constraintTop_toTopOf="parent"
-                        app:layout_constraintHorizontal_bias="0.04"
-                        app:layout_constraintVertical_bias="0.40"
-                        app:srcCompat="@drawable/ic_htp_grid_correct"/>
-
-                    <TextView
-                        android:id="@+id/textview39"
-                        android:layout_width="90dp"
-                        android:layout_height="50dp"
-                        android:background="@drawable/ic_htp_grid_bg2"
-                        android:gravity="center"
-                        android:text="@string/rightblock"
-                        android:textColor="#FFFFFF"
-                        android:textSize="12sp"
-                        app:layout_constraintBottom_toBottomOf="@id/imageview8"
-                        app:layout_constraintEnd_toEndOf="parent"
-                        app:layout_constraintStart_toStartOf="parent"
-                        app:layout_constraintTop_toTopOf="parent"
-                        app:layout_constraintHorizontal_bias="0.36"
-                        app:layout_constraintVertical_bias="0.40"/>
-                </androidx.constraintlayout.widget.ConstraintLayout>
-
-                <TextView
-                    android:id="@+id/textview40"
-                    android:layout_width="match_parent"
-                    android:layout_height="1dp" />
-
-                <TextView
-                    android:id="@+id/textview41"
-                    android:layout_width="match_parent"
-                    android:layout_height="56dp"
-                    android:gravity="center|left"
-                    android:text="@string/how_4"
-                    android:textColor="#000000"
-                    android:textSize="16sp"/>
-
-                <androidx.constraintlayout.widget.ConstraintLayout
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content">
-
-                    <ImageView
-                        android:id="@+id/imageview10"
-                        android:layout_width="250dp"
-                        android:layout_height="250dp"
-                        app:layout_constraintBottom_toBottomOf="parent"
-                        app:layout_constraintEnd_toEndOf="parent"
-                        app:layout_constraintStart_toStartOf="parent"
-                        app:layout_constraintTop_toTopOf="parent"
-                        app:srcCompat="@drawable/ic_htp_grid5"/>
-
-                    <ImageView
-                        android:id="@+id/imageview11"
-                        android:layout_width="50dp"
-                        android:layout_height="50dp"
-                        app:layout_constraintBottom_toBottomOf="parent"
-                        app:layout_constraintEnd_toEndOf="parent"
-                        app:layout_constraintStart_toStartOf="parent"
-                        app:layout_constraintTop_toTopOf="@id/imageview10"
-                        app:layout_constraintHorizontal_bias="0.18"
-                        app:layout_constraintVertical_bias="0.45"
-                        app:srcCompat="@drawable/ic_htp_grid_correct"/>
-
-                    <TextView
-                        android:id="@+id/textview43"
-                        android:layout_width="70dp"
-                        android:layout_height="60dp"
-                        android:background="@drawable/ic_htp_grid_bg2"
-                        android:gravity="center"
-                        android:text="@string/complete"
-                        android:textColor="#FFFFFF"
-                        android:textSize="12sp"
-                        app:layout_constraintBottom_toBottomOf="@id/imageview10"
-                        app:layout_constraintEnd_toEndOf="parent"
-                        app:layout_constraintStart_toStartOf="parent"
-                        app:layout_constraintTop_toTopOf="parent"
-                        app:layout_constraintHorizontal_bias="0.48"
-                        app:layout_constraintVertical_bias="0.45"/>
-                </androidx.constraintlayout.widget.ConstraintLayout>
-
-                <TextView
-                    android:id="@+id/textview42"
-                    android:layout_width="match_parent"
-                    android:layout_height="30dp" />
+                    android:textColor="#B0C4DE"
+                    android:textSize="15sp" />
             </LinearLayout>
-        </ScrollView>
 
-        <TextView
-            android:id="@+id/textview18"
-            android:layout_width="16dp"
-            android:layout_height="wrap_content" />
-    </LinearLayout>
+            <!-- Rule 2 -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="16dp"
+                android:background="@drawable/dialog_background"
+                android:elevation="4dp"
+                android:orientation="vertical"
+                android:padding="16dp">
 
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginBottom="8dp"
+                    android:text="2. 棋盘结构"
+                    android:textColor="#8EC8F2"
+                    android:textSize="17sp"
+                    android:textStyle="bold" />
+
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="@string/how_2"
+                    android:textColor="#B0C4DE"
+                    android:textSize="15sp" />
+
+                <ImageView
+                    android:layout_width="220dp"
+                    android:layout_height="220dp"
+                    android:layout_gravity="center"
+                    android:layout_marginTop="12dp"
+                    android:src="@drawable/ic_htp_grid1" />
+            </LinearLayout>
+
+            <!-- Rule 3 -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="16dp"
+                android:background="@drawable/dialog_background"
+                android:elevation="4dp"
+                android:orientation="vertical"
+                android:padding="16dp">
+
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginBottom="8dp"
+                    android:text="3. 填写规则"
+                    android:textColor="#8EC8F2"
+                    android:textSize="17sp"
+                    android:textStyle="bold" />
+
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="@string/how_3"
+                    android:textColor="#B0C4DE"
+                    android:textSize="15sp" />
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="12dp"
+                    android:gravity="center"
+                    android:orientation="horizontal">
+
+                    <ImageView
+                        android:layout_width="120dp"
+                        android:layout_height="120dp"
+                        android:layout_marginEnd="8dp"
+                        android:src="@drawable/ic_htp_grid2" />
+
+                    <ImageView
+                        android:layout_width="120dp"
+                        android:layout_height="120dp"
+                        android:src="@drawable/ic_htp_grid3" />
+                </LinearLayout>
+            </LinearLayout>
+
+            <!-- Rule 4 -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="32dp"
+                android:background="@drawable/dialog_background"
+                android:elevation="4dp"
+                android:orientation="vertical"
+                android:padding="16dp">
+
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginBottom="8dp"
+                    android:text="4. 通关条件"
+                    android:textColor="#8EC8F2"
+                    android:textSize="17sp"
+                    android:textStyle="bold" />
+
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="@string/how_4"
+                    android:textColor="#B0C4DE"
+                    android:textSize="15sp" />
+
+                <ImageView
+                    android:layout_width="220dp"
+                    android:layout_height="220dp"
+                    android:layout_gravity="center"
+                    android:layout_marginTop="12dp"
+                    android:src="@drawable/ic_htp_grid5" />
+            </LinearLayout>
+        </LinearLayout>
+    </ScrollView>
 </LinearLayout>

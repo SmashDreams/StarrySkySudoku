@@ -176,9 +176,13 @@ class MapActivity : AppCompatActivity() {
     }
 
     private fun initList() {
+        recyclerView.layoutManager = LinearLayoutManager(this@MapActivity)
+        // Set empty adapter immediately to avoid "No adapter attached" warning
+        adapter = PassListAdapter(emptyList(), lightStars)
+        recyclerView.adapter = adapter
+
         viewModel.mapData.observe(this) { data ->
             adapter = PassListAdapter(data, lightStars)
-            recyclerView.layoutManager = LinearLayoutManager(this@MapActivity)
             recyclerView.adapter = adapter
             recyclerView.scrollToPosition(adapter.getPosition())
             recyclerView.smoothScrollBy(0, 150)
@@ -299,6 +303,7 @@ class MapActivity : AppCompatActivity() {
     override fun onResume() {
         super.onResume()
         PlayMusic.getInstance().playBGM()
+        viewModel.loadMapData()
         intent.getStringExtra("roll")?.let { recyclerView.scrollToPosition(getRollingPosition(it)) }
         nextNum = intent.getStringExtra("next")
         loseNum = intent.getStringExtra("lose")
