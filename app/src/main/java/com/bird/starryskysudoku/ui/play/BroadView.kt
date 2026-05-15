@@ -5,7 +5,7 @@ import android.content.Context
 import android.graphics.*
 import android.util.AttributeSet
 import android.view.MotionEvent
-import androidx.annotation.NonNull
+import androidx.annotation.Keep
 import androidx.appcompat.widget.AppCompatImageView
 import com.bird.starryskysudoku.R
 
@@ -46,13 +46,16 @@ class BroadView : AppCompatImageView {
         fun onTouch(row: Int, col: Int, block: Int)
     }
 
-    constructor(@NonNull context: Context) : super(context) { initView() }
-    constructor(@NonNull context: Context, @NonNull attrs: AttributeSet) : super(context, attrs) { initView() }
-    constructor(@NonNull context: Context, @NonNull attrs: AttributeSet, defStyleAttr: Int) : super(context, attrs, defStyleAttr) { initView() }
+    constructor(context: Context) : super(context) { initView() }
+    constructor(context: Context, attrs: AttributeSet) : super(context, attrs) { initView() }
+    constructor(context: Context, attrs: AttributeSet, defStyleAttr: Int) : super(context, attrs, defStyleAttr) { initView() }
 
     fun setListener(listener: Listener) { mListener = listener }
+    @Keep
     fun setTextSize(size: Int) { mTextSize = size; invalidate() }
+    @Keep
     fun setTextAlpha(alpha: Int) { mTextAlpha = alpha; invalidate() }
+    @Keep
     fun setLine(line: Int) { mLine = line }
 
     private fun initView() {
@@ -109,7 +112,7 @@ class BroadView : AppCompatImageView {
         }
     }
 
-    override fun dispatchDraw(@NonNull canvas: Canvas) {
+    override fun dispatchDraw(canvas: Canvas) {
         super.dispatchDraw(canvas)
         val tag = Paint().apply {
             textSize = 33f; color = Color.GRAY
@@ -142,7 +145,7 @@ class BroadView : AppCompatImageView {
         }
     }
 
-    override fun onDrawForeground(@NonNull canvas: Canvas) {
+    override fun onDrawForeground(canvas: Canvas) {
         super.onDrawForeground(canvas)
         val number = Paint().apply {
             isAntiAlias = true; color = Color.BLACK
@@ -223,15 +226,26 @@ class BroadView : AppCompatImageView {
 
     override fun onTouchEvent(event: MotionEvent): Boolean {
         if (mHasDone || mWrong) return false
-        if (event.action == MotionEvent.ACTION_DOWN) {
-            val x = event.x; val y = event.y
-            if (x < 28 || y < 28 || x >= 28 + mWidth * 9 || y >= 28 + mWidth * 9) return false
-            mCol = ((x - 28) / mWidth).toInt().coerceIn(0, 8)
-            mRow = ((y - 28) / mWidth).toInt().coerceIn(0, 8)
-            mBigBlock = getBigBlock(mRow, mCol)
-            mListener?.onTouch(mRow, mCol, mBigBlock)
-            return true
+        when (event.action) {
+            MotionEvent.ACTION_DOWN -> {
+                val x = event.x; val y = event.y
+                if (x < 28 || y < 28 || x >= 28 + mWidth * 9 || y >= 28 + mWidth * 9) return false
+                mCol = ((x - 28) / mWidth).toInt().coerceIn(0, 8)
+                mRow = ((y - 28) / mWidth).toInt().coerceIn(0, 8)
+                mBigBlock = getBigBlock(mRow, mCol)
+                return true
+            }
+            MotionEvent.ACTION_UP -> {
+                performClick()
+                return true
+            }
         }
+        return true
+    }
+
+    override fun performClick(): Boolean {
+        super.performClick()
+        mListener?.onTouch(mRow, mCol, mBigBlock)
         return true
     }
 

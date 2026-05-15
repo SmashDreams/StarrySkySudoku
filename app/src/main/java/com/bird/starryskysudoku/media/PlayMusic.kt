@@ -36,7 +36,6 @@ class PlayMusic private constructor() {
     private lateinit var soundPool: SoundPool
     private lateinit var timesUpPool: SoundPool
     private var bgmPlayer: MediaPlayer? = null
-    private lateinit var context: Context
     private lateinit var prefs: SharedPreferences
     private val musicMap = mutableMapOf<MusicType, Int>()
     private val soundIdMap = mutableMapOf<MusicType, Int>()
@@ -45,7 +44,6 @@ class PlayMusic private constructor() {
 
     fun init(application: Application) {
         if (initialized) return
-        context = application
         prefs = application.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
 
         val audioAttrs = AudioAttributes.Builder()

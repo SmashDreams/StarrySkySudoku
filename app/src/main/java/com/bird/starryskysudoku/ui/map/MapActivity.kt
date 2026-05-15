@@ -5,21 +5,25 @@ import android.content.Intent
 import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
-import android.view.KeyEvent
 import android.view.View
 import android.view.animation.AnimationUtils
 import android.widget.ImageView
 import android.widget.TextView
 import android.widget.Toast
+import androidx.activity.OnBackPressedCallback
 import androidx.appcompat.app.AppCompatActivity
+import androidx.appcompat.app.AppCompatDelegate
+import androidx.core.content.edit
+import androidx.core.os.LocaleListCompat
 import androidx.lifecycle.ViewModelProvider
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.bird.starryskysudoku.R
 import com.bird.starryskysudoku.data.database.DatabaseInitializer
+import com.bird.starryskysudoku.media.PlayMusic
+import com.bird.starryskysudoku.ui.common.startActivityWithTransition
 import com.bird.starryskysudoku.ui.dialog.MyDialog
 import com.bird.starryskysudoku.ui.dialog.MyDialogManager
-import com.bird.starryskysudoku.media.PlayMusic
 import com.bird.starryskysudoku.ui.howtoplay.HowToPlayActivity
 import com.bird.starryskysudoku.ui.play.PlayActivity
 import com.bird.starryskysudoku.ui.splash.SplashActivity
@@ -77,6 +81,7 @@ class MapActivity : AppCompatActivity() {
         initSettingDialog()
         initShootingStar()
         initMapData()
+        initBackHandler()
         PlayMusic.getInstance().playBGM()
     }
 
@@ -137,9 +142,12 @@ class MapActivity : AppCompatActivity() {
             findViewById<View>(R.id.passcheck_start).setOnClickListener {
                 PlayMusic.getInstance().playButtonTap()
                 handler.postDelayed({
-                    startActivity(Intent(this@MapActivity, PlayActivity::class.java)
-                        .putExtra("num", checkNum))
-                    overridePendingTransition(R.anim.playpage_show, R.anim.playpage_hide)
+                    startActivityWithTransition(
+                        Intent(this@MapActivity, PlayActivity::class.java)
+                            .putExtra("num", checkNum),
+                        R.anim.playpage_show,
+                        R.anim.playpage_hide
+                    )
                     finish()
                     MyDialogManager.getInstance().hide(this)
                 }, 165)
@@ -172,9 +180,12 @@ class MapActivity : AppCompatActivity() {
                 handler.postDelayed({
                     intent.removeExtra("next")
                     intent.removeExtra("lose")
-                    startActivity(Intent(this@MapActivity, PlayActivity::class.java)
-                        .putExtra("num", checkNum))
-                    overridePendingTransition(R.anim.playpage_show, R.anim.playpage_hide)
+                    startActivityWithTransition(
+                        Intent(this@MapActivity, PlayActivity::class.java)
+                            .putExtra("num", checkNum),
+                        R.anim.playpage_show,
+                        R.anim.playpage_hide
+                    )
                     MyDialogManager.getInstance().hide(this)
                 }, 165)
             }
@@ -199,9 +210,12 @@ class MapActivity : AppCompatActivity() {
 
             adapter.setOpenListener(object : PassListAdapter.OpenPlayPage {
                 override fun onOpen(num: String) {
-                    startActivity(Intent(this@MapActivity, PlayActivity::class.java)
-                        .putExtra("num", num))
-                    overridePendingTransition(R.anim.playpage_show, R.anim.playpage_hide)
+                    startActivityWithTransition(
+                        Intent(this@MapActivity, PlayActivity::class.java)
+                            .putExtra("num", num),
+                        R.anim.playpage_show,
+                        R.anim.playpage_hide
+                    )
                     finish()
                 }
             })
@@ -233,17 +247,25 @@ class MapActivity : AppCompatActivity() {
 
         settingsDialog.findViewById<View>(R.id.settings_howtoplay).setOnClickListener {
             PlayMusic.getInstance().playButtonTap()
-            startActivity(Intent(this, HowToPlayActivity::class.java))
-            overridePendingTransition(R.anim.setguide_right_in, R.anim.mappage_gone)
+            startActivityWithTransition(
+                Intent(this, HowToPlayActivity::class.java),
+                R.anim.setguide_right_in,
+                R.anim.mappage_gone
+            )
         }
 
         settingsDialog.findViewById<View>(R.id.settings_language).setOnClickListener {
             PlayMusic.getInstance().playButtonTap()
             val newLang = if (language == "zh") "en" else "zh"
-            getSharedPreferences("language", MODE_PRIVATE).edit()
-                .putString("language", newLang).apply()
-            startActivity(Intent(this, SplashActivity::class.java))
-            overridePendingTransition(R.anim.playpage_show, R.anim.playpage_hide)
+            getSharedPreferences("language", MODE_PRIVATE).edit {
+                putString("language", newLang)
+            }
+            AppCompatDelegate.setApplicationLocales(LocaleListCompat.forLanguageTags(newLang))
+            startActivityWithTransition(
+                Intent(this, SplashActivity::class.java),
+                R.anim.playpage_show,
+                R.anim.playpage_hide
+            )
             finishAffinity()
         }
 
@@ -253,12 +275,12 @@ class MapActivity : AppCompatActivity() {
             if (musicOpened) {
                 musicSwitch.setImageResource(R.drawable.ic_pop_music_off)
                 musicOpened = false
-                prefs.edit().putBoolean("music", false).apply()
+                prefs.edit { putBoolean("music", false) }
                 PlayMusic.getInstance().stopBGM()
             } else {
                 musicSwitch.setImageResource(R.drawable.ic_pop_music_on)
                 musicOpened = true
-                prefs.edit().putBoolean("music", true).apply()
+                prefs.edit { putBoolean("music", true) }
                 PlayMusic.getInstance().playBGM()
             }
         }
@@ -268,11 +290,11 @@ class MapActivity : AppCompatActivity() {
             if (audioOpened) {
                 audioSwitch.setImageResource(R.drawable.ic_pop_audio_off)
                 audioOpened = false
-                prefs.edit().putBoolean("audio", false).apply()
+                prefs.edit { putBoolean("audio", false) }
             } else {
                 audioSwitch.setImageResource(R.drawable.ic_pop_audio_on)
                 audioOpened = true
-                prefs.edit().putBoolean("audio", true).apply()
+                prefs.edit { putBoolean("audio", true) }
                 PlayMusic.getInstance().playButtonTap()
             }
         }
@@ -289,17 +311,18 @@ class MapActivity : AppCompatActivity() {
         }
     }
 
-    override fun onKeyDown(keyCode: Int, event: KeyEvent): Boolean {
-        if (keyCode == KeyEvent.KEYCODE_BACK) {
-            if (backPressCount == 1) finishAffinity()
-            else {
-                Toast.makeText(this, R.string.pressagain, Toast.LENGTH_SHORT).show()
-                backPressCount++
-                handler.postDelayed({ backPressCount = 0 }, 1500)
-                return true
+    private fun initBackHandler() {
+        onBackPressedDispatcher.addCallback(this, object : OnBackPressedCallback(true) {
+            override fun handleOnBackPressed() {
+                if (backPressCount == 1) {
+                    finishAffinity()
+                } else {
+                    Toast.makeText(this@MapActivity, R.string.pressagain, Toast.LENGTH_SHORT).show()
+                    backPressCount++
+                    handler.postDelayed({ backPressCount = 0 }, 1500)
+                }
             }
-        }
-        return super.onKeyDown(keyCode, event)
+        })
     }
 
     private fun getRollingPosition(num: String): Int {
