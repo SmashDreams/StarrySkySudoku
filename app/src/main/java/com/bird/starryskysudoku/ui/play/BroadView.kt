@@ -127,11 +127,12 @@ class BroadView : AppCompatImageView {
                     var position = 0
                     for (m in 0 until 3) {
                         for (n in 0 until 3) {
-                            if (mTagData[i][j]?.tags?.get(position) != "0") {
+                            val tagText = mTagData[i][j]?.tags?.getOrNull(position) ?: "0"
+                            if (tagText != "0") {
                                 val subCenterX = cellLeft + n * subWidth + subWidth / 2
                                 val subCenterY = cellTop + m * subHeight + subHeight / 2
                                 val baseline = subCenterY - (tag.ascent() + tag.descent()) / 2
-                                canvas.drawText(mTagData[i][j]!!.tags[position], subCenterX, baseline, tag)
+                                canvas.drawText(tagText, subCenterX, baseline, tag)
                             }
                             position++
                         }
