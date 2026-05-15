@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">星空数独</string>
+    <string name="tap">点击任意位置继续</string>
+    <string name="guide_1_1">欢迎！</string>
+    <string name="guide_1_2">要解开一个数独谜题，请在盘上填满数字。</string>
+    <string name="guide_2">一个数字只能在每行、每列和每个小方块中出现一次。</string>
+    <string name="guide_3">要输入一个数字，先点按一个空格。</string>
+    <string name="guide_4">然后点击要输入的数字。</string>
+    <string name="guide_5">注意时间限制！</string>
+    <string name="guide_6">这是星空数独的基本规则，祝您好运！</string>
+
+    <string name="star">星星 - </string>
+    <string name="nextlevel">一大波关卡</string>
+    <string name="coming">即将来袭...</string>
+
+    <string name="times">通关次数：</string>
+    <string name="start">开始玩</string>
+
+    <string name="pressagain">再按一次退出程序</string>
+
+    <string name="setting">设置</string>
+    <string name="how">玩法说明</string>
+    <string name="How">玩法说明</string>
+    <string name="language">语言：中文</string>
+
+    <string name="how_1">数独是一种宫格填字游戏。</string>
+    <string name="row">行</string>
+    <string name="col">列</string>
+    <string name="blcok">小方块</string>
+    <string name="how_2">数独宫格可以被拆分为9行，9列和9个小方块。</string>
+    <string name="how_3">每一行、列和小方块必须包含无重复的数字1至9。</string>
+
+    <string name="rightrow">正确的行</string>
+    <string name="rightcol">正确的列</string>
+    <string name="rightblock">正确的小方块</string>
+
+    <string name="how_4">当所有的行、列和小方块被正确填满，数独完成！</string>
+
+    <string name="complete">数独完成</string>
+
+    <string name="pause">暂停中</string>
+    <string name="retry">重新开始</string>
+    <string name="back">回到星空</string>
+
+    <string name="win">您赢了!</string>
+    <string name="next">继续</string>
+
+    <string name="lose">您输了!</string>
+    <string name="replay">重试</string>
+
+</resources>

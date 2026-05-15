@@ -1,0 +1,345 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@drawable/bg">
+
+    <LinearLayout
+        android:id="@+id/linearlayout3"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintHorizontal_bias="0.04"
+        app:layout_constraintVertical_bias="0.09000002">
+
+        <TextView
+            android:id="@+id/textview25"
+            android:layout_width="wrap_content"
+            android:layout_height="35dp"
+            android:gravity="center"
+            android:text="@string/star"
+            android:textColor="#FBFBFB"
+            android:textSize="20sp"
+            android:textStyle="bold"/>
+
+        <TextView
+            android:id="@+id/play_num"
+            android:layout_width="wrap_content"
+            android:layout_height="35dp"
+            android:gravity="center"
+            android:hint="00"
+            android:textColor="#FFFFFF"
+            android:textSize="20sp"
+            android:textStyle="bold"/>
+    </LinearLayout>
+
+    <ImageView
+        android:id="@+id/play_pause"
+        android:layout_width="35dp"
+        android:layout_height="35dp"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintHorizontal_bias="0.957"
+        app:layout_constraintVertical_bias="0.090"
+        app:srcCompat="@drawable/ic_play_pause"/>
+
+    <com.bird.starryskysudoku.view.BroadView
+        android:id="@+id/play_broad"
+        android:layout_width="370dp"
+        android:layout_height="370dp"
+        android:scaleType="centerCrop"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintVertical_bias="0.38"
+        />
+
+    <LinearLayout
+        android:id="@+id/linearlayout2"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/play_broad"
+        app:layout_constraintVertical_bias="0.37000002">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal">
+
+            <TextView
+                android:id="@+id/textview45"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"/>
+
+            <TextView
+                android:id="@+id/play_1"
+                android:layout_width="55dp"
+                android:layout_height="60dp"
+                android:background="@drawable/ic_play_numberbox_bg1"
+                android:gravity="center"
+                android:text="1"
+                android:textColor="#020A13"
+                android:textSize="23sp"
+                android:textStyle="bold"/>
+
+            <TextView
+                android:id="@+id/textview56"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"/>
+
+            <TextView
+                android:id="@+id/play_2"
+                android:layout_width="55dp"
+                android:layout_height="60dp"
+                android:background="@drawable/ic_play_numberbox_bg1"
+                android:gravity="center"
+                android:text="2"
+                android:textColor="#020A13"
+                android:textSize="23sp"
+                android:textStyle="bold"/>
+
+            <TextView
+                android:id="@+id/textview57"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"/>
+
+            <TextView
+                android:id="@+id/play_3"
+                android:layout_width="55dp"
+                android:layout_height="60dp"
+                android:background="@drawable/ic_play_numberbox_bg1"
+                android:gravity="center"
+                android:text="3"
+                android:textColor="#020A13"
+                android:textSize="23sp"
+                android:textStyle="bold"/>
+
+            <TextView
+                android:id="@+id/textview58"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"/>
+
+            <TextView
+                android:id="@+id/play_4"
+                android:layout_width="55dp"
+                android:layout_height="60dp"
+                android:background="@drawable/ic_play_numberbox_bg1"
+                android:gravity="center"
+                android:text="4"
+                android:textColor="#020A13"
+                android:textSize="23sp"
+                android:textStyle="bold"/>
+
+            <TextView
+                android:id="@+id/textview59"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"/>
+
+            <TextView
+                android:id="@+id/play_5"
+                android:layout_width="55dp"
+                android:layout_height="60dp"
+                android:background="@drawable/ic_play_numberbox_bg1"
+                android:gravity="center"
+                android:text="5"
+                android:textColor="#020A13"
+                android:textSize="23sp"
+                android:textStyle="bold"/>
+
+            <TextView
+                android:id="@+id/textview60"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"/>
+
+            <ImageView
+                android:id="@+id/play_tag"
+                android:layout_width="55dp"
+                android:layout_height="60dp"
+                android:background="@drawable/ic_play_numberbox_bg1"
+                app:srcCompat="@drawable/ic_play_numberbox_markoff"/>
+
+            <TextView
+                android:id="@+id/textview53"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"/>
+        </LinearLayout>
+
+        <TextView
+            android:id="@+id/textview61"
+            android:layout_width="match_parent"
+            android:layout_height="1dp" />
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:orientation="horizontal">
+
+            <TextView
+                android:id="@+id/textview62"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"/>
+
+            <TextView
+                android:id="@+id/play_6"
+                android:layout_width="55dp"
+                android:layout_height="60dp"
+                android:background="@drawable/ic_play_numberbox_bg1"
+                android:gravity="center"
+                android:text="6"
+                android:textColor="#020A13"
+                android:textSize="23sp"
+                android:textStyle="bold"/>
+
+            <TextView
+                android:id="@+id/textview64"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"/>
+
+            <TextView
+                android:id="@+id/play_7"
+                android:layout_width="55dp"
+                android:layout_height="60dp"
+                android:background="@drawable/ic_play_numberbox_bg1"
+                android:gravity="center"
+                android:text="7"
+                android:textColor="#020A13"
+                android:textSize="23sp"
+                android:textStyle="bold"/>
+
+            <TextView
+                android:id="@+id/textview67"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"/>
+
+            <TextView
+                android:id="@+id/play_8"
+                android:layout_width="55dp"
+                android:layout_height="60dp"
+                android:background="@drawable/ic_play_numberbox_bg1"
+                android:gravity="center"
+                android:text="8"
+                android:textColor="#020A13"
+                android:textSize="23sp"
+                android:textStyle="bold"/>
+
+            <TextView
+                android:id="@+id/textview65"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"/>
+
+            <TextView
+                android:id="@+id/play_9"
+                android:layout_width="55dp"
+                android:layout_height="60dp"
+                android:background="@drawable/ic_play_numberbox_bg1"
+                android:gravity="center"
+                android:text="9"
+                android:textColor="#020A13"
+                android:textSize="23sp"
+                android:textStyle="bold"/>
+
+            <TextView
+                android:id="@+id/textview69"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"/>
+
+            <ImageView
+                android:id="@+id/play_revoke"
+                android:layout_width="110dp"
+                android:layout_height="60dp"
+                android:layout_gravity="center"
+                android:layout_weight="1"
+                android:background="@drawable/ic_play_numberbox_bg1"
+                app:srcCompat="@drawable/ic_play_numberbox_revoke"/>
+
+            <TextView
+                android:id="@+id/textview71"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"/>
+        </LinearLayout>
+    </LinearLayout>
+
+    <LinearLayout
+        android:id="@+id/linearlayout"
+        android:layout_width="100dp"
+        android:layout_height="20dp"
+        android:layout_marginTop="65dp"
+        android:orientation="horizontal"
+        app:layout_constraintEnd_toStartOf="@id/play_pause"
+        app:layout_constraintStart_toEndOf="@id/linearlayout3"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintHorizontal_bias="0.73">
+
+        <TextView
+            android:id="@+id/play_time_min"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:gravity="right"
+            android:hint="00"
+            android:textColor="#FFFFFF"
+            android:textSize="16sp"
+            android:textStyle="bold"/>
+
+        <TextView
+            android:id="@+id/textview74"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text=":"
+            android:textColor="#FFFFFF"
+            android:textSize="16sp"
+            android:textStyle="bold"/>
+
+        <TextView
+            android:id="@+id/play_time_sec"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:gravity="left"
+            android:hint="00"
+            android:textColor="#FFFFFF"
+            android:textSize="16sp"
+            android:textStyle="bold"/>
+    </LinearLayout>
+
+    <ProgressBar
+        android:id="@+id/play_time_progressbar"
+        style="?android:attr/progressBarStyleHorizontal"
+        android:layout_width="100dp"
+        android:layout_height="10dp"
+        android:max="600"
+        android:progressDrawable="@drawable/time_progressbar"
+        android:visibility="visible"
+        app:layout_constraintEnd_toStartOf="@id/play_pause"
+        app:layout_constraintStart_toEndOf="@id/linearlayout3"
+        app:layout_constraintTop_toBottomOf="@id/linearlayout"
+        app:layout_constraintHorizontal_bias="0.73"/>
+
+</androidx.constraintlayout.widget.ConstraintLayout>

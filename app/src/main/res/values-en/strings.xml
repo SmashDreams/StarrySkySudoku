@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">STARRY SKY SUDOKU</string>
+    <string name="tap">Tap anywhere to continue</string>
+    <string name="guide_1_1">Welcome!</string>
+    <string name="guide_1_2">To solve a Sudoku puzzle,fill the board with numbers.</string>
+    <string name="guide_2">A number can appear only ONCE in each ROW、COLUMN &amp; BLOCK.</string>
+    <string name="guide_3">To enter a number,tap on an EMPTY cell,</string>
+    <string name="guide_4">then tap on the appropriate number.</string>
+    <string name="guide_5">You have a limited amount of time to complete each puzzle!</string>
+    <string name="guide_6">This covers the basics of Starry Sudoku.Good Luck!</string>
+
+    <string name="star">STAR - </string>
+    <string name="nextlevel">More Levels</string>
+    <string name="coming">Coming Soon...</string>
+
+    <string name="times">PassTimes：</string>
+    <string name="start">PLAY</string>
+
+    <string name="pressagain">Press Again To Exit</string>
+
+    <string name="setting">SETTINGS</string>
+    <string name="how">How to play</string>
+    <string name="How">HOW TO PLAY</string>
+    <string name="language">LANGUAGE：EN</string>
+
+    <string name="how_1">Sudoku is a game played on a square grid.</string>
+    <string name="row">ROW</string>
+    <string name="col">COL</string>
+    <string name="blcok">BLOCK</string>
+    <string name="how_2">The sudoku Grid is divided into 9 Rows,9 Columns and 9 Blocks</string>
+    <string name="how_3">Each Row,Column and Block must contain number 1 to 9 without repetition.</string>
+
+    <string name="rightrow">Correct Row</string>
+    <string name="rightcol">Correct Col</string>
+    <string name="rightblock">Correct Block</string>
+
+    <string name="how_4">When all the Rows,Columns and Blocks are correctly filled,the Sudoku is Complete.</string>
+
+    <string name="complete">Sudoku Complete</string>
+
+    <string name="pause">PAUSED</string>
+    <string name="retry">RESTART</string>
+    <string name="back">STARRY SKY</string>
+
+    <string name="win">YOU WIN!</string>
+    <string name="next">NEXT</string>
+
+    <string name="lose">YOU LOSE!</string>
+    <string name="replay">PLAY AGAIN</string>
+</resources>

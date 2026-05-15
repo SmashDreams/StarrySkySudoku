@@ -1,0 +1,21 @@
+<resources xmlns:tools="http://schemas.android.com/tools">
+    <!-- Base application theme. -->
+    <style name="Base.Theme.StarrySkySudoku" parent="Theme.Material3.DayNight.NoActionBar">
+
+        <!-- Customize your theme here. -->
+    </style>
+
+    <style name="Theme.StarrySkySudoku" parent="Base.Theme.StarrySkySudoku" >
+        <item name="android:windowContentTransitions">true</item><!--动画平滑切换-->
+    </style>
+
+    <style name="MyDialog" parent="android:Theme.Dialog">
+        <item name="android:windowBackground">@android:color/transparent</item><!--背景透明-->
+        <item name="android:windowNoTitle">true</item><!--去除标题-->
+        <item name="android:windowFrame">@null</item><!--去除边框-->
+    </style>
+    <style name="SlideInFromBottomDialogAnimation">
+        <item name="android:windowEnterAnimation">@anim/dialog_show</item>
+        <item name="android:windowExitAnimation">@anim/dialog_hide</item>
+    </style>
+</resources>
