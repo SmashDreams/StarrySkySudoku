@@ -1,13 +1,13 @@
 package com.bird.starryskysudoku.ui.dialog
 
-import android.app.Dialog
 import android.content.Context
 import android.util.Log
-import android.view.KeyEvent
+import androidx.activity.ComponentDialog
+import androidx.activity.OnBackPressedCallback
 import com.bird.starryskysudoku.R
 import com.bird.starryskysudoku.media.PlayMusic
 
-class MyDialog(context: Context, private val layout: Int, style: Int, gravity: Int) : Dialog(context, style) {
+class MyDialog(context: Context, private val layout: Int, style: Int, gravity: Int) : ComponentDialog(context, style) {
 
     companion object {
         private const val TAG = "MyDialog"
@@ -15,21 +15,16 @@ class MyDialog(context: Context, private val layout: Int, style: Int, gravity: I
 
     init {
         setContentView(layout)
+        window?.setGravity(gravity)
         window?.attributes?.windowAnimations = R.style.SlideInFromBottomDialogAnimation
-    }
-
-    override fun onKeyDown(keyCode: Int, event: KeyEvent): Boolean {
-        Log.d(TAG, "onKeyDown:")
-        if (keyCode == KeyEvent.KEYCODE_BACK) {
-            if (layout == R.layout.dialog_passcheck || layout == R.layout.dialog_settings) {
-                dismiss()
-                PlayMusic.getInstance().stopDialogShow()
-                return super.onKeyDown(keyCode, event)
-            } else {
-                return true
+        onBackPressedDispatcher.addCallback(this, object : OnBackPressedCallback(true) {
+            override fun handleOnBackPressed() {
+                if (layout == R.layout.dialog_passcheck || layout == R.layout.dialog_settings) {
+                    dismiss()
+                    PlayMusic.getInstance().stopDialogShow()
+                }
             }
-        }
-        return super.onKeyDown(keyCode, event)
+        })
     }
 
     override fun cancel() {

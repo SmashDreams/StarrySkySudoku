@@ -2,12 +2,14 @@ package com.bird.starryskysudoku.ui.guide
 
 import android.content.Intent
 import android.os.Bundle
-import android.view.KeyEvent
 import android.view.View
+import androidx.activity.OnBackPressedCallback
 import androidx.appcompat.app.AppCompatActivity
 import androidx.constraintlayout.widget.ConstraintLayout
+import androidx.core.content.edit
 import com.bird.starryskysudoku.R
 import com.bird.starryskysudoku.media.PlayMusic
+import com.bird.starryskysudoku.ui.common.startActivityWithTransition
 import com.bird.starryskysudoku.ui.map.MapActivity
 
 class GuideActivity : AppCompatActivity() {
@@ -28,6 +30,7 @@ class GuideActivity : AppCompatActivity() {
         )
         finalGuide = findViewById(R.id.guide_6)
         initTouch()
+        initBackHandler()
     }
 
     private fun initTouch() {
@@ -45,17 +48,24 @@ class GuideActivity : AppCompatActivity() {
         }
         finalGuide.setOnClickListener {
             PlayMusic.getInstance().playButtonTap()
-            getSharedPreferences("firstcome", MODE_PRIVATE)
-                .edit().putBoolean("first", false).apply()
-            startActivity(Intent(this, MapActivity::class.java))
-            overridePendingTransition(R.anim.playpage_show, R.anim.playpage_hide)
+            getSharedPreferences("firstcome", MODE_PRIVATE).edit {
+                putBoolean("first", false)
+            }
+            startActivityWithTransition(
+                Intent(this, MapActivity::class.java),
+                R.anim.playpage_show,
+                R.anim.playpage_hide
+            )
             finish()
         }
     }
 
-    override fun onKeyDown(keyCode: Int, event: KeyEvent): Boolean {
-        if (keyCode == KeyEvent.KEYCODE_BACK) finishAffinity()
-        return super.onKeyDown(keyCode, event)
+    private fun initBackHandler() {
+        onBackPressedDispatcher.addCallback(this, object : OnBackPressedCallback(true) {
+            override fun handleOnBackPressed() {
+                finishAffinity()
+            }
+        })
     }
 
     override fun onResume() { super.onResume(); PlayMusic.getInstance().playBGM() }

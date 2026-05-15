@@ -7,23 +7,27 @@ import android.content.Intent
 import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
-import android.view.KeyEvent
 import android.view.MotionEvent
 import android.view.View
 import android.view.animation.LinearInterpolator
 import android.widget.ImageView
 import android.widget.ProgressBar
 import android.widget.TextView
+import androidx.activity.OnBackPressedCallback
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.content.ContextCompat
+import androidx.core.content.edit
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.lifecycleScope
 import com.bird.starryskysudoku.R
 import com.bird.starryskysudoku.data.database.DatabaseInitializer
 import com.bird.starryskysudoku.media.PlayMusic
+import com.bird.starryskysudoku.ui.common.startActivityWithTransition
 import com.bird.starryskysudoku.ui.dialog.MyDialog
 import com.bird.starryskysudoku.ui.dialog.MyDialogManager
 import com.bird.starryskysudoku.ui.map.MapActivity
 import kotlinx.coroutines.launch
+import java.util.Locale
 
 class PlayActivity : AppCompatActivity() {
 
@@ -101,6 +105,7 @@ class PlayActivity : AppCompatActivity() {
         initInsertButtons()
         initRevokeButton()
         initPauseButton()
+        initBackHandler()
     }
 
     private fun initBoard() {
@@ -154,17 +159,17 @@ class PlayActivity : AppCompatActivity() {
         viewModel.remainingSeconds.observe(this) { seconds ->
             val min = seconds / 60; val sec = seconds % 60
             timeProgressBar.progress = seconds
-            remainingMins.text = String.format("%02d", min)
-            remainingSecs.text = String.format("%02d", sec)
+            remainingMins.text = String.format(Locale.ROOT, "%02d", min)
+            remainingSecs.text = String.format(Locale.ROOT, "%02d", sec)
 
             if (seconds in 1..10) {
-                val red = getColor(R.color.red)
+                val red = ContextCompat.getColor(this, R.color.red)
                 remainingMins.setTextColor(red)
                 remainingSecs.setTextColor(red)
                 colon.setTextColor(red)
                 if (seconds <= 10) PlayMusic.getInstance().playTimesUp()
             } else {
-                val white = getColor(R.color.white)
+                val white = ContextCompat.getColor(this, R.color.white)
                 remainingMins.setTextColor(white)
                 remainingSecs.setTextColor(white)
                 colon.setTextColor(white)
@@ -442,8 +447,11 @@ class PlayActivity : AppCompatActivity() {
             MyDialogManager.getInstance().hide(pauseDialog)
             clearHistoryAndRun {
                 finish()
-                startActivity(Intent(this, PlayActivity::class.java).putExtra("num", num))
-                overridePendingTransition(R.anim.playpage_show, R.anim.playpage_hide)
+                startActivityWithTransition(
+                    Intent(this, PlayActivity::class.java).putExtra("num", num),
+                    R.anim.playpage_show,
+                    R.anim.playpage_hide
+                )
             }
         }
 
@@ -451,8 +459,11 @@ class PlayActivity : AppCompatActivity() {
             PlayMusic.getInstance().playButtonTap()
             MyDialogManager.getInstance().hide(pauseDialog)
             clearHistoryAndRun {
-                startActivity(Intent(this, MapActivity::class.java).putExtra("roll", num))
-                overridePendingTransition(R.anim.playpage_show, R.anim.playpage_hide)
+                startActivityWithTransition(
+                    Intent(this, MapActivity::class.java).putExtra("roll", num),
+                    R.anim.playpage_show,
+                    R.anim.playpage_hide
+                )
                 finish()
             }
         }
@@ -465,11 +476,11 @@ class PlayActivity : AppCompatActivity() {
             val prefs = getSharedPreferences("music_set", MODE_PRIVATE)
             if (musicOpened) {
                 musicBtn.setImageResource(R.drawable.ic_pop_music_off)
-                musicOpened = false; prefs.edit().putBoolean("music", false).apply()
+                musicOpened = false; prefs.edit { putBoolean("music", false) }
                 PlayMusic.getInstance().stopBGM()
             } else {
                 musicBtn.setImageResource(R.drawable.ic_pop_music_on)
-                musicOpened = true; prefs.edit().putBoolean("music", true).apply()
+                musicOpened = true; prefs.edit { putBoolean("music", true) }
                 PlayMusic.getInstance().playBGM()
             }
         }
@@ -481,10 +492,10 @@ class PlayActivity : AppCompatActivity() {
             val prefs = getSharedPreferences("music_set", MODE_PRIVATE)
             if (audioOpened) {
                 audioBtn.setImageResource(R.drawable.ic_pop_audio_off)
-                audioOpened = false; prefs.edit().putBoolean("audio", false).apply()
+                audioOpened = false; prefs.edit { putBoolean("audio", false) }
             } else {
                 audioBtn.setImageResource(R.drawable.ic_pop_audio_on)
-                audioOpened = true; prefs.edit().putBoolean("audio", true).apply()
+                audioOpened = true; prefs.edit { putBoolean("audio", true) }
                 PlayMusic.getInstance().playButtonTap()
             }
         }
@@ -496,8 +507,11 @@ class PlayActivity : AppCompatActivity() {
         loseDialog.findViewById<View>(R.id.lose_close).setOnClickListener {
             PlayMusic.getInstance().playButtonTap()
             clearHistoryAndRun {
-                startActivity(Intent(this, MapActivity::class.java).putExtra("lose", num))
-                overridePendingTransition(R.anim.playpage_show, R.anim.playpage_hide)
+                startActivityWithTransition(
+                    Intent(this, MapActivity::class.java).putExtra("lose", num),
+                    R.anim.playpage_show,
+                    R.anim.playpage_hide
+                )
                 finish()
             }
         }
@@ -506,8 +520,11 @@ class PlayActivity : AppCompatActivity() {
             PlayMusic.getInstance().playButtonTap()
             clearHistoryAndRun {
                 finish()
-                startActivity(Intent(this, PlayActivity::class.java).putExtra("num", num))
-                overridePendingTransition(R.anim.playpage_show, R.anim.playpage_hide)
+                startActivityWithTransition(
+                    Intent(this, PlayActivity::class.java).putExtra("num", num),
+                    R.anim.playpage_show,
+                    R.anim.playpage_hide
+                )
             }
         }
 
@@ -521,8 +538,7 @@ class PlayActivity : AppCompatActivity() {
                 val level = parseLevel(num)
                 val intent = Intent(this, MapActivity::class.java)
                 if (level < maxNum) intent.putExtra("next", (level + 1).toString())
-                startActivity(intent)
-                overridePendingTransition(R.anim.playpage_show, R.anim.playpage_hide)
+                startActivityWithTransition(intent, R.anim.playpage_show, R.anim.playpage_hide)
                 finish()
             }
         }
@@ -533,25 +549,32 @@ class PlayActivity : AppCompatActivity() {
                 finish()
                 val level = parseLevel(num)
                 if (level == maxNum) {
-                    startActivity(Intent(this, MapActivity::class.java))
+                    startActivityWithTransition(
+                        Intent(this, MapActivity::class.java),
+                        R.anim.playpage_show,
+                        R.anim.playpage_hide
+                    )
                 } else {
-                    startActivity(Intent(this, PlayActivity::class.java)
-                        .putExtra("num", (level + 1).toString()))
+                    startActivityWithTransition(
+                        Intent(this, PlayActivity::class.java)
+                            .putExtra("num", (level + 1).toString()),
+                        R.anim.playpage_show,
+                        R.anim.playpage_hide
+                    )
                 }
-                overridePendingTransition(R.anim.playpage_show, R.anim.playpage_hide)
             }
         }
     }
 
-    override fun onKeyDown(keyCode: Int, event: KeyEvent): Boolean {
-        if (keyCode == KeyEvent.KEYCODE_BACK) {
-            viewModel.pauseTimer()
-            PlayMusic.getInstance().stopTimesUp()
-            PlayMusic.getInstance().playDialogShow()
-            MyDialogManager.getInstance().show(pauseDialog)
-            return true
-        }
-        return super.onKeyDown(keyCode, event)
+    private fun initBackHandler() {
+        onBackPressedDispatcher.addCallback(this, object : OnBackPressedCallback(true) {
+            override fun handleOnBackPressed() {
+                viewModel.pauseTimer()
+                PlayMusic.getInstance().stopTimesUp()
+                PlayMusic.getInstance().playDialogShow()
+                MyDialogManager.getInstance().show(pauseDialog)
+            }
+        })
     }
 
     override fun onPause() {

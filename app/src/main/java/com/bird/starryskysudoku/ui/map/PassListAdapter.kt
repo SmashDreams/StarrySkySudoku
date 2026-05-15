@@ -3,7 +3,6 @@ package com.bird.starryskysudoku.ui.map
 import android.animation.ObjectAnimator
 import android.animation.ValueAnimator
 import android.content.Context
-import android.graphics.Color
 import android.os.Handler
 import android.os.Looper
 import android.view.LayoutInflater
@@ -11,12 +10,15 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.ImageView
 import android.widget.TextView
+import androidx.core.content.ContextCompat
+import androidx.core.graphics.toColorInt
 import androidx.recyclerview.widget.RecyclerView
 import com.bird.starryskysudoku.R
 import com.bird.starryskysudoku.data.entity.MapEntity
+import com.bird.starryskysudoku.media.PlayMusic
 import com.bird.starryskysudoku.ui.dialog.MyDialog
 import com.bird.starryskysudoku.ui.dialog.MyDialogManager
-import com.bird.starryskysudoku.media.PlayMusic
+import java.util.Locale
 
 class PassListAdapter(
     private val passList: List<Array<MapEntity?>>,
@@ -76,11 +78,10 @@ class PassListAdapter(
                 }, 200)
             }
 
-            val passNumText: TextView = dialog.findViewById(R.id.passcheck_num)
             dialog.findViewById<View>(R.id.passcheck_start).setOnClickListener {
                 PlayMusic.getInstance().playButtonTap()
                 Handler(Looper.getMainLooper()).postDelayed({
-                    openListener?.onOpen(passNumText.text.toString())
+                    openListener?.onOpen(passNumView.text.toString())
                     MyDialogManager.getInstance().hide(dialog)
                 }, 165)
             }
@@ -97,7 +98,7 @@ class PassListAdapter(
         for (i in 0 until 4) {
             val entity = item[i] ?: continue
             val idx = i
-            holder.nums[i].text = entity.passNum.toString()
+            holder.nums[i].text = String.format(Locale.getDefault(), "%d", entity.passNum)
             holder.status[i] = entity.status
             holder.stars[i].setOnClickListener(null)
             holder.stars[i].clearAnimation()
@@ -108,7 +109,7 @@ class PassListAdapter(
 
             when (entity.status) {
                 "已通关" -> {
-                    holder.nums[i].setTextColor(context.resources.getColor(R.color.map_pass))
+                    holder.nums[i].setTextColor(ContextCompat.getColor(context, R.color.map_pass))
                     holder.stars[i].setImageResource(R.drawable.ic_map_star_small_on)
 
                     if (entity.passNum == lightStar) {
@@ -156,7 +157,7 @@ class PassListAdapter(
                     }
                 }
                 else -> {
-                    holder.nums[i].setTextColor(Color.parseColor("#E7E8E9"))
+                    holder.nums[i].setTextColor("#E7E8E9".toColorInt())
                     holder.stars[i].setImageResource(R.drawable.ic_map_star_small_off)
                     holder.lines[i].setImageResource(R.drawable.ic_map_line_left_off)
                     if (i == 2 || i == 3) holder.lines[i].setImageResource(R.drawable.ic_map_line_right_off)
