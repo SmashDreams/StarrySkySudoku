@@ -15,3 +15,7 @@
 .externalNativeBuild
 .cxx
 local.properties
+
+# Local review and agent planning artifacts
+CODE_REVIEW_REPORT.md
+docs/
