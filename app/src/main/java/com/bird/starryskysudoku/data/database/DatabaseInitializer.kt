@@ -16,21 +16,9 @@ object DatabaseInitializer {
     }
 
     private fun buildDatabase(context: Context): AppDatabase {
-        copyDatabaseIfNeeded(context)
         return Room.databaseBuilder(context, AppDatabase::class.java, DB_NAME)
             .createFromAsset(DB_NAME)
+            .fallbackToDestructiveMigration()
             .build()
-    }
-
-    private fun copyDatabaseIfNeeded(context: Context) {
-        val dbFile = context.getDatabasePath(DB_NAME)
-        if (!dbFile.exists()) {
-            dbFile.parentFile?.mkdirs()
-            context.assets.open(DB_NAME).use { input ->
-                java.io.FileOutputStream(dbFile).use { output ->
-                    input.copyTo(output)
-                }
-            }
-        }
     }
 }
