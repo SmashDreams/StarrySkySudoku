@@ -1,5 +1,6 @@
 /build
 *.db
+!src/main/assets/sudoku.db
 release/
 Thumbs.db
 .~*
