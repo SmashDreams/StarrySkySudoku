@@ -79,7 +79,7 @@
         app:layout_constraintTop_toBottomOf="@id/textview78"
         app:layout_constraintHorizontal_bias="0.0" />
 
-    <com.bird.starryskysudoku.view.BroadView
+    <com.bird.starryskysudoku.ui.play.BroadView
         android:id="@+id/guide_broad"
         android:layout_width="375dp"
         android:layout_height="375dp"
