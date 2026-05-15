@@ -225,20 +225,14 @@ class BroadView : AppCompatImageView {
         if (mHasDone || mWrong) return false
         if (event.action == MotionEvent.ACTION_DOWN) {
             val x = event.x; val y = event.y
-            for (i in 0 until 9) {
-                for (j in 0 until 9) {
-                    if (x > (28 + (mWidth * j)) && x < (28 + (mWidth * (j + 1)))) {
-                        if (y > (28 + (mWidth * i)) && y < (28 + (mWidth * (i + 1)))) {
-                            mRow = i; mCol = j
-                            mBigBlock = getBigBlock(i, j)
-                            break
-                        }
-                    }
-                }
-            }
+            if (x < 28 || y < 28 || x >= 28 + mWidth * 9 || y >= 28 + mWidth * 9) return false
+            mCol = ((x - 28) / mWidth).toInt().coerceIn(0, 8)
+            mRow = ((y - 28) / mWidth).toInt().coerceIn(0, 8)
+            mBigBlock = getBigBlock(mRow, mCol)
             mListener?.onTouch(mRow, mCol, mBigBlock)
+            return true
         }
-        return super.onTouchEvent(event)
+        return true
     }
 
     fun getBigBlock(row: Int, col: Int): Int {

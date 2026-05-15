@@ -99,7 +99,12 @@ class PassListAdapter(
             val idx = i
             holder.nums[i].text = entity.passNum.toString()
             holder.status[i] = entity.status
+            holder.stars[i].setOnClickListener(null)
+            holder.stars[i].clearAnimation()
+            holder.lights[i].clearAnimation()
             holder.lights[i].visibility = View.GONE
+            holder.lights[i].alpha = 1f
+            holder.lines[i].visibility = View.VISIBLE
 
             when (entity.status) {
                 "已通关" -> {

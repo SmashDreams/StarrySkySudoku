@@ -9,6 +9,7 @@ import com.bird.starryskysudoku.data.entity.HistoryEntity
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import java.util.UUID
 
 class PlayViewModel(private val db: AppDatabase) : ViewModel() {
 
@@ -47,6 +48,8 @@ class PlayViewModel(private val db: AppDatabase) : ViewModel() {
     var currentX = 0
     var currentY = 0
     var currentBlock = 0
+    private var currentPassNum = 0
+    private var gameSession = UUID.randomUUID().toString()
 
     private var timerJob: Job? = null
     private val _remainingSeconds = MutableLiveData(600) // 10min
@@ -56,7 +59,11 @@ class PlayViewModel(private val db: AppDatabase) : ViewModel() {
 
     fun initBoard(levelNum: Int) {
         viewModelScope.launch {
+            currentPassNum = levelNum
+            gameSession = UUID.randomUUID().toString()
+            db.historyDao().deleteForPass(levelNum)
             val values = db.problemDao().getValuesForLevel(levelNum)
+            if (values.size != 81 || values.any { it !in 0..9 }) return@launch
             val board = Array(9) { row ->
                 Array(9) { col ->
                     val idx = row * 9 + col
@@ -121,14 +128,15 @@ class PlayViewModel(private val db: AppDatabase) : ViewModel() {
     }
 
     suspend fun insertNumber(x: Int, y: Int, number: String): Boolean {
+        if (!isValidCell(x, y) || !isValidNumber(number) || currentPassNum == 0) return false
         val b = _board.value ?: return false
         val cell = b[x][y]
         val historyDao = db.historyDao()
 
         // Insert same number = clear
         if (cell.value == number) {
-            historyDao.insert(HistoryEntity(row = x, col = y, type = TYPE_NUMBER, value = lastValue.toIntOrNull() ?: 0))
-            historyDao.trimToLimit()
+            historyDao.insert(newHistory(x, y, TYPE_NUMBER, lastValue.toIntOrNull() ?: 0))
+            historyDao.trimToLimit(currentPassNum, gameSession)
             lastValue = "0"; cell.value = "0"; cell.status = BE_SELECTED
             tapEmpty(x, y, cell.block)
             _board.value = b
@@ -153,8 +161,8 @@ class PlayViewModel(private val db: AppDatabase) : ViewModel() {
 
         if (cell.status == WRONG) { _isWrong.value = true; return false }
 
-        historyDao.insert(HistoryEntity(row = x, col = y, type = TYPE_NUMBER, value = lastValue.toIntOrNull() ?: 0))
-        historyDao.trimToLimit()
+        historyDao.insert(newHistory(x, y, TYPE_NUMBER, lastValue.toIntOrNull() ?: 0))
+        historyDao.trimToLimit(currentPassNum, gameSession)
         lastValue = cell.value
 
         if (wrongCount == 0) _hasWon.value = true
@@ -162,6 +170,7 @@ class PlayViewModel(private val db: AppDatabase) : ViewModel() {
     }
 
     fun revertWrongInput(x: Int, y: Int) {
+        if (!isValidCell(x, y)) return
         val b = _board.value ?: return
         b[x][y].value = lastValue; b[x][y].status = BE_SELECTED
         if (lastValue == "0") tapEmpty(x, y, b[x][y].block)
@@ -171,20 +180,24 @@ class PlayViewModel(private val db: AppDatabase) : ViewModel() {
     }
 
     suspend fun insertOrRemoveTag(x: Int, y: Int, number: String, tagData: Array<Array<TagData?>>): Boolean {
+        if (!isValidCell(x, y) || !isValidNumber(number) || currentPassNum == 0) return false
         val td = tagData[x][y] ?: return false
-        db.historyDao().insert(HistoryEntity(row = x, col = y, type = TYPE_TAG, value = number.toIntOrNull() ?: 0))
-        db.historyDao().trimToLimit()
+        db.historyDao().insert(newHistory(x, y, TYPE_TAG, number.toIntOrNull() ?: 0))
+        db.historyDao().trimToLimit(currentPassNum, gameSession)
         return if (!td.haveTag(number)) { td.setTag(number); true }
         else { td.deleteTag(number); false }
     }
 
     suspend fun undo(): HistoryEntity? {
-        val h = db.historyDao().getLatest() ?: return null
+        if (currentPassNum == 0) return null
+        val h = db.historyDao().getLatest(currentPassNum, gameSession) ?: return null
         db.historyDao().deleteById(h.id)
         return h
     }
 
-    suspend fun clearHistory() { db.historyDao().deleteAll() }
+    suspend fun clearHistory() {
+        if (currentPassNum != 0) db.historyDao().deleteForSession(currentPassNum, gameSession)
+    }
 
     suspend fun updatePassStatus(passNum: Int, nextPassNum: Int) {
         db.mapDao().updateStatus(passNum, "已通关")
@@ -195,4 +208,19 @@ class PlayViewModel(private val db: AppDatabase) : ViewModel() {
     }
 
     fun clearWinState() { _hasWon.value = false }
+
+    private fun isValidCell(x: Int, y: Int) = x in 0..8 && y in 0..8
+
+    private fun isValidNumber(number: String) = number.toIntOrNull() in 1..9
+
+    private fun newHistory(row: Int, col: Int, type: Int, value: Int): HistoryEntity {
+        return HistoryEntity(
+            row = row,
+            col = col,
+            type = type,
+            value = value,
+            passNum = currentPassNum,
+            gameSession = gameSession
+        )
+    }
 }

@@ -19,3 +19,10 @@
 # If you keep the line number information, uncomment this to
 # hide the original source file name.
 #-renamesourcefileattribute SourceFile
+
+# BroadView win animation uses ObjectAnimator string property names.
+-keepclassmembers class com.bird.starryskysudoku.ui.play.BroadView {
+    public void setTextSize(int);
+    public void setTextAlpha(int);
+    public void setLine(int);
+}

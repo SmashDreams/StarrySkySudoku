@@ -9,8 +9,6 @@ import android.os.Looper
 import androidx.appcompat.app.AppCompatActivity
 import androidx.constraintlayout.widget.ConstraintLayout
 import com.bird.starryskysudoku.R
-import com.bird.starryskysudoku.data.database.DatabaseInitializer
-import com.bird.starryskysudoku.media.PlayMusic
 import com.bird.starryskysudoku.ui.guide.GuideActivity
 import com.bird.starryskysudoku.ui.map.MapActivity
 import java.util.Locale
@@ -54,9 +52,6 @@ class SplashActivity : AppCompatActivity() {
             start()
         }
 
-        PlayMusic.getInstance().init(application)
-        DatabaseInitializer.getDatabase(this)
-
         Handler(Looper.getMainLooper()).postDelayed({
             if (isFirst) {
                 startActivity(Intent(this, GuideActivity::class.java))
@@ -67,8 +62,4 @@ class SplashActivity : AppCompatActivity() {
         }, 2000)
     }
 
-    override fun onDestroy() {
-        super.onDestroy()
-        PlayMusic.getInstance().release()
-    }
 }

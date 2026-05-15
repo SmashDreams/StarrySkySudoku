@@ -26,6 +26,10 @@ import com.bird.starryskysudoku.ui.splash.SplashActivity
 
 class MapActivity : AppCompatActivity() {
 
+    companion object {
+        private const val MAX_LEVEL = 40
+    }
+
     private lateinit var settings: ImageView
     private lateinit var bigShootingStar: ImageView
     private lateinit var smallShootingStar: ImageView
@@ -42,15 +46,13 @@ class MapActivity : AppCompatActivity() {
     private var delayTime = 0
     private var lightStars = 0
     private var backPressCount = 0
+    private val handler = Handler(Looper.getMainLooper())
 
     private lateinit var settingsDialog: MyDialog
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_mappage)
-
-        nextNum = intent.getStringExtra("next")
-        loseNum = intent.getStringExtra("lose")
 
         val db = DatabaseInitializer.getDatabase(this)
         viewModel = ViewModelProvider(this, object : ViewModelProvider.Factory {
@@ -71,32 +73,40 @@ class MapActivity : AppCompatActivity() {
         backgroundStars = findViewById(R.id.map_bgstar)
         settings = findViewById(R.id.settings)
 
-        initMapData()
         initList()
         initSettingDialog()
         initShootingStar()
+        initMapData()
         PlayMusic.getInstance().playBGM()
     }
 
     private fun initMapData() {
         viewModel.loadMapData()
+        consumeNavigationExtras()
+    }
 
-        val rollTo = intent.getStringExtra("roll")
-        if (rollTo != null) recyclerView.scrollToPosition(getRollingPosition(rollTo))
+    private fun consumeNavigationExtras() {
+        intent.getStringExtra("roll")?.let { recyclerView.scrollToPosition(getRollingPosition(it)) }
+        nextNum = intent.getStringExtra("next")?.takeIf { parseLevel(it) != null }
+        loseNum = intent.getStringExtra("lose")?.takeIf { parseLevel(it) != null }
+        intent.removeExtra("roll")
+        intent.removeExtra("next")
+        intent.removeExtra("lose")
 
-        if (nextNum != null) { delayTime = 1050; handleCheckNum(nextNum!!) }
-        if (loseNum != null) {
+        nextNum?.let { delayTime = 1050; handleCheckNum(it) }
+        loseNum?.let {
             delayTime = 500
-            handleCheckNum(loseNum!!)
-            if (nextNum == null) recyclerView.scrollToPosition(getRollingPosition(loseNum!!))
+            handleCheckNum(it)
+            if (nextNum == null) recyclerView.scrollToPosition(getRollingPosition(it))
         }
     }
 
     private fun handleCheckNum(num: String) {
-        viewModel.getPassStatus(num.toInt()) { status ->
+        val passNum = parseLevel(num) ?: return
+        viewModel.getPassStatus(passNum) { status ->
             when (status) {
-                "待通关" -> openPassCheck(num)
-                "已通关" -> openRetryCheck(num)
+                "待通关" -> openPassCheck(passNum.toString())
+                "已通关" -> openRetryCheck(passNum.toString())
             }
         }
     }
@@ -104,7 +114,7 @@ class MapActivity : AppCompatActivity() {
     private fun openPassCheck(checkNum: String) {
         if (nextNum != null) {
             lightStars = nextNum!!.toInt() - 1
-            Handler(Looper.getMainLooper()).postDelayed({
+            handler.postDelayed({
                 if (nextNum!!.toInt() % 4 == 0) {
                     recyclerView.smoothScrollBy(0, -400)
                     delayTime = 1550
@@ -119,14 +129,14 @@ class MapActivity : AppCompatActivity() {
 
             findViewById<View>(R.id.passcheck_close).setOnClickListener {
                 PlayMusic.getInstance().playButtonTap()
-                Handler(Looper.getMainLooper()).postDelayed({
+                handler.postDelayed({
                     MyDialogManager.getInstance().hide(this)
                 }, 200)
             }
 
             findViewById<View>(R.id.passcheck_start).setOnClickListener {
                 PlayMusic.getInstance().playButtonTap()
-                Handler(Looper.getMainLooper()).postDelayed({
+                handler.postDelayed({
                     startActivity(Intent(this@MapActivity, PlayActivity::class.java)
                         .putExtra("num", checkNum))
                     overridePendingTransition(R.anim.playpage_show, R.anim.playpage_hide)
@@ -136,7 +146,7 @@ class MapActivity : AppCompatActivity() {
             }
         }
 
-        Handler(Looper.getMainLooper()).postDelayed({
+        handler.postDelayed({
             MyDialogManager.getInstance().show(dialog)
         }, delayTime.toLong())
     }
@@ -152,14 +162,14 @@ class MapActivity : AppCompatActivity() {
 
             findViewById<View>(R.id.passcheck_close).setOnClickListener {
                 PlayMusic.getInstance().playButtonTap()
-                Handler(Looper.getMainLooper()).postDelayed({
+                handler.postDelayed({
                     MyDialogManager.getInstance().hide(this)
                 }, 200)
             }
 
             findViewById<View>(R.id.passcheck_start).setOnClickListener {
                 PlayMusic.getInstance().playButtonTap()
-                Handler(Looper.getMainLooper()).postDelayed({
+                handler.postDelayed({
                     intent.removeExtra("next")
                     intent.removeExtra("lose")
                     startActivity(Intent(this@MapActivity, PlayActivity::class.java)
@@ -170,7 +180,7 @@ class MapActivity : AppCompatActivity() {
             }
         }
 
-        Handler(Looper.getMainLooper()).postDelayed({
+        handler.postDelayed({
             MyDialogManager.getInstance().show(dialog)
         }, delayTime.toLong())
     }
@@ -285,7 +295,7 @@ class MapActivity : AppCompatActivity() {
             else {
                 Toast.makeText(this, R.string.pressagain, Toast.LENGTH_SHORT).show()
                 backPressCount++
-                Handler(Looper.getMainLooper()).postDelayed({ backPressCount = 0 }, 1500)
+                handler.postDelayed({ backPressCount = 0 }, 1500)
                 return true
             }
         }
@@ -293,7 +303,7 @@ class MapActivity : AppCompatActivity() {
     }
 
     private fun getRollingPosition(num: String): Int {
-        val position = num.toIntOrNull() ?: return 1
+        val position = parseLevel(num) ?: return 1
         val n = (position - 1) / 4
         return if (n in 0..8) 10 - n else 1
     }
@@ -304,17 +314,16 @@ class MapActivity : AppCompatActivity() {
         super.onResume()
         PlayMusic.getInstance().playBGM()
         viewModel.loadMapData()
-        intent.getStringExtra("roll")?.let { recyclerView.scrollToPosition(getRollingPosition(it)) }
-        nextNum = intent.getStringExtra("next")
-        loseNum = intent.getStringExtra("lose")
-        intent.removeExtra("next")
-        intent.removeExtra("lose")
-        nextNum?.let { delayTime = 1050; handleCheckNum(it) }
-        loseNum?.let { delayTime = 500; handleCheckNum(it) }
+        consumeNavigationExtras()
     }
 
     override fun onDestroy() {
         super.onDestroy()
+        handler.removeCallbacksAndMessages(null)
         MyDialogManager.getInstance().hide(settingsDialog)
+    }
+
+    private fun parseLevel(raw: String?): Int? {
+        return raw?.toIntOrNull()?.takeIf { it in 1..MAX_LEVEL }
     }
 }

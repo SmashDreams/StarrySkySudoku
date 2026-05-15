@@ -4,7 +4,6 @@ import android.animation.AnimatorSet
 import android.animation.ObjectAnimator
 import android.annotation.SuppressLint
 import android.content.Intent
-import android.graphics.Color
 import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
@@ -24,10 +23,13 @@ import com.bird.starryskysudoku.media.PlayMusic
 import com.bird.starryskysudoku.ui.dialog.MyDialog
 import com.bird.starryskysudoku.ui.dialog.MyDialogManager
 import com.bird.starryskysudoku.ui.map.MapActivity
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
 class PlayActivity : AppCompatActivity() {
+
+    companion object {
+        private const val MAX_LEVEL = 40
+    }
 
     private val handler = Handler(Looper.getMainLooper())
     private lateinit var viewModel: PlayViewModel
@@ -60,8 +62,8 @@ class PlayActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_play)
 
-        num = intent.getStringExtra("num") ?: "1"
-        val maxNum = 40
+        num = parseLevel(intent.getStringExtra("num")).toString()
+        val maxNum = MAX_LEVEL
 
         val db = DatabaseInitializer.getDatabase(this)
         viewModel = ViewModelProvider(this, object : ViewModelProvider.Factory {
@@ -102,7 +104,7 @@ class PlayActivity : AppCompatActivity() {
     }
 
     private fun initBoard() {
-        viewModel.initBoard(num.toInt())
+        viewModel.initBoard(parseLevel(num))
         viewModel.board.observe(this) { board ->
             // Initialize tag data for empty cells
             for (i in 0 until 9) {
@@ -258,11 +260,14 @@ class PlayActivity : AppCompatActivity() {
             if (viewModel.hasWon.value == true) return@setOnClickListener
             val cell = viewModel.board.value?.get(viewModel.currentX)?.get(viewModel.currentY) ?: return@setOnClickListener
             if (cell.type == PlayViewModel.PROBLEM) { PlayMusic.getInstance().playInputWrong(); return@setOnClickListener }
+            if (viewModel.currentBlock == 0 || cell.value != "0") {
+                PlayMusic.getInstance().playInputWrong()
+                return@setOnClickListener
+            }
             PlayMusic.getInstance().playButtonTap()
             if (!viewModel.tagMode) {
                 tag.setImageResource(R.drawable.ic_play_numberbox_markon)
                 viewModel.tagMode = true
-                if (cell.value != "0") return@setOnClickListener
                 val td = tagData[viewModel.currentX][viewModel.currentY]
                 for (i in 0 until 9) {
                     numbers[i]?.alpha = if (td != null && td.haveTag((i + 1).toString())) 0.55f else 1f
@@ -428,24 +433,28 @@ class PlayActivity : AppCompatActivity() {
         pauseDialog.findViewById<View>(R.id.pause_close).setOnClickListener {
             PlayMusic.getInstance().playButtonTap()
             MyDialogManager.getInstance().hide(pauseDialog)
+            isPaused = false
             viewModel.startTimer()
         }
 
         pauseDialog.findViewById<View>(R.id.pause_restart).setOnClickListener {
             PlayMusic.getInstance().playButtonTap()
             MyDialogManager.getInstance().hide(pauseDialog)
-            finish()
-            startActivity(Intent(this, PlayActivity::class.java).putExtra("num", num))
-            overridePendingTransition(R.anim.playpage_show, R.anim.playpage_hide)
+            clearHistoryAndRun {
+                finish()
+                startActivity(Intent(this, PlayActivity::class.java).putExtra("num", num))
+                overridePendingTransition(R.anim.playpage_show, R.anim.playpage_hide)
+            }
         }
 
         pauseDialog.findViewById<View>(R.id.pause_back).setOnClickListener {
             PlayMusic.getInstance().playButtonTap()
             MyDialogManager.getInstance().hide(pauseDialog)
-            lifecycleScope.launch { viewModel.clearHistory() }
-            startActivity(Intent(this, MapActivity::class.java).putExtra("roll", num))
-            overridePendingTransition(R.anim.playpage_show, R.anim.playpage_hide)
-            finish()
+            clearHistoryAndRun {
+                startActivity(Intent(this, MapActivity::class.java).putExtra("roll", num))
+                overridePendingTransition(R.anim.playpage_show, R.anim.playpage_hide)
+                finish()
+            }
         }
 
         // Music toggle in pause dialog
@@ -486,16 +495,20 @@ class PlayActivity : AppCompatActivity() {
 
         loseDialog.findViewById<View>(R.id.lose_close).setOnClickListener {
             PlayMusic.getInstance().playButtonTap()
-            startActivity(Intent(this, MapActivity::class.java).putExtra("lose", num))
-            overridePendingTransition(R.anim.playpage_show, R.anim.playpage_hide)
-            finish()
+            clearHistoryAndRun {
+                startActivity(Intent(this, MapActivity::class.java).putExtra("lose", num))
+                overridePendingTransition(R.anim.playpage_show, R.anim.playpage_hide)
+                finish()
+            }
         }
 
         loseDialog.findViewById<View>(R.id.lose_retry).setOnClickListener {
             PlayMusic.getInstance().playButtonTap()
-            finish()
-            startActivity(Intent(this, PlayActivity::class.java).putExtra("num", num))
-            overridePendingTransition(R.anim.playpage_show, R.anim.playpage_hide)
+            clearHistoryAndRun {
+                finish()
+                startActivity(Intent(this, PlayActivity::class.java).putExtra("num", num))
+                overridePendingTransition(R.anim.playpage_show, R.anim.playpage_hide)
+            }
         }
 
         // Win dialog
@@ -504,22 +517,29 @@ class PlayActivity : AppCompatActivity() {
 
         winDialog.findViewById<View>(R.id.win_close).setOnClickListener {
             PlayMusic.getInstance().playButtonTap()
-            startActivity(Intent(this, MapActivity::class.java)
-                .putExtra("next", (num.toInt() + 1).toString()))
-            overridePendingTransition(R.anim.playpage_show, R.anim.playpage_hide)
-            finish()
+            clearHistoryAndRun {
+                val level = parseLevel(num)
+                val intent = Intent(this, MapActivity::class.java)
+                if (level < maxNum) intent.putExtra("next", (level + 1).toString())
+                startActivity(intent)
+                overridePendingTransition(R.anim.playpage_show, R.anim.playpage_hide)
+                finish()
+            }
         }
 
         winDialog.findViewById<View>(R.id.win_next).setOnClickListener {
             PlayMusic.getInstance().playButtonTap()
-            finish()
-            if (num.toInt() == maxNum) {
-                startActivity(Intent(this, MapActivity::class.java))
-            } else {
-                startActivity(Intent(this, PlayActivity::class.java)
-                    .putExtra("num", (num.toInt() + 1).toString()))
+            clearHistoryAndRun {
+                finish()
+                val level = parseLevel(num)
+                if (level == maxNum) {
+                    startActivity(Intent(this, MapActivity::class.java))
+                } else {
+                    startActivity(Intent(this, PlayActivity::class.java)
+                        .putExtra("num", (level + 1).toString()))
+                }
+                overridePendingTransition(R.anim.playpage_show, R.anim.playpage_hide)
             }
-            overridePendingTransition(R.anim.playpage_show, R.anim.playpage_hide)
         }
     }
 
@@ -559,9 +579,21 @@ class PlayActivity : AppCompatActivity() {
 
     override fun onDestroy() {
         super.onDestroy()
+        handler.removeCallbacksAndMessages(null)
         viewModel.pauseTimer()
         MyDialogManager.getInstance().hide(pauseDialog)
         MyDialogManager.getInstance().hide(winDialog)
         MyDialogManager.getInstance().hide(loseDialog)
+    }
+
+    private fun parseLevel(raw: String?): Int {
+        return raw?.toIntOrNull()?.takeIf { it in 1..MAX_LEVEL } ?: 1
+    }
+
+    private fun clearHistoryAndRun(action: () -> Unit) {
+        lifecycleScope.launch {
+            viewModel.clearHistory()
+            action()
+        }
     }
 }
