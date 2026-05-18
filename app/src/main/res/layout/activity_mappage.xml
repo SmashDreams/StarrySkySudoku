@@ -5,7 +5,7 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@drawable/bg">
+    android:background="@drawable/background_night_sky">
 
     <ImageView
         android:id="@+id/map_bgstar"
@@ -15,7 +15,7 @@
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent"
-        app:srcCompat="@drawable/bg_star"/>
+        app:srcCompat="@drawable/map_starry_overlay"/>
 
     <ImageView
         android:id="@+id/sstar_small"
@@ -24,7 +24,7 @@
         android:layout_marginTop="120dp"
         app:layout_constraintStart_toEndOf="parent"
         app:layout_constraintTop_toTopOf="parent"
-        app:srcCompat="@drawable/ic_map_flash_small"/>
+        app:srcCompat="@drawable/shooting_star_small"/>
 
     <ImageView
         android:id="@+id/sstar_big"
@@ -33,7 +33,7 @@
         android:layout_marginTop="80dp"
         app:layout_constraintStart_toEndOf="parent"
         app:layout_constraintTop_toTopOf="@id/map_bgstar"
-        app:srcCompat="@drawable/ic_map_flash_big"/>
+        app:srcCompat="@drawable/shooting_star_large"/>
 
     <LinearLayout
         android:layout_width="match_parent"
@@ -52,7 +52,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginBottom="-75dp"
-            app:srcCompat="@drawable/ic_map_cover_down"/>
+            app:srcCompat="@drawable/map_bottom_fade"/>
     </LinearLayout>
 
 
@@ -60,7 +60,7 @@
         android:id="@+id/textview3"
         android:layout_width="match_parent"
         android:layout_height="100dp"
-        android:background="@drawable/ic_map_cover_top"
+        android:background="@drawable/map_top_fade"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent"/>
@@ -75,6 +75,6 @@
         app:layout_constraintVertical_bias="0.055"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent"
-        app:srcCompat="@drawable/ic_map_settings"/>
+        app:srcCompat="@drawable/icon_settings"/>
 
 </androidx.constraintlayout.widget.ConstraintLayout>

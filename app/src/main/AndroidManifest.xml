@@ -23,8 +23,9 @@
         <activity
             android:name=".ui.guide.GuideActivity" />
         <activity
-            android:name=".ui.splash.SplashActivity"
-            android:exported="true">
+            android:name=".ui.splash.AppEntryActivity"
+            android:exported="true"
+            android:theme="@style/Theme.StarrySkySudoku.Starting">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />

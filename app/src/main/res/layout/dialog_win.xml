@@ -44,7 +44,7 @@
                 android:layout_width="30dp"
                 android:layout_height="30dp"
                 android:layout_gravity="center"
-                app:srcCompat="@drawable/ic_pop_close"/>
+                app:srcCompat="@drawable/icon_close"/>
 
             <TextView
                 android:id="@+id/textview55"
@@ -68,7 +68,7 @@
                 android:layout_width="70dp"
                 android:layout_height="70dp"
                 android:layout_gravity="center"
-                app:srcCompat="@drawable/ic_pop_star_bg"/>
+                app:srcCompat="@drawable/star_empty"/>
 
             <TextView
                 android:id="@+id/textview68"
@@ -81,7 +81,7 @@
             android:id="@+id/win_next"
             android:layout_width="match_parent"
             android:layout_height="92dp"
-            android:background="@drawable/ic_pop_btn_black"
+            android:background="@drawable/dialog_button_dark"
             android:gravity="center"
             android:text="@string/next"
             android:textColor="#FFFFFF"
@@ -103,5 +103,5 @@
         app:layout_constraintEnd_toEndOf="@id/win_body"
         app:layout_constraintStart_toStartOf="@id/win_body"
         app:layout_constraintTop_toTopOf="@id/win_body"
-        app:srcCompat="@drawable/ic_pop_star"/>
+        app:srcCompat="@drawable/star_earned"/>
 </androidx.constraintlayout.widget.ConstraintLayout>

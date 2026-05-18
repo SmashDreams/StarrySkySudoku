@@ -11,7 +11,7 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import java.util.UUID
 
-class PlayViewModel(private val db: AppDatabase) : ViewModel() {
+class PlayViewModel(private val mDb: AppDatabase) : ViewModel() {
 
     companion object {
         const val SELECT_NONE = 0
@@ -25,189 +25,189 @@ class PlayViewModel(private val db: AppDatabase) : ViewModel() {
     }
 
     data class CellData(
-        var row: Int,
-        var col: Int,
-        var value: String,
-        var block: Int,
-        var status: Int = SELECT_NONE,
-        var type: Int = EMPTY
+        var mRow: Int,
+        var mCol: Int,
+        var mValue: String,
+        var mBlock: Int,
+        var mStatus: Int = SELECT_NONE,
+        var mType: Int = EMPTY
     )
 
-    private val _board = MutableLiveData<Array<Array<CellData>>>()
-    val board: LiveData<Array<Array<CellData>>> = _board
+    private val mBoardSource = MutableLiveData<Array<Array<CellData>>>()
+    val mBoard: LiveData<Array<Array<CellData>>> = mBoardSource
 
-    private val _hasWon = MutableLiveData(false)
-    val hasWon: LiveData<Boolean> = _hasWon
+    private val mHasWonSource = MutableLiveData(false)
+    val mHasWon: LiveData<Boolean> = mHasWonSource
 
-    private val _isWrong = MutableLiveData(false)
-    val isWrong: LiveData<Boolean> = _isWrong
+    private val mIsWrongSource = MutableLiveData(false)
+    val mIsWrong: LiveData<Boolean> = mIsWrongSource
 
-    var tagMode = false
-    var canInsert = true
-    var lastValue = "0"
-    var currentX = 0
-    var currentY = 0
-    var currentBlock = 0
-    private var currentPassNum = 0
-    private var gameSession = UUID.randomUUID().toString()
+    var mTagMode = false
+    var mCanInsert = true
+    var mLastValue = "0"
+    var mCurrentX = 0
+    var mCurrentY = 0
+    var mCurrentBlock = 0
+    private var mCurrentPassNum = 0
+    private var mGameSession = UUID.randomUUID().toString()
 
-    private var timerJob: Job? = null
-    private val _remainingSeconds = MutableLiveData(600) // 10min
-    val remainingSeconds: LiveData<Int> = _remainingSeconds
-    private val _timerFinished = MutableLiveData(false)
-    val timerFinished: LiveData<Boolean> = _timerFinished
+    private var mTimerJob: Job? = null
+    private val mRemainingSecondsSource = MutableLiveData(600) // 10min
+    val mRemainingSeconds: LiveData<Int> = mRemainingSecondsSource
+    private val mTimerFinishedSource = MutableLiveData(false)
+    val mTimerFinished: LiveData<Boolean> = mTimerFinishedSource
 
     fun initBoard(levelNum: Int) {
         viewModelScope.launch {
-            currentPassNum = levelNum
-            gameSession = UUID.randomUUID().toString()
-            db.historyDao().deleteForPass(levelNum)
-            val values = db.problemDao().getValuesForLevel(levelNum)
+            mCurrentPassNum = levelNum
+            mGameSession = UUID.randomUUID().toString()
+            mDb.historyDao().deleteForPass(levelNum)
+            val values = mDb.problemDao().getValuesForLevel(levelNum)
             if (values.size != 81 || values.any { it !in 0..9 }) return@launch
             val board = Array(9) { row ->
                 Array(9) { col ->
                     val idx = row * 9 + col
                     val value = values.getOrElse(idx) { 0 }
                     CellData(
-                        row = row, col = col,
-                        value = value.toString(),
-                        block = (row / 3) * 3 + (col / 3) + 1,
-                        type = if (value == 0) EMPTY else PROBLEM
+                        mRow = row, mCol = col,
+                        mValue = value.toString(),
+                        mBlock = (row / 3) * 3 + (col / 3) + 1,
+                        mType = if (value == 0) EMPTY else PROBLEM
                     )
                 }
             }
-            _board.value = board
+            mBoardSource.value = board
         }
     }
 
     fun startTimer(onTick: ((Int) -> Unit)? = null) {
-        timerJob?.cancel()
-        timerJob = viewModelScope.launch {
-            while (_remainingSeconds.value!! > 0) {
+        mTimerJob?.cancel()
+        mTimerJob = viewModelScope.launch {
+            while (mRemainingSecondsSource.value!! > 0) {
                 delay(1000)
-                val current = _remainingSeconds.value!! - 1
-                _remainingSeconds.value = current
+                val current = mRemainingSecondsSource.value!! - 1
+                mRemainingSecondsSource.value = current
                 onTick?.invoke(current)
             }
-            _timerFinished.value = true
+            mTimerFinishedSource.value = true
         }
     }
 
-    fun pauseTimer() { timerJob?.cancel() }
+    fun pauseTimer() { mTimerJob?.cancel() }
 
     fun setCurrentPosition(x: Int, y: Int, block: Int) {
-        currentX = x; currentY = y; currentBlock = block
+        mCurrentX = x; mCurrentY = y; mCurrentBlock = block
     }
 
     fun selectCell(x: Int, y: Int) {
-        val b = _board.value ?: return
-        val number = b[x][y].value
-        lastValue = number
-        b[x][y].status = BE_SELECTED
-        if (number == "0") tapEmpty(x, y, b[x][y].block)
+        val b = mBoardSource.value ?: return
+        val number = b[x][y].mValue
+        mLastValue = number
+        b[x][y].mStatus = BE_SELECTED
+        if (number == "0") tapEmpty(x, y, b[x][y].mBlock)
         else tapNoneEmpty(x, y, number)
-        _board.value = b
+        mBoardSource.value = b
     }
 
     private fun tapNoneEmpty(currentX: Int, currentY: Int, number: String) {
-        val b = _board.value ?: return
+        val b = mBoardSource.value ?: return
         for (i in 0 until 9)
             for (j in 0 until 9)
                 if (i != currentX || j != currentY)
-                    b[i][j].status = if (b[i][j].value == number) SELECT_ON else SELECT_NONE
-        _board.value = b
+                    b[i][j].mStatus = if (b[i][j].mValue == number) SELECT_ON else SELECT_NONE
+        mBoardSource.value = b
     }
 
     private fun tapEmpty(currentX: Int, currentY: Int, block: Int) {
-        val b = _board.value ?: return
+        val b = mBoardSource.value ?: return
         for (i in 0 until 9)
             for (j in 0 until 9)
                 if (i != currentX || j != currentY)
-                    b[i][j].status = if (b[i][j].row == currentX || b[i][j].col == currentY || b[i][j].block == block) SELECT_ON else SELECT_NONE
-        _board.value = b
+                    b[i][j].mStatus = if (b[i][j].mRow == currentX || b[i][j].mCol == currentY || b[i][j].mBlock == block) SELECT_ON else SELECT_NONE
+        mBoardSource.value = b
     }
 
     suspend fun insertNumber(x: Int, y: Int, number: String): Boolean {
-        if (!isValidCell(x, y) || !isValidNumber(number) || currentPassNum == 0) return false
-        val b = _board.value ?: return false
+        if (!isValidCell(x, y) || !isValidNumber(number) || mCurrentPassNum == 0) return false
+        val b = mBoardSource.value ?: return false
         val cell = b[x][y]
-        val historyDao = db.historyDao()
+        val historyDao = mDb.historyDao()
 
         // Insert same number = clear
-        if (cell.value == number) {
-            historyDao.insert(newHistory(x, y, TYPE_NUMBER, lastValue.toIntOrNull() ?: 0))
-            historyDao.trimToLimit(currentPassNum, gameSession)
-            lastValue = "0"; cell.value = "0"; cell.status = BE_SELECTED
-            tapEmpty(x, y, cell.block)
-            _board.value = b
+        if (cell.mValue == number) {
+            historyDao.insert(newHistory(x, y, TYPE_NUMBER, mLastValue.toIntOrNull() ?: 0))
+            historyDao.trimToLimit(mCurrentPassNum, mGameSession)
+            mLastValue = "0"; cell.mValue = "0"; cell.mStatus = BE_SELECTED
+            tapEmpty(x, y, cell.mBlock)
+            mBoardSource.value = b
             return false
         }
 
-        cell.value = number; cell.status = SELECT_ON
+        cell.mValue = number; cell.mStatus = SELECT_ON
         var wrongCount = 0
         for (i in 0 until 9) {
             for (j in 0 until 9) {
                 if (i != x || j != y) {
-                    if (b[i][j].value == number && (b[i][j].row == x || b[i][j].col == y || b[i][j].block == cell.block)) {
-                        b[i][j].status = WRONG; cell.status = WRONG
-                    } else if (b[i][j].value == number) {
-                        b[i][j].status = SELECT_ON
-                    } else b[i][j].status = SELECT_NONE
+                    if (b[i][j].mValue == number && (b[i][j].mRow == x || b[i][j].mCol == y || b[i][j].mBlock == cell.mBlock)) {
+                        b[i][j].mStatus = WRONG; cell.mStatus = WRONG
+                    } else if (b[i][j].mValue == number) {
+                        b[i][j].mStatus = SELECT_ON
+                    } else b[i][j].mStatus = SELECT_NONE
                 }
-                if (b[i][j].value == "0" || b[i][j].status == WRONG) wrongCount++
+                if (b[i][j].mValue == "0" || b[i][j].mStatus == WRONG) wrongCount++
             }
         }
-        _board.value = b
+        mBoardSource.value = b
 
-        if (cell.status == WRONG) { _isWrong.value = true; return false }
+        if (cell.mStatus == WRONG) { mIsWrongSource.value = true; return false }
 
-        historyDao.insert(newHistory(x, y, TYPE_NUMBER, lastValue.toIntOrNull() ?: 0))
-        historyDao.trimToLimit(currentPassNum, gameSession)
-        lastValue = cell.value
+        historyDao.insert(newHistory(x, y, TYPE_NUMBER, mLastValue.toIntOrNull() ?: 0))
+        historyDao.trimToLimit(mCurrentPassNum, mGameSession)
+        mLastValue = cell.mValue
 
-        if (wrongCount == 0) _hasWon.value = true
+        if (wrongCount == 0) mHasWonSource.value = true
         return true
     }
 
     fun revertWrongInput(x: Int, y: Int) {
         if (!isValidCell(x, y)) return
-        val b = _board.value ?: return
-        b[x][y].value = lastValue; b[x][y].status = BE_SELECTED
-        if (lastValue == "0") tapEmpty(x, y, b[x][y].block)
-        else tapNoneEmpty(x, y, lastValue)
-        _isWrong.value = false
-        _board.value = b
+        val b = mBoardSource.value ?: return
+        b[x][y].mValue = mLastValue; b[x][y].mStatus = BE_SELECTED
+        if (mLastValue == "0") tapEmpty(x, y, b[x][y].mBlock)
+        else tapNoneEmpty(x, y, mLastValue)
+        mIsWrongSource.value = false
+        mBoardSource.value = b
     }
 
     suspend fun insertOrRemoveTag(x: Int, y: Int, number: String, tagData: Array<Array<TagData?>>): Boolean {
-        if (!isValidCell(x, y) || !isValidNumber(number) || currentPassNum == 0) return false
+        if (!isValidCell(x, y) || !isValidNumber(number) || mCurrentPassNum == 0) return false
         val td = tagData[x][y] ?: return false
-        db.historyDao().insert(newHistory(x, y, TYPE_TAG, number.toIntOrNull() ?: 0))
-        db.historyDao().trimToLimit(currentPassNum, gameSession)
+        mDb.historyDao().insert(newHistory(x, y, TYPE_TAG, number.toIntOrNull() ?: 0))
+        mDb.historyDao().trimToLimit(mCurrentPassNum, mGameSession)
         return if (!td.haveTag(number)) { td.setTag(number); true }
         else { td.deleteTag(number); false }
     }
 
     suspend fun undo(): HistoryEntity? {
-        if (currentPassNum == 0) return null
-        val h = db.historyDao().getLatest(currentPassNum, gameSession) ?: return null
-        db.historyDao().deleteById(h.id)
+        if (mCurrentPassNum == 0) return null
+        val h = mDb.historyDao().getLatest(mCurrentPassNum, mGameSession) ?: return null
+        mDb.historyDao().deleteById(h.mId)
         return h
     }
 
     suspend fun clearHistory() {
-        if (currentPassNum != 0) db.historyDao().deleteForSession(currentPassNum, gameSession)
+        if (mCurrentPassNum != 0) mDb.historyDao().deleteForSession(mCurrentPassNum, mGameSession)
     }
 
     suspend fun updatePassStatus(passNum: Int, nextPassNum: Int) {
-        db.mapDao().updateStatus(passNum, "已通关")
-        val map = db.mapDao().getMapByNum(passNum)
-        val newTimes = ((map?.playTime?.toIntOrNull() ?: 0) + 1).toString()
-        db.mapDao().updatePlayTime(passNum, newTimes)
-        if (passNum < 40) db.mapDao().updateStatus(nextPassNum, "待通关")
+        mDb.mapDao().updateStatus(passNum, "已通关")
+        val map = mDb.mapDao().getMapByNum(passNum)
+        val newTimes = ((map?.mPlayTime?.toIntOrNull() ?: 0) + 1).toString()
+        mDb.mapDao().updatePlayTime(passNum, newTimes)
+        if (passNum < 40) mDb.mapDao().updateStatus(nextPassNum, "待通关")
     }
 
-    fun clearWinState() { _hasWon.value = false }
+    fun clearWinState() { mHasWonSource.value = false }
 
     private fun isValidCell(x: Int, y: Int) = x in 0..8 && y in 0..8
 
@@ -215,12 +215,12 @@ class PlayViewModel(private val db: AppDatabase) : ViewModel() {
 
     private fun newHistory(row: Int, col: Int, type: Int, value: Int): HistoryEntity {
         return HistoryEntity(
-            row = row,
-            col = col,
-            type = type,
-            value = value,
-            passNum = currentPassNum,
-            gameSession = gameSession
+            mRow = row,
+            mCol = col,
+            mType = type,
+            mValue = value,
+            mPassNum = mCurrentPassNum,
+            mGameSession = mGameSession
         )
     }
 }

@@ -59,13 +59,13 @@ class BroadView : AppCompatImageView {
     fun setLine(line: Int) { mLine = line }
 
     private fun initView() {
-        mProblemNormal = BitmapFactory.decodeResource(resources, R.drawable.ic_play_grid_filled_off)
-        mProblemLight = BitmapFactory.decodeResource(resources, R.drawable.ic_play_grid_filled_on)
-        mProblemWrong = BitmapFactory.decodeResource(resources, R.drawable.ic_play_grid_filled_clash)
-        mEmptyNormal = BitmapFactory.decodeResource(resources, R.drawable.ic_play_grid_none_off)
-        mEmptyLight = BitmapFactory.decodeResource(resources, R.drawable.ic_play_grid_none_on)
-        mEmptyWrong = BitmapFactory.decodeResource(resources, R.drawable.ic_play_grid_focus_clash)
-        mEmptySelected = BitmapFactory.decodeResource(resources, R.drawable.ic_play_grid_focus_off)
+        mProblemNormal = BitmapFactory.decodeResource(resources, R.drawable.sudoku_cell_given)
+        mProblemLight = BitmapFactory.decodeResource(resources, R.drawable.sudoku_cell_given_selected)
+        mProblemWrong = BitmapFactory.decodeResource(resources, R.drawable.sudoku_cell_given_error)
+        mEmptyNormal = BitmapFactory.decodeResource(resources, R.drawable.sudoku_cell_empty)
+        mEmptyLight = BitmapFactory.decodeResource(resources, R.drawable.sudoku_cell_empty_related)
+        mEmptyWrong = BitmapFactory.decodeResource(resources, R.drawable.sudoku_cell_editable_error)
+        mEmptySelected = BitmapFactory.decodeResource(resources, R.drawable.sudoku_cell_editable_focused)
     }
 
     fun initData(data: Array<Array<PlayViewModel.CellData>>) { mData = data }
@@ -89,21 +89,21 @@ class BroadView : AppCompatImageView {
                     (28 + (mWidth * j)).toInt(), (28 + (mWidth * i)).toInt(),
                     (28 + (mWidth * (j + 1))).toInt(), (28 + (mWidth * (i + 1))).toInt()
                 )
-                if (mData[i][j].type == PROBLEM) {
+                if (mData[i][j].mType == PROBLEM) {
                     when {
-                        mData[i][j].status == SELECT_ON || mData[i][j].status == BE_SELECTED ->
+                        mData[i][j].mStatus == SELECT_ON || mData[i][j].mStatus == BE_SELECTED ->
                             canvas.drawBitmap(mProblemLight, null, rect, Paint())
-                        mData[i][j].status == WRONG ->
+                        mData[i][j].mStatus == WRONG ->
                             canvas.drawBitmap(mProblemWrong, null, rect, Paint())
                         else -> canvas.drawBitmap(mProblemNormal, null, rect, Paint())
                     }
-                } else if (mData[i][j].type == EMPTY) {
+                } else if (mData[i][j].mType == EMPTY) {
                     when {
-                        mData[i][j].status == BE_SELECTED ->
+                        mData[i][j].mStatus == BE_SELECTED ->
                             canvas.drawBitmap(mEmptySelected, null, rect, Paint())
-                        mData[i][j].status == SELECT_ON ->
+                        mData[i][j].mStatus == SELECT_ON ->
                             canvas.drawBitmap(mEmptyLight, null, rect, Paint())
-                        mData[i][j].status == WRONG ->
+                        mData[i][j].mStatus == WRONG ->
                             canvas.drawBitmap(mEmptyWrong, null, rect, Paint())
                         else -> canvas.drawBitmap(mEmptyNormal, null, rect, Paint())
                     }
@@ -124,13 +124,13 @@ class BroadView : AppCompatImageView {
 
         for (i in 0 until 9) {
             for (j in 0 until 9) {
-                if (mData[i][j].value == "0") {
+                if (mData[i][j].mValue == "0") {
                     val cellLeft = 28 + mWidth * j
                     val cellTop = 28 + mWidth * i
                     var position = 0
                     for (m in 0 until 3) {
                         for (n in 0 until 3) {
-                            val tagText = mTagData[i][j]?.tags?.getOrNull(position) ?: "0"
+                            val tagText = mTagData[i][j]?.mTags?.getOrNull(position) ?: "0"
                             if (tagText != "0") {
                                 val subCenterX = cellLeft + n * subWidth + subWidth / 2
                                 val subCenterY = cellTop + m * subHeight + subHeight / 2
@@ -156,11 +156,11 @@ class BroadView : AppCompatImageView {
             number.textSize = 80f; number.typeface = Typeface.DEFAULT_BOLD
             for (i in 0 until 9) {
                 for (j in 0 until 9) {
-                    if (mData[i][j].value != "0") {
+                    if (mData[i][j].mValue != "0") {
                         val cellLeft = 28 + mWidth * j; val cellTop = 28 + mWidth * i
                         val centerX = cellLeft + mWidth / 2; val centerY = cellTop + mWidth / 2
                         val baseline = centerY - (number.ascent() + number.descent()) / 2
-                        canvas.drawText(mData[i][j].value, centerX, baseline, number)
+                        canvas.drawText(mData[i][j].mValue, centerX, baseline, number)
                     }
                 }
             }
@@ -176,7 +176,7 @@ class BroadView : AppCompatImageView {
                         number.textSize = 80f; number.alpha = 255
                     }
                     val baseline = centerY - (number.ascent() + number.descent()) / 2
-                    canvas.drawText(mData[i][j].value, centerX, baseline, number)
+                    canvas.drawText(mData[i][j].mValue, centerX, baseline, number)
                 }
             }
         }

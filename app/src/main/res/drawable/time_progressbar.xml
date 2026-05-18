@@ -3,7 +3,7 @@
 <!--背景绘制对象-->
     <item
         android:id="@android:id/background"
-        android:drawable="@drawable/ic_play_timer_bg"/>
+        android:drawable="@drawable/timer_track_background"/>
 
 <!--进度条绘制对象-->
     <item android:id="@android:id/progress">

@@ -8,11 +8,11 @@ class MyDialogManager private constructor() {
 
     companion object {
         @Volatile
-        private var instance: MyDialogManager? = null
+        private var sInstance: MyDialogManager? = null
 
         fun getInstance(): MyDialogManager {
-            return instance ?: synchronized(this) {
-                instance ?: MyDialogManager().also { instance = it }
+            return sInstance ?: synchronized(this) {
+                sInstance ?: MyDialogManager().also { sInstance = it }
             }
         }
     }

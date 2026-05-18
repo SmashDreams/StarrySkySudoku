@@ -21,45 +21,48 @@ import androidx.recyclerview.widget.RecyclerView
 import com.bird.starryskysudoku.R
 import com.bird.starryskysudoku.data.database.DatabaseInitializer
 import com.bird.starryskysudoku.media.PlayMusic
+import com.bird.starryskysudoku.ui.common.flashThreeTimes
 import com.bird.starryskysudoku.ui.common.startActivityWithTransition
 import com.bird.starryskysudoku.ui.dialog.MyDialog
 import com.bird.starryskysudoku.ui.dialog.MyDialogManager
 import com.bird.starryskysudoku.ui.howtoplay.HowToPlayActivity
 import com.bird.starryskysudoku.ui.play.PlayActivity
-import com.bird.starryskysudoku.ui.splash.SplashActivity
 
 class MapActivity : AppCompatActivity() {
 
     companion object {
         private const val MAX_LEVEL = 40
+        const val EXTRA_FLASH_HOME = "flash_home"
+        private const val PREFS_UI_STATE = "ui_state"
+        private const val KEY_FLASH_HOME = "flash_home"
     }
 
-    private lateinit var settings: ImageView
-    private lateinit var bigShootingStar: ImageView
-    private lateinit var smallShootingStar: ImageView
-    private lateinit var backgroundStars: ImageView
-    private lateinit var recyclerView: RecyclerView
-    private lateinit var adapter: PassListAdapter
-    private lateinit var viewModel: MapViewModel
+    private lateinit var mSettings: ImageView
+    private lateinit var mBigShootingStar: ImageView
+    private lateinit var mSmallShootingStar: ImageView
+    private lateinit var mBackgroundStars: ImageView
+    private lateinit var mRecyclerView: RecyclerView
+    private lateinit var mAdapter: PassListAdapter
+    private lateinit var mViewModel: MapViewModel
 
-    private var musicOpened = true
-    private var audioOpened = true
-    private var language = "zh"
-    private var nextNum: String? = null
-    private var loseNum: String? = null
-    private var delayTime = 0
-    private var lightStars = 0
-    private var backPressCount = 0
-    private val handler = Handler(Looper.getMainLooper())
+    private var mMusicOpened = true
+    private var mAudioOpened = true
+    private var mLanguage = "zh"
+    private var mNextNum: String? = null
+    private var mLoseNum: String? = null
+    private var mDelayTime = 0
+    private var mLightStars = 0
+    private var mBackPressCount = 0
+    private val mHandler = Handler(Looper.getMainLooper())
 
-    private lateinit var settingsDialog: MyDialog
+    private lateinit var mSettingsDialog: MyDialog
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_mappage)
 
         val db = DatabaseInitializer.getDatabase(this)
-        viewModel = ViewModelProvider(this, object : ViewModelProvider.Factory {
+        mViewModel = ViewModelProvider(this, object : ViewModelProvider.Factory {
             @Suppress("UNCHECKED_CAST")
             override fun <T : androidx.lifecycle.ViewModel> create(modelClass: Class<T>): T {
                 return MapViewModel(db) as T
@@ -67,48 +70,49 @@ class MapActivity : AppCompatActivity() {
         })[MapViewModel::class.java]
 
         val musicPrefs = getSharedPreferences("music_set", MODE_PRIVATE)
-        musicOpened = musicPrefs.getBoolean("music", true)
-        audioOpened = musicPrefs.getBoolean("audio", true)
-        language = getSharedPreferences("language", MODE_PRIVATE).getString("language", "zh") ?: "zh"
+        mMusicOpened = musicPrefs.getBoolean("music", true)
+        mAudioOpened = musicPrefs.getBoolean("audio", true)
+        mLanguage = getSharedPreferences("mLanguage", MODE_PRIVATE).getString("mLanguage", "zh") ?: "zh"
 
-        recyclerView = findViewById(R.id.pass_list)
-        bigShootingStar = findViewById(R.id.sstar_big)
-        smallShootingStar = findViewById(R.id.sstar_small)
-        backgroundStars = findViewById(R.id.map_bgstar)
-        settings = findViewById(R.id.settings)
+        mRecyclerView = findViewById(R.id.pass_list)
+        mBigShootingStar = findViewById(R.id.sstar_big)
+        mSmallShootingStar = findViewById(R.id.sstar_small)
+        mBackgroundStars = findViewById(R.id.map_bgstar)
+        mSettings = findViewById(R.id.settings)
 
         initList()
         initSettingDialog()
         initShootingStar()
         initMapData()
         initBackHandler()
+        if (consumeHomeFlashRequest()) flashHome()
         PlayMusic.getInstance().playBGM()
     }
 
     private fun initMapData() {
-        viewModel.loadMapData()
+        mViewModel.loadMapData()
         consumeNavigationExtras()
     }
 
     private fun consumeNavigationExtras() {
-        intent.getStringExtra("roll")?.let { recyclerView.scrollToPosition(getRollingPosition(it)) }
-        nextNum = intent.getStringExtra("next")?.takeIf { parseLevel(it) != null }
-        loseNum = intent.getStringExtra("lose")?.takeIf { parseLevel(it) != null }
+        intent.getStringExtra("roll")?.let { mRecyclerView.scrollToPosition(getRollingPosition(it)) }
+        mNextNum = intent.getStringExtra("next")?.takeIf { parseLevel(it) != null }
+        mLoseNum = intent.getStringExtra("lose")?.takeIf { parseLevel(it) != null }
         intent.removeExtra("roll")
         intent.removeExtra("next")
         intent.removeExtra("lose")
 
-        nextNum?.let { delayTime = 1050; handleCheckNum(it) }
-        loseNum?.let {
-            delayTime = 500
+        mNextNum?.let { mDelayTime = 1050; handleCheckNum(it) }
+        mLoseNum?.let {
+            mDelayTime = 500
             handleCheckNum(it)
-            if (nextNum == null) recyclerView.scrollToPosition(getRollingPosition(it))
+            if (mNextNum == null) mRecyclerView.scrollToPosition(getRollingPosition(it))
         }
     }
 
     private fun handleCheckNum(num: String) {
         val passNum = parseLevel(num) ?: return
-        viewModel.getPassStatus(passNum) { status ->
+        mViewModel.getPassStatus(passNum) { status ->
             when (status) {
                 "待通关" -> openPassCheck(passNum.toString())
                 "已通关" -> openRetryCheck(passNum.toString())
@@ -117,12 +121,12 @@ class MapActivity : AppCompatActivity() {
     }
 
     private fun openPassCheck(checkNum: String) {
-        if (nextNum != null) {
-            lightStars = nextNum!!.toInt() - 1
-            handler.postDelayed({
-                if (nextNum!!.toInt() % 4 == 0) {
-                    recyclerView.smoothScrollBy(0, -400)
-                    delayTime = 1550
+        if (mNextNum != null) {
+            mLightStars = mNextNum!!.toInt() - 1
+            mHandler.postDelayed({
+                if (mNextNum!!.toInt() % 4 == 0) {
+                    mRecyclerView.smoothScrollBy(0, -400)
+                    mDelayTime = 1550
                 }
             }, 700)
         }
@@ -130,18 +134,18 @@ class MapActivity : AppCompatActivity() {
         val dialog = MyDialogManager.getInstance().initView(this, R.layout.dialog_passcheck).apply {
             findViewById<TextView>(R.id.passcheck_num).text = checkNum
             findViewById<TextView>(R.id.passcheck_passtimes).text = "0"
-            findViewById<ImageView>(R.id.passcheck_star).setImageResource(R.drawable.ic_pop_star_bg)
+            findViewById<ImageView>(R.id.passcheck_star).setImageResource(R.drawable.star_empty)
 
             findViewById<View>(R.id.passcheck_close).setOnClickListener {
                 PlayMusic.getInstance().playButtonTap()
-                handler.postDelayed({
+                mHandler.postDelayed({
                     MyDialogManager.getInstance().hide(this)
                 }, 200)
             }
 
             findViewById<View>(R.id.passcheck_start).setOnClickListener {
                 PlayMusic.getInstance().playButtonTap()
-                handler.postDelayed({
+                mHandler.postDelayed({
                     startActivityWithTransition(
                         Intent(this@MapActivity, PlayActivity::class.java)
                             .putExtra("num", checkNum),
@@ -154,30 +158,30 @@ class MapActivity : AppCompatActivity() {
             }
         }
 
-        handler.postDelayed({
+        mHandler.postDelayed({
             MyDialogManager.getInstance().show(dialog)
-        }, delayTime.toLong())
+        }, mDelayTime.toLong())
     }
 
     private fun openRetryCheck(checkNum: String) {
         val dialog = MyDialogManager.getInstance().initView(this, R.layout.dialog_passcheck).apply {
-            findViewById<ImageView>(R.id.passcheck_star).setImageResource(R.drawable.ic_pop_star_bg)
+            findViewById<ImageView>(R.id.passcheck_star).setImageResource(R.drawable.star_empty)
             findViewById<TextView>(R.id.passcheck_num).text = checkNum
 
-            viewModel.getPassTimes(checkNum.toInt()) { times ->
+            mViewModel.getPassTimes(checkNum.toInt()) { times ->
                 findViewById<TextView>(R.id.passcheck_passtimes).text = times
             }
 
             findViewById<View>(R.id.passcheck_close).setOnClickListener {
                 PlayMusic.getInstance().playButtonTap()
-                handler.postDelayed({
+                mHandler.postDelayed({
                     MyDialogManager.getInstance().hide(this)
                 }, 200)
             }
 
             findViewById<View>(R.id.passcheck_start).setOnClickListener {
                 PlayMusic.getInstance().playButtonTap()
-                handler.postDelayed({
+                mHandler.postDelayed({
                     intent.removeExtra("next")
                     intent.removeExtra("lose")
                     startActivityWithTransition(
@@ -191,24 +195,24 @@ class MapActivity : AppCompatActivity() {
             }
         }
 
-        handler.postDelayed({
+        mHandler.postDelayed({
             MyDialogManager.getInstance().show(dialog)
-        }, delayTime.toLong())
+        }, mDelayTime.toLong())
     }
 
     private fun initList() {
-        recyclerView.layoutManager = LinearLayoutManager(this@MapActivity)
-        // Set empty adapter immediately to avoid "No adapter attached" warning
-        adapter = PassListAdapter(emptyList(), lightStars)
-        recyclerView.adapter = adapter
+        mRecyclerView.layoutManager = LinearLayoutManager(this@MapActivity)
+        // Set empty mAdapter immediately to avoid "No mAdapter attached" warning
+        mAdapter = PassListAdapter(emptyList(), mLightStars)
+        mRecyclerView.adapter = mAdapter
 
-        viewModel.mapData.observe(this) { data ->
-            adapter = PassListAdapter(data, lightStars)
-            recyclerView.adapter = adapter
-            recyclerView.scrollToPosition(adapter.getPosition())
-            recyclerView.smoothScrollBy(0, 150)
+        mViewModel.mMapData.observe(this) { data ->
+            mAdapter = PassListAdapter(data, mLightStars)
+            mRecyclerView.adapter = mAdapter
+            mRecyclerView.scrollToPosition(mAdapter.getPosition())
+            mRecyclerView.smoothScrollBy(0, 150)
 
-            adapter.setOpenListener(object : PassListAdapter.OpenPlayPage {
+            mAdapter.setOpenListener(object : PassListAdapter.OpenPlayPage {
                 override fun onOpen(num: String) {
                     startActivityWithTransition(
                         Intent(this@MapActivity, PlayActivity::class.java)
@@ -223,29 +227,29 @@ class MapActivity : AppCompatActivity() {
     }
 
     private fun initSettingDialog() {
-        settingsDialog = MyDialogManager.getInstance().initView(this, R.layout.dialog_settings)
-        settingsDialog.setCanceledOnTouchOutside(true)
+        mSettingsDialog = MyDialogManager.getInstance().initView(this, R.layout.dialog_settings)
+        mSettingsDialog.setCanceledOnTouchOutside(true)
 
-        val musicSwitch = settingsDialog.findViewById<ImageView>(R.id.settings_music)
-        val audioSwitch = settingsDialog.findViewById<ImageView>(R.id.settings_audio)
+        val musicSwitch = mSettingsDialog.findViewById<ImageView>(R.id.settings_music)
+        val audioSwitch = mSettingsDialog.findViewById<ImageView>(R.id.settings_audio)
 
-        settings.setOnClickListener {
+        mSettings.setOnClickListener {
             PlayMusic.getInstance().playDialogShow()
             musicSwitch.setImageResource(
-                if (musicOpened) R.drawable.ic_pop_music_on else R.drawable.ic_pop_music_off
+                if (mMusicOpened) R.drawable.icon_music_on else R.drawable.icon_music_off
             )
             audioSwitch.setImageResource(
-                if (audioOpened) R.drawable.ic_pop_audio_on else R.drawable.ic_pop_audio_off
+                if (mAudioOpened) R.drawable.icon_sound_on else R.drawable.icon_sound_off
             )
-            MyDialogManager.getInstance().show(settingsDialog)
+            MyDialogManager.getInstance().show(mSettingsDialog)
         }
 
-        settingsDialog.findViewById<View>(R.id.settings_close).setOnClickListener {
+        mSettingsDialog.findViewById<View>(R.id.settings_close).setOnClickListener {
             PlayMusic.getInstance().playButtonTap()
-            MyDialogManager.getInstance().hide(settingsDialog)
+            MyDialogManager.getInstance().hide(mSettingsDialog)
         }
 
-        settingsDialog.findViewById<View>(R.id.settings_howtoplay).setOnClickListener {
+        mSettingsDialog.findViewById<View>(R.id.settings_howtoplay).setOnClickListener {
             PlayMusic.getInstance().playButtonTap()
             startActivityWithTransition(
                 Intent(this, HowToPlayActivity::class.java),
@@ -254,32 +258,30 @@ class MapActivity : AppCompatActivity() {
             )
         }
 
-        settingsDialog.findViewById<View>(R.id.settings_language).setOnClickListener {
+        mSettingsDialog.findViewById<View>(R.id.settings_language).setOnClickListener {
             PlayMusic.getInstance().playButtonTap()
-            val newLang = if (language == "zh") "en" else "zh"
-            getSharedPreferences("language", MODE_PRIVATE).edit {
-                putString("language", newLang)
+            val newLang = if (mLanguage == "zh") "en" else "zh"
+            getSharedPreferences("mLanguage", MODE_PRIVATE).edit {
+                putString("mLanguage", newLang)
+            }
+            getSharedPreferences(PREFS_UI_STATE, MODE_PRIVATE).edit {
+                putBoolean(KEY_FLASH_HOME, true)
             }
             AppCompatDelegate.setApplicationLocales(LocaleListCompat.forLanguageTags(newLang))
-            startActivityWithTransition(
-                Intent(this, SplashActivity::class.java),
-                R.anim.playpage_show,
-                R.anim.playpage_hide
-            )
-            finishAffinity()
+            MyDialogManager.getInstance().hide(mSettingsDialog)
         }
 
         musicSwitch.setOnClickListener {
             PlayMusic.getInstance().playButtonTap()
             val prefs = getSharedPreferences("music_set", MODE_PRIVATE)
-            if (musicOpened) {
-                musicSwitch.setImageResource(R.drawable.ic_pop_music_off)
-                musicOpened = false
+            if (mMusicOpened) {
+                musicSwitch.setImageResource(R.drawable.icon_music_off)
+                mMusicOpened = false
                 prefs.edit { putBoolean("music", false) }
                 PlayMusic.getInstance().stopBGM()
             } else {
-                musicSwitch.setImageResource(R.drawable.ic_pop_music_on)
-                musicOpened = true
+                musicSwitch.setImageResource(R.drawable.icon_music_on)
+                mMusicOpened = true
                 prefs.edit { putBoolean("music", true) }
                 PlayMusic.getInstance().playBGM()
             }
@@ -287,13 +289,13 @@ class MapActivity : AppCompatActivity() {
 
         audioSwitch.setOnClickListener {
             val prefs = getSharedPreferences("music_set", MODE_PRIVATE)
-            if (audioOpened) {
-                audioSwitch.setImageResource(R.drawable.ic_pop_audio_off)
-                audioOpened = false
+            if (mAudioOpened) {
+                audioSwitch.setImageResource(R.drawable.icon_sound_off)
+                mAudioOpened = false
                 prefs.edit { putBoolean("audio", false) }
             } else {
-                audioSwitch.setImageResource(R.drawable.ic_pop_audio_on)
-                audioOpened = true
+                audioSwitch.setImageResource(R.drawable.icon_sound_on)
+                mAudioOpened = true
                 prefs.edit { putBoolean("audio", true) }
                 PlayMusic.getInstance().playButtonTap()
             }
@@ -301,9 +303,9 @@ class MapActivity : AppCompatActivity() {
     }
 
     private fun initShootingStar() {
-        bigShootingStar.startAnimation(AnimationUtils.loadAnimation(this, R.anim.shootingstar_big))
-        smallShootingStar.startAnimation(AnimationUtils.loadAnimation(this, R.anim.shootingstar_small))
-        ObjectAnimator.ofFloat(backgroundStars, "alpha", 0.5f, 1f).apply {
+        mBigShootingStar.startAnimation(AnimationUtils.loadAnimation(this, R.anim.shootingstar_big))
+        mSmallShootingStar.startAnimation(AnimationUtils.loadAnimation(this, R.anim.shootingstar_small))
+        ObjectAnimator.ofFloat(mBackgroundStars, "alpha", 0.5f, 1f).apply {
             duration = 1500
             repeatCount = ObjectAnimator.INFINITE
             repeatMode = ObjectAnimator.REVERSE
@@ -314,12 +316,12 @@ class MapActivity : AppCompatActivity() {
     private fun initBackHandler() {
         onBackPressedDispatcher.addCallback(this, object : OnBackPressedCallback(true) {
             override fun handleOnBackPressed() {
-                if (backPressCount == 1) {
+                if (mBackPressCount == 1) {
                     finishAffinity()
                 } else {
                     Toast.makeText(this@MapActivity, R.string.pressagain, Toast.LENGTH_SHORT).show()
-                    backPressCount++
-                    handler.postDelayed({ backPressCount = 0 }, 1500)
+                    mBackPressCount++
+                    mHandler.postDelayed({ mBackPressCount = 0 }, 1500)
                 }
             }
         })
@@ -336,17 +338,32 @@ class MapActivity : AppCompatActivity() {
     override fun onResume() {
         super.onResume()
         PlayMusic.getInstance().playBGM()
-        viewModel.loadMapData()
+        mViewModel.loadMapData()
         consumeNavigationExtras()
     }
 
     override fun onDestroy() {
         super.onDestroy()
-        handler.removeCallbacksAndMessages(null)
-        MyDialogManager.getInstance().hide(settingsDialog)
+        mHandler.removeCallbacksAndMessages(null)
+        MyDialogManager.getInstance().hide(mSettingsDialog)
     }
 
     private fun parseLevel(raw: String?): Int? {
         return raw?.toIntOrNull()?.takeIf { it in 1..MAX_LEVEL }
+    }
+
+    private fun consumeHomeFlashRequest(): Boolean {
+        val fromIntent = intent.getBooleanExtra(EXTRA_FLASH_HOME, false)
+        intent.removeExtra(EXTRA_FLASH_HOME)
+        val prefs = getSharedPreferences(PREFS_UI_STATE, MODE_PRIVATE)
+        val fromPrefs = prefs.getBoolean(KEY_FLASH_HOME, false)
+        if (fromPrefs) prefs.edit { putBoolean(KEY_FLASH_HOME, false) }
+        return fromIntent || fromPrefs
+    }
+
+    private fun flashHome() {
+        findViewById<View>(android.R.id.content).post {
+            findViewById<View>(android.R.id.content).flashThreeTimes()
+        }
     }
 }
