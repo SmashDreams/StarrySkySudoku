@@ -35,42 +35,42 @@ class PlayActivity : AppCompatActivity() {
         private const val MAX_LEVEL = 40
     }
 
-    private val handler = Handler(Looper.getMainLooper())
-    private lateinit var viewModel: PlayViewModel
-    private lateinit var broadView: BroadView
+    private val mHandler = Handler(Looper.getMainLooper())
+    private lateinit var mViewModel: PlayViewModel
+    private lateinit var mBroadView: BroadView
 
     // UI elements
-    private lateinit var playNum: TextView
-    private lateinit var timeProgressBar: ProgressBar
-    private lateinit var remainingMins: TextView
-    private lateinit var remainingSecs: TextView
-    private lateinit var colon: TextView
-    private val numbers = arrayOfNulls<TextView>(9)
-    private lateinit var revoke: ImageView
-    private lateinit var tag: ImageView
-    private lateinit var pauseButton: ImageView
+    private lateinit var mPlayNum: TextView
+    private lateinit var mTimeProgressBar: ProgressBar
+    private lateinit var mRemainingMins: TextView
+    private lateinit var mRemainingSecs: TextView
+    private lateinit var mColon: TextView
+    private val mNumbers = arrayOfNulls<TextView>(9)
+    private lateinit var mRevoke: ImageView
+    private lateinit var mTag: ImageView
+    private lateinit var mPauseButton: ImageView
 
     // State
-    private var musicOpened = true
-    private var audioOpened = true
-    private var isPaused = false
-    private var num = "1"
-    private var tagData = Array(9) { arrayOfNulls<TagData>(9) }
+    private var mMusicOpened = true
+    private var mAudioOpened = true
+    private var mIsPaused = false
+    private var mNum = "1"
+    private var mTagData = Array(9) { arrayOfNulls<TagData>(9) }
 
     // Dialogs
-    private lateinit var pauseDialog: MyDialog
-    private lateinit var winDialog: MyDialog
-    private lateinit var loseDialog: MyDialog
+    private lateinit var mPauseDialog: MyDialog
+    private lateinit var mWinDialog: MyDialog
+    private lateinit var mLoseDialog: MyDialog
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_play)
 
-        num = parseLevel(intent.getStringExtra("num")).toString()
+        mNum = parseLevel(intent.getStringExtra("mNum")).toString()
         val maxNum = MAX_LEVEL
 
         val db = DatabaseInitializer.getDatabase(this)
-        viewModel = ViewModelProvider(this, object : ViewModelProvider.Factory {
+        mViewModel = ViewModelProvider(this, object : ViewModelProvider.Factory {
             @Suppress("UNCHECKED_CAST")
             override fun <T : androidx.lifecycle.ViewModel> create(modelClass: Class<T>): T {
                 return PlayViewModel(db) as T
@@ -78,25 +78,25 @@ class PlayActivity : AppCompatActivity() {
         })[PlayViewModel::class.java]
 
         val musicPrefs = getSharedPreferences("music_set", MODE_PRIVATE)
-        musicOpened = musicPrefs.getBoolean("music", true)
-        audioOpened = musicPrefs.getBoolean("audio", true)
+        mMusicOpened = musicPrefs.getBoolean("music", true)
+        mAudioOpened = musicPrefs.getBoolean("audio", true)
 
         // Bind views
-        playNum = findViewById(R.id.play_num); playNum.text = num
-        timeProgressBar = findViewById(R.id.play_time_progressbar)
-        remainingMins = findViewById(R.id.play_time_min)
-        remainingSecs = findViewById(R.id.play_time_sec)
-        colon = findViewById(R.id.textview74)
-        broadView = findViewById(R.id.play_broad)
-        numbers[0] = findViewById(R.id.play_1); numbers[1] = findViewById(R.id.play_2)
-        numbers[2] = findViewById(R.id.play_3); numbers[3] = findViewById(R.id.play_4)
-        numbers[4] = findViewById(R.id.play_5); numbers[5] = findViewById(R.id.play_6)
-        numbers[6] = findViewById(R.id.play_7); numbers[7] = findViewById(R.id.play_8)
-        numbers[8] = findViewById(R.id.play_9)
-        revoke = findViewById(R.id.play_revoke); tag = findViewById(R.id.play_tag)
-        pauseButton = findViewById(R.id.play_pause)
+        mPlayNum = findViewById(R.id.play_num); mPlayNum.text = mNum
+        mTimeProgressBar = findViewById(R.id.play_time_progressbar)
+        mRemainingMins = findViewById(R.id.play_time_min)
+        mRemainingSecs = findViewById(R.id.play_time_sec)
+        mColon = findViewById(R.id.textview74)
+        mBroadView = findViewById(R.id.play_broad)
+        mNumbers[0] = findViewById(R.id.play_1); mNumbers[1] = findViewById(R.id.play_2)
+        mNumbers[2] = findViewById(R.id.play_3); mNumbers[3] = findViewById(R.id.play_4)
+        mNumbers[4] = findViewById(R.id.play_5); mNumbers[5] = findViewById(R.id.play_6)
+        mNumbers[6] = findViewById(R.id.play_7); mNumbers[7] = findViewById(R.id.play_8)
+        mNumbers[8] = findViewById(R.id.play_9)
+        mRevoke = findViewById(R.id.play_revoke); mTag = findViewById(R.id.play_tag)
+        mPauseButton = findViewById(R.id.play_pause)
 
-        timeProgressBar.max = 600
+        mTimeProgressBar.max = 600
 
         initBoard()
         initTimer()
@@ -109,119 +109,119 @@ class PlayActivity : AppCompatActivity() {
     }
 
     private fun initBoard() {
-        viewModel.initBoard(parseLevel(num))
-        viewModel.board.observe(this) { board ->
-            // Initialize tag data for empty cells
+        mViewModel.initBoard(parseLevel(mNum))
+        mViewModel.mBoard.observe(this) { board ->
+            // Initialize mTag data for empty cells
             for (i in 0 until 9) {
                 for (j in 0 until 9) {
-                    if (board[i][j].value == "0" && tagData[i][j] == null) {
-                        tagData[i][j] = TagData()
+                    if (board[i][j].mValue == "0" && mTagData[i][j] == null) {
+                        mTagData[i][j] = TagData()
                     }
                 }
             }
-            broadView.initData(board)
-            broadView.initTagData(tagData)
-            broadView.invalidate()
+            mBroadView.initData(board)
+            mBroadView.initTagData(mTagData)
+            mBroadView.invalidate()
         }
-        broadView.setListener(object : BroadView.Listener {
+        mBroadView.setListener(object : BroadView.Listener {
             override fun onTouch(row: Int, col: Int, block: Int) {
-                if (viewModel.currentBlock == 0 && viewModel.board.value?.get(row)?.get(col)?.type == PlayViewModel.EMPTY) {
+                if (mViewModel.mCurrentBlock == 0 && mViewModel.mBoard.value?.get(row)?.get(col)?.mType == PlayViewModel.EMPTY) {
                     // already selected empty - proceed
                 }
-                viewModel.setCurrentPosition(row, col, block)
-                viewModel.selectCell(row, col)
+                mViewModel.setCurrentPosition(row, col, block)
+                mViewModel.selectCell(row, col)
 
-                val cell = viewModel.board.value?.get(row)?.get(col) ?: return
-                if (cell.type == PlayViewModel.PROBLEM) {
-                    for (numBtn in numbers) numBtn?.alpha = 0.55f
-                    tag.alpha = 0.55f
-                } else if (cell.value != "0") {
-                    for (numBtn in numbers) numBtn?.alpha = 1f
-                    tag.alpha = 0.55f
+                val cell = mViewModel.mBoard.value?.get(row)?.get(col) ?: return
+                if (cell.mType == PlayViewModel.PROBLEM) {
+                    for (numBtn in mNumbers) numBtn?.alpha = 0.55f
+                    mTag.alpha = 0.55f
+                } else if (cell.mValue != "0") {
+                    for (numBtn in mNumbers) numBtn?.alpha = 1f
+                    mTag.alpha = 0.55f
                 } else {
-                    tag.alpha = 1f
-                    if (viewModel.tagMode) {
-                        val td = tagData[row][col]
+                    mTag.alpha = 1f
+                    if (mViewModel.mTagMode) {
+                        val td = mTagData[row][col]
                         for (i in 0 until 9) {
-                            numbers[i]?.alpha = if (td != null && td.haveTag((i + 1).toString())) 0.55f else 1f
+                            mNumbers[i]?.alpha = if (td != null && td.haveTag((i + 1).toString())) 0.55f else 1f
                         }
                     } else {
-                        for (numBtn in numbers) numBtn?.alpha = 1f
+                        for (numBtn in mNumbers) numBtn?.alpha = 1f
                     }
                 }
-                broadView.invalidate()
+                mBroadView.invalidate()
                 PlayMusic.getInstance().playButtonTap()
             }
         })
     }
 
     private fun initTimer() {
-        viewModel.remainingSeconds.observe(this) { seconds ->
+        mViewModel.mRemainingSeconds.observe(this) { seconds ->
             val min = seconds / 60; val sec = seconds % 60
-            timeProgressBar.progress = seconds
-            remainingMins.text = String.format(Locale.ROOT, "%02d", min)
-            remainingSecs.text = String.format(Locale.ROOT, "%02d", sec)
+            mTimeProgressBar.progress = seconds
+            mRemainingMins.text = String.format(Locale.ROOT, "%02d", min)
+            mRemainingSecs.text = String.format(Locale.ROOT, "%02d", sec)
 
             if (seconds in 1..10) {
                 val red = ContextCompat.getColor(this, R.color.red)
-                remainingMins.setTextColor(red)
-                remainingSecs.setTextColor(red)
-                colon.setTextColor(red)
+                mRemainingMins.setTextColor(red)
+                mRemainingSecs.setTextColor(red)
+                mColon.setTextColor(red)
                 if (seconds <= 10) PlayMusic.getInstance().playTimesUp()
             } else {
                 val white = ContextCompat.getColor(this, R.color.white)
-                remainingMins.setTextColor(white)
-                remainingSecs.setTextColor(white)
-                colon.setTextColor(white)
+                mRemainingMins.setTextColor(white)
+                mRemainingSecs.setTextColor(white)
+                mColon.setTextColor(white)
             }
         }
 
-        viewModel.timerFinished.observe(this) { finished ->
+        mViewModel.mTimerFinished.observe(this) { finished ->
             if (finished) failed()
         }
 
-        viewModel.startTimer()
+        mViewModel.startTimer()
 
-        viewModel.hasWon.observe(this) { won ->
-            if (won && !isPaused) {
-                viewModel.pauseTimer()
+        mViewModel.mHasWon.observe(this) { won ->
+            if (won && !mIsPaused) {
+                mViewModel.pauseTimer()
                 PlayMusic.getInstance().stopTimesUp()
                 PlayMusic.getInstance().playWinning()
                 playWinAnimation()
             }
         }
 
-        viewModel.isWrong.observe(this) { wrong ->
+        mViewModel.mIsWrong.observe(this) { wrong ->
             if (wrong) {
-                broadView.setWrong(true)
+                mBroadView.setWrong(true)
                 PlayMusic.getInstance().playInputWrong()
-                viewModel.canInsert = false
-                handler.postDelayed({
-                    viewModel.revertWrongInput(viewModel.currentX, viewModel.currentY)
-                    broadView.initData(viewModel.board.value!!)
-                    broadView.invalidate()
-                    broadView.setWrong(false)
-                    viewModel.canInsert = true
+                mViewModel.mCanInsert = false
+                mHandler.postDelayed({
+                    mViewModel.revertWrongInput(mViewModel.mCurrentX, mViewModel.mCurrentY)
+                    mBroadView.initData(mViewModel.mBoard.value!!)
+                    mBroadView.invalidate()
+                    mBroadView.setWrong(false)
+                    mViewModel.mCanInsert = true
                 }, 200)
             }
         }
     }
 
     private fun playWinAnimation() {
-        val board = viewModel.board.value ?: return
+        val board = mViewModel.mBoard.value ?: return
         for (i in 0 until 9)
             for (j in 0 until 9)
-                board[i][j].status = PlayViewModel.SELECT_NONE
-        broadView.overDone(board)
-        broadView.invalidate()
+                board[i][j].mStatus = PlayViewModel.SELECT_NONE
+        mBroadView.overDone(board)
+        mBroadView.invalidate()
 
         val winningAnims = Array(9) { AnimatorSet() }
         for (i in 8 downTo 0) {
             winningAnims[i] = AnimatorSet().apply {
                 playTogether(
-                    ObjectAnimator.ofInt(broadView, "TextSize", 80, 100, 80),
-                    ObjectAnimator.ofInt(broadView, "TextAlpha", 255, 0, 255),
-                    ObjectAnimator.ofInt(broadView, "Line", i, i)
+                    ObjectAnimator.ofInt(mBroadView, "TextSize", 80, 100, 80),
+                    ObjectAnimator.ofInt(mBroadView, "TextAlpha", 255, 0, 255),
+                    ObjectAnimator.ofInt(mBroadView, "Line", i, i)
                 )
                 interpolator = LinearInterpolator()
                 duration = 500
@@ -230,10 +230,10 @@ class PlayActivity : AppCompatActivity() {
             }
         }
 
-        handler.postDelayed({
-            MyDialogManager.getInstance().show(winDialog)
+        mHandler.postDelayed({
+            MyDialogManager.getInstance().show(mWinDialog)
             PlayMusic.getInstance().playGetStar()
-            val winStar = winDialog.findViewById<ImageView>(R.id.win_star_on)
+            val winStar = mWinDialog.findViewById<ImageView>(R.id.win_star_on)
             ObjectAnimator.ofFloat(winStar, "alpha", 0f, 1f).setDuration(500).start()
             ObjectAnimator.ofFloat(winStar, "scaleX", 0.5f, 1.1f, 1f).setDuration(500).start()
             ObjectAnimator.ofFloat(winStar, "scaleY", 0.5f, 1.1f, 1f).setDuration(500).start()
@@ -241,18 +241,18 @@ class PlayActivity : AppCompatActivity() {
     }
 
     private fun failed() {
-        broadView.setWrong(true)
+        mBroadView.setWrong(true)
         PlayMusic.getInstance().stopTimesUp()
         PlayMusic.getInstance().playLosing()
-        handler.postDelayed({
-            MyDialogManager.getInstance().show(loseDialog)
+        mHandler.postDelayed({
+            MyDialogManager.getInstance().show(mLoseDialog)
         }, 1500)
     }
 
     @SuppressLint("ClickableViewAccessibility")
     private fun initTagButton() {
-        tag.setOnTouchListener { v, event ->
-            if (viewModel.currentBlock == 0 || viewModel.board.value?.get(viewModel.currentX)?.get(viewModel.currentY)?.type == PlayViewModel.PROBLEM || viewModel.hasWon.value == true)
+        mTag.setOnTouchListener { v, event ->
+            if (mViewModel.mCurrentBlock == 0 || mViewModel.mBoard.value?.get(mViewModel.mCurrentX)?.get(mViewModel.mCurrentY)?.mType == PlayViewModel.PROBLEM || mViewModel.mHasWon.value == true)
                 return@setOnTouchListener false
             when (event.action) {
                 MotionEvent.ACTION_DOWN -> v.animate().scaleX(0.8f).scaleY(0.8f).setDuration(100).start()
@@ -261,26 +261,26 @@ class PlayActivity : AppCompatActivity() {
             false
         }
 
-        tag.setOnClickListener {
-            if (viewModel.hasWon.value == true) return@setOnClickListener
-            val cell = viewModel.board.value?.get(viewModel.currentX)?.get(viewModel.currentY) ?: return@setOnClickListener
-            if (cell.type == PlayViewModel.PROBLEM) { PlayMusic.getInstance().playInputWrong(); return@setOnClickListener }
-            if (viewModel.currentBlock == 0 || cell.value != "0") {
+        mTag.setOnClickListener {
+            if (mViewModel.mHasWon.value == true) return@setOnClickListener
+            val cell = mViewModel.mBoard.value?.get(mViewModel.mCurrentX)?.get(mViewModel.mCurrentY) ?: return@setOnClickListener
+            if (cell.mType == PlayViewModel.PROBLEM) { PlayMusic.getInstance().playInputWrong(); return@setOnClickListener }
+            if (mViewModel.mCurrentBlock == 0 || cell.mValue != "0") {
                 PlayMusic.getInstance().playInputWrong()
                 return@setOnClickListener
             }
             PlayMusic.getInstance().playButtonTap()
-            if (!viewModel.tagMode) {
-                tag.setImageResource(R.drawable.ic_play_numberbox_markon)
-                viewModel.tagMode = true
-                val td = tagData[viewModel.currentX][viewModel.currentY]
+            if (!mViewModel.mTagMode) {
+                mTag.setImageResource(R.drawable.icon_notes_on)
+                mViewModel.mTagMode = true
+                val td = mTagData[mViewModel.mCurrentX][mViewModel.mCurrentY]
                 for (i in 0 until 9) {
-                    numbers[i]?.alpha = if (td != null && td.haveTag((i + 1).toString())) 0.55f else 1f
+                    mNumbers[i]?.alpha = if (td != null && td.haveTag((i + 1).toString())) 0.55f else 1f
                 }
             } else {
-                for (btn in numbers) btn?.alpha = 1f
-                tag.setImageResource(R.drawable.ic_play_numberbox_markoff)
-                viewModel.tagMode = false
+                for (btn in mNumbers) btn?.alpha = 1f
+                mTag.setImageResource(R.drawable.icon_notes_off)
+                mViewModel.mTagMode = false
             }
         }
     }
@@ -289,8 +289,8 @@ class PlayActivity : AppCompatActivity() {
     private fun initInsertButtons() {
         for (i in 0 until 9) {
             val idx = i
-            numbers[i]?.setOnTouchListener { v, event ->
-                if (viewModel.currentBlock == 0 || viewModel.board.value?.get(viewModel.currentX)?.get(viewModel.currentY)?.type == PlayViewModel.PROBLEM || viewModel.hasWon.value == true)
+            mNumbers[i]?.setOnTouchListener { v, event ->
+                if (mViewModel.mCurrentBlock == 0 || mViewModel.mBoard.value?.get(mViewModel.mCurrentX)?.get(mViewModel.mCurrentY)?.mType == PlayViewModel.PROBLEM || mViewModel.mHasWon.value == true)
                     return@setOnTouchListener false
                 when (event.action) {
                     MotionEvent.ACTION_DOWN -> v.animate().scaleX(0.8f).scaleY(0.8f).setDuration(100).start()
@@ -299,37 +299,37 @@ class PlayActivity : AppCompatActivity() {
                 false
             }
 
-            numbers[i]?.setOnClickListener {
-                if (viewModel.hasWon.value == true || !viewModel.canInsert) return@setOnClickListener
-                val cell = viewModel.board.value?.get(viewModel.currentX)?.get(viewModel.currentY) ?: return@setOnClickListener
-                if (cell.type == PlayViewModel.PROBLEM || viewModel.currentBlock == 0) {
+            mNumbers[i]?.setOnClickListener {
+                if (mViewModel.mHasWon.value == true || !mViewModel.mCanInsert) return@setOnClickListener
+                val cell = mViewModel.mBoard.value?.get(mViewModel.mCurrentX)?.get(mViewModel.mCurrentY) ?: return@setOnClickListener
+                if (cell.mType == PlayViewModel.PROBLEM || mViewModel.mCurrentBlock == 0) {
                     PlayMusic.getInstance().playInputWrong(); return@setOnClickListener
                 }
                 val number = (idx + 1).toString()
 
-                if (!viewModel.tagMode) {
+                if (!mViewModel.mTagMode) {
                     lifecycleScope.launch {
-                        viewModel.insertNumber(viewModel.currentX, viewModel.currentY, number)
-                        revoke.alpha = 1f
-                        tag.alpha = 0.55f
-                        broadView.initData(viewModel.board.value!!)
-                        broadView.invalidate()
+                        mViewModel.insertNumber(mViewModel.mCurrentX, mViewModel.mCurrentY, number)
+                        mRevoke.alpha = 1f
+                        mTag.alpha = 0.55f
+                        mBroadView.initData(mViewModel.mBoard.value!!)
+                        mBroadView.invalidate()
 
-                        if (viewModel.hasWon.value == true) {
-                            val levelNum = num.toInt()
-                            viewModel.updatePassStatus(levelNum, levelNum + 1)
+                        if (mViewModel.mHasWon.value == true) {
+                            val levelNum = mNum.toInt()
+                            mViewModel.updatePassStatus(levelNum, levelNum + 1)
                         }
                     }
                 } else {
                     // Tag mode
-                    if (cell.value != "0") { PlayMusic.getInstance().playInputWrong(); return@setOnClickListener }
+                    if (cell.mValue != "0") { PlayMusic.getInstance().playInputWrong(); return@setOnClickListener }
                     PlayMusic.getInstance().playButtonTap()
-                    revoke.alpha = 1f
+                    mRevoke.alpha = 1f
                     lifecycleScope.launch {
-                        val added = viewModel.insertOrRemoveTag(viewModel.currentX, viewModel.currentY, number, tagData)
-                        numbers[idx]?.alpha = if (added) 0.55f else 1f
-                        broadView.initTagData(tagData)
-                        broadView.invalidate()
+                        val added = mViewModel.insertOrRemoveTag(mViewModel.mCurrentX, mViewModel.mCurrentY, number, mTagData)
+                        mNumbers[idx]?.alpha = if (added) 0.55f else 1f
+                        mBroadView.initTagData(mTagData)
+                        mBroadView.invalidate()
                     }
                 }
             }
@@ -338,9 +338,9 @@ class PlayActivity : AppCompatActivity() {
 
     @SuppressLint("ClickableViewAccessibility")
     private fun initRevokeButton() {
-        revoke.alpha = 0.55f
-        revoke.setOnTouchListener { v, event ->
-            if (viewModel.currentBlock == 0 || viewModel.board.value?.get(viewModel.currentX)?.get(viewModel.currentY)?.type == PlayViewModel.PROBLEM || viewModel.hasWon.value == true)
+        mRevoke.alpha = 0.55f
+        mRevoke.setOnTouchListener { v, event ->
+            if (mViewModel.mCurrentBlock == 0 || mViewModel.mBoard.value?.get(mViewModel.mCurrentX)?.get(mViewModel.mCurrentY)?.mType == PlayViewModel.PROBLEM || mViewModel.mHasWon.value == true)
                 return@setOnTouchListener false
             when (event.action) {
                 MotionEvent.ACTION_DOWN -> v.animate().scaleX(0.8f).scaleY(0.8f).setDuration(100).start()
@@ -349,118 +349,120 @@ class PlayActivity : AppCompatActivity() {
             false
         }
 
-        revoke.setOnClickListener {
-            if (viewModel.hasWon.value == true || viewModel.currentBlock == 0) return@setOnClickListener
+        mRevoke.setOnClickListener {
+            if (mViewModel.mHasWon.value == true || mViewModel.mCurrentBlock == 0) return@setOnClickListener
             lifecycleScope.launch {
-                val history = viewModel.undo()
+                val history = mViewModel.undo()
                 if (history == null) {
                     PlayMusic.getInstance().playInputWrong()
-                    revoke.alpha = 0.55f
-                    tag.alpha = 1f
-                    tag.setImageResource(R.drawable.ic_play_numberbox_markoff)
-                    viewModel.tagMode = false
-                    viewModel.currentBlock = 0
-                    val board = viewModel.board.value!!
+                    mRevoke.alpha = 0.55f
+                    mTag.alpha = 1f
+                    mTag.setImageResource(R.drawable.icon_notes_off)
+                    mViewModel.mTagMode = false
+                    mViewModel.mCurrentBlock = 0
+                    val board = mViewModel.mBoard.value!!
                     for (i in 0 until 9)
                         for (j in 0 until 9)
-                            board[i][j].status = PlayViewModel.SELECT_NONE
-                    broadView.initData(board)
-                    broadView.invalidate()
+                            board[i][j].mStatus = PlayViewModel.SELECT_NONE
+                    mBroadView.initData(board)
+                    mBroadView.invalidate()
                     return@launch
                 }
-                viewModel.currentX = history.row
-                viewModel.currentY = history.col
-                viewModel.currentBlock = viewModel.board.value?.get(history.row)?.get(history.col)?.block ?: 0
+                mViewModel.mCurrentX = history.mRow
+                mViewModel.mCurrentY = history.mCol
+                mViewModel.mCurrentBlock = mViewModel.mBoard.value?.get(history.mRow)?.get(history.mCol)?.mBlock ?: 0
 
                 PlayMusic.getInstance().playButtonTap()
 
-                if (history.type == PlayViewModel.TYPE_NUMBER) {
-                    viewModel.tagMode = false
-                    viewModel.lastValue = history.value.toString()
-                    tag.setImageResource(R.drawable.ic_play_numberbox_markoff)
-                    for (btn in numbers) btn?.alpha = 1f
+                if (history.mType == PlayViewModel.TYPE_NUMBER) {
+                    mViewModel.mTagMode = false
+                    mViewModel.mLastValue = history.mValue.toString()
+                    mTag.setImageResource(R.drawable.icon_notes_off)
+                    for (btn in mNumbers) btn?.alpha = 1f
 
-                    val board = viewModel.board.value!!
-                    board[history.row][history.col].value = history.value.toString()
-                    board[history.row][history.col].status = PlayViewModel.BE_SELECTED
-                    if (history.value == 0) {
-                        viewModel.selectCell(history.row, history.col) // will tap empty
-                        tag.alpha = 1f
+                    val board = mViewModel.mBoard.value!!
+                    board[history.mRow][history.mCol].mValue = history.mValue.toString()
+                    board[history.mRow][history.mCol].mStatus = PlayViewModel.BE_SELECTED
+                    if (history.mValue == 0) {
+                        mViewModel.selectCell(history.mRow, history.mCol) // will tap empty
+                        mTag.alpha = 1f
                     } else {
-                        viewModel.selectCell(history.row, history.col)
-                        tag.alpha = 0.55f
+                        mViewModel.selectCell(history.mRow, history.mCol)
+                        mTag.alpha = 0.55f
                     }
-                    broadView.initData(board)
+                    mBroadView.initData(board)
                 } else {
                     // Tag type undo
-                    val board = viewModel.board.value!!
-                    board[history.row][history.col].status = PlayViewModel.BE_SELECTED
-                    tag.alpha = 1f
-                    viewModel.tagMode = true
-                    tag.setImageResource(R.drawable.ic_play_numberbox_markon)
+                    val board = mViewModel.mBoard.value!!
+                    board[history.mRow][history.mCol].mStatus = PlayViewModel.BE_SELECTED
+                    mTag.alpha = 1f
+                    mViewModel.mTagMode = true
+                    mTag.setImageResource(R.drawable.icon_notes_on)
 
-                    val td = tagData[history.row][history.col]!!
-                    val hVal = history.value.toString()
+                    val td = mTagData[history.mRow][history.mCol]!!
+                    val hVal = history.mValue.toString()
                     if (td.haveTag(hVal)) {
                         td.deleteTag(hVal)
-                        numbers[history.value - 1]?.alpha = 1f
+                        mNumbers[history.mValue - 1]?.alpha = 1f
                     } else {
                         td.setTag(hVal)
-                        numbers[history.value - 1]?.alpha = 0.55f
+                        mNumbers[history.mValue - 1]?.alpha = 0.55f
                     }
-                    broadView.initTagData(tagData)
+                    mBroadView.initTagData(mTagData)
 
                     for (i in 0 until 9) {
-                        numbers[i]?.alpha = if (td.haveTag((i + 1).toString())) 0.55f else 1f
+                        mNumbers[i]?.alpha = if (td.haveTag((i + 1).toString())) 0.55f else 1f
                     }
-                    broadView.initData(board)
+                    mBroadView.initData(board)
                 }
-                broadView.invalidate()
+                mBroadView.invalidate()
             }
         }
     }
 
     private fun initPauseButton() {
-        pauseButton.setOnClickListener {
-            if (viewModel.hasWon.value == true) return@setOnClickListener
+        mPauseButton.setOnClickListener {
+            if (mViewModel.mHasWon.value == true) return@setOnClickListener
             PlayMusic.getInstance().playDialogShow()
             PlayMusic.getInstance().stopTimesUp()
-            viewModel.pauseTimer()
-            MyDialogManager.getInstance().show(pauseDialog)
+            mViewModel.pauseTimer()
+            MyDialogManager.getInstance().show(mPauseDialog)
         }
     }
 
     private fun initDialogs(maxNum: Int) {
         // Pause dialog
-        pauseDialog = MyDialogManager.getInstance().initView(this, R.layout.dialog_pause)
-        pauseDialog.setCanceledOnTouchOutside(false)
+        mPauseDialog = MyDialogManager.getInstance().initView(this, R.layout.dialog_pause)
+        mPauseDialog.setCanceledOnTouchOutside(false)
 
-        pauseDialog.findViewById<View>(R.id.pause_close).setOnClickListener {
+        mPauseDialog.findViewById<View>(R.id.pause_close).setOnClickListener {
             PlayMusic.getInstance().playButtonTap()
-            MyDialogManager.getInstance().hide(pauseDialog)
-            isPaused = false
-            viewModel.startTimer()
+            MyDialogManager.getInstance().hide(mPauseDialog)
+            mIsPaused = false
+            mViewModel.startTimer()
         }
 
-        pauseDialog.findViewById<View>(R.id.pause_restart).setOnClickListener {
+        mPauseDialog.findViewById<View>(R.id.pause_restart).setOnClickListener {
             PlayMusic.getInstance().playButtonTap()
-            MyDialogManager.getInstance().hide(pauseDialog)
+            MyDialogManager.getInstance().hide(mPauseDialog)
             clearHistoryAndRun {
                 finish()
                 startActivityWithTransition(
-                    Intent(this, PlayActivity::class.java).putExtra("num", num),
+                    Intent(this, PlayActivity::class.java).putExtra("mNum", mNum),
                     R.anim.playpage_show,
                     R.anim.playpage_hide
                 )
             }
         }
 
-        pauseDialog.findViewById<View>(R.id.pause_back).setOnClickListener {
+        mPauseDialog.findViewById<View>(R.id.pause_back).setOnClickListener {
             PlayMusic.getInstance().playButtonTap()
-            MyDialogManager.getInstance().hide(pauseDialog)
+            MyDialogManager.getInstance().hide(mPauseDialog)
             clearHistoryAndRun {
                 startActivityWithTransition(
-                    Intent(this, MapActivity::class.java).putExtra("roll", num),
+                    Intent(this, MapActivity::class.java)
+                        .putExtra("roll", mNum)
+                        .putExtra(MapActivity.EXTRA_FLASH_HOME, true),
                     R.anim.playpage_show,
                     R.anim.playpage_hide
                 )
@@ -469,46 +471,48 @@ class PlayActivity : AppCompatActivity() {
         }
 
         // Music toggle in pause dialog
-        val musicBtn = pauseDialog.findViewById<ImageView>(R.id.pause_music)
-        musicBtn.setImageResource(if (musicOpened) R.drawable.ic_pop_music_on else R.drawable.ic_pop_music_off)
+        val musicBtn = mPauseDialog.findViewById<ImageView>(R.id.pause_music)
+        musicBtn.setImageResource(if (mMusicOpened) R.drawable.icon_music_on else R.drawable.icon_music_off)
         musicBtn.setOnClickListener {
             PlayMusic.getInstance().playButtonTap()
             val prefs = getSharedPreferences("music_set", MODE_PRIVATE)
-            if (musicOpened) {
-                musicBtn.setImageResource(R.drawable.ic_pop_music_off)
-                musicOpened = false; prefs.edit { putBoolean("music", false) }
+            if (mMusicOpened) {
+                musicBtn.setImageResource(R.drawable.icon_music_off)
+                mMusicOpened = false; prefs.edit { putBoolean("music", false) }
                 PlayMusic.getInstance().stopBGM()
             } else {
-                musicBtn.setImageResource(R.drawable.ic_pop_music_on)
-                musicOpened = true; prefs.edit { putBoolean("music", true) }
+                musicBtn.setImageResource(R.drawable.icon_music_on)
+                mMusicOpened = true; prefs.edit { putBoolean("music", true) }
                 PlayMusic.getInstance().playBGM()
             }
         }
 
         // Audio toggle
-        val audioBtn = pauseDialog.findViewById<ImageView>(R.id.pause_audio)
-        audioBtn.setImageResource(if (audioOpened) R.drawable.ic_pop_audio_on else R.drawable.ic_pop_audio_off)
+        val audioBtn = mPauseDialog.findViewById<ImageView>(R.id.pause_audio)
+        audioBtn.setImageResource(if (mAudioOpened) R.drawable.icon_sound_on else R.drawable.icon_sound_off)
         audioBtn.setOnClickListener {
             val prefs = getSharedPreferences("music_set", MODE_PRIVATE)
-            if (audioOpened) {
-                audioBtn.setImageResource(R.drawable.ic_pop_audio_off)
-                audioOpened = false; prefs.edit { putBoolean("audio", false) }
+            if (mAudioOpened) {
+                audioBtn.setImageResource(R.drawable.icon_sound_off)
+                mAudioOpened = false; prefs.edit { putBoolean("audio", false) }
             } else {
-                audioBtn.setImageResource(R.drawable.ic_pop_audio_on)
-                audioOpened = true; prefs.edit { putBoolean("audio", true) }
+                audioBtn.setImageResource(R.drawable.icon_sound_on)
+                mAudioOpened = true; prefs.edit { putBoolean("audio", true) }
                 PlayMusic.getInstance().playButtonTap()
             }
         }
 
         // Lose dialog
-        loseDialog = MyDialogManager.getInstance().initView(this, R.layout.dialog_lose)
-        loseDialog.setCanceledOnTouchOutside(false)
+        mLoseDialog = MyDialogManager.getInstance().initView(this, R.layout.dialog_lose)
+        mLoseDialog.setCanceledOnTouchOutside(false)
 
-        loseDialog.findViewById<View>(R.id.lose_close).setOnClickListener {
+        mLoseDialog.findViewById<View>(R.id.lose_close).setOnClickListener {
             PlayMusic.getInstance().playButtonTap()
             clearHistoryAndRun {
                 startActivityWithTransition(
-                    Intent(this, MapActivity::class.java).putExtra("lose", num),
+                    Intent(this, MapActivity::class.java)
+                        .putExtra("lose", mNum)
+                        .putExtra(MapActivity.EXTRA_FLASH_HOME, true),
                     R.anim.playpage_show,
                     R.anim.playpage_hide
                 )
@@ -516,12 +520,12 @@ class PlayActivity : AppCompatActivity() {
             }
         }
 
-        loseDialog.findViewById<View>(R.id.lose_retry).setOnClickListener {
+        mLoseDialog.findViewById<View>(R.id.lose_retry).setOnClickListener {
             PlayMusic.getInstance().playButtonTap()
             clearHistoryAndRun {
                 finish()
                 startActivityWithTransition(
-                    Intent(this, PlayActivity::class.java).putExtra("num", num),
+                    Intent(this, PlayActivity::class.java).putExtra("mNum", mNum),
                     R.anim.playpage_show,
                     R.anim.playpage_hide
                 )
@@ -529,35 +533,37 @@ class PlayActivity : AppCompatActivity() {
         }
 
         // Win dialog
-        winDialog = MyDialogManager.getInstance().initView(this, R.layout.dialog_win)
-        winDialog.setCanceledOnTouchOutside(false)
+        mWinDialog = MyDialogManager.getInstance().initView(this, R.layout.dialog_win)
+        mWinDialog.setCanceledOnTouchOutside(false)
 
-        winDialog.findViewById<View>(R.id.win_close).setOnClickListener {
+        mWinDialog.findViewById<View>(R.id.win_close).setOnClickListener {
             PlayMusic.getInstance().playButtonTap()
             clearHistoryAndRun {
-                val level = parseLevel(num)
+                val level = parseLevel(mNum)
                 val intent = Intent(this, MapActivity::class.java)
+                    .putExtra(MapActivity.EXTRA_FLASH_HOME, true)
                 if (level < maxNum) intent.putExtra("next", (level + 1).toString())
                 startActivityWithTransition(intent, R.anim.playpage_show, R.anim.playpage_hide)
                 finish()
             }
         }
 
-        winDialog.findViewById<View>(R.id.win_next).setOnClickListener {
+        mWinDialog.findViewById<View>(R.id.win_next).setOnClickListener {
             PlayMusic.getInstance().playButtonTap()
             clearHistoryAndRun {
                 finish()
-                val level = parseLevel(num)
+                val level = parseLevel(mNum)
                 if (level == maxNum) {
                     startActivityWithTransition(
-                        Intent(this, MapActivity::class.java),
+                        Intent(this, MapActivity::class.java)
+                            .putExtra(MapActivity.EXTRA_FLASH_HOME, true),
                         R.anim.playpage_show,
                         R.anim.playpage_hide
                     )
                 } else {
                     startActivityWithTransition(
                         Intent(this, PlayActivity::class.java)
-                            .putExtra("num", (level + 1).toString()),
+                            .putExtra("mNum", (level + 1).toString()),
                         R.anim.playpage_show,
                         R.anim.playpage_hide
                     )
@@ -569,21 +575,21 @@ class PlayActivity : AppCompatActivity() {
     private fun initBackHandler() {
         onBackPressedDispatcher.addCallback(this, object : OnBackPressedCallback(true) {
             override fun handleOnBackPressed() {
-                viewModel.pauseTimer()
+                mViewModel.pauseTimer()
                 PlayMusic.getInstance().stopTimesUp()
                 PlayMusic.getInstance().playDialogShow()
-                MyDialogManager.getInstance().show(pauseDialog)
+                MyDialogManager.getInstance().show(mPauseDialog)
             }
         })
     }
 
     override fun onPause() {
         super.onPause()
-        isPaused = true
+        mIsPaused = true
         PlayMusic.getInstance().stopBGM()
         PlayMusic.getInstance().stopTimesUp()
-        viewModel.pauseTimer()
-        if (viewModel.hasWon.value == true) {
+        mViewModel.pauseTimer()
+        if (mViewModel.mHasWon.value == true) {
             PlayMusic.getInstance().stopWinning()
         }
     }
@@ -591,22 +597,22 @@ class PlayActivity : AppCompatActivity() {
     override fun onResume() {
         super.onResume()
         PlayMusic.getInstance().playBGM()
-        if (viewModel.hasWon.value == true) {
-            MyDialogManager.getInstance().show(winDialog)
-        } else if (viewModel.timerFinished.value == true) {
-            MyDialogManager.getInstance().show(loseDialog)
-        } else if (isPaused && !pauseDialog.isShowing) {
-            MyDialogManager.getInstance().show(pauseDialog)
+        if (mViewModel.mHasWon.value == true) {
+            MyDialogManager.getInstance().show(mWinDialog)
+        } else if (mViewModel.mTimerFinished.value == true) {
+            MyDialogManager.getInstance().show(mLoseDialog)
+        } else if (mIsPaused && !mPauseDialog.isShowing) {
+            MyDialogManager.getInstance().show(mPauseDialog)
         }
     }
 
     override fun onDestroy() {
         super.onDestroy()
-        handler.removeCallbacksAndMessages(null)
-        viewModel.pauseTimer()
-        MyDialogManager.getInstance().hide(pauseDialog)
-        MyDialogManager.getInstance().hide(winDialog)
-        MyDialogManager.getInstance().hide(loseDialog)
+        mHandler.removeCallbacksAndMessages(null)
+        mViewModel.pauseTimer()
+        MyDialogManager.getInstance().hide(mPauseDialog)
+        MyDialogManager.getInstance().hide(mWinDialog)
+        MyDialogManager.getInstance().hide(mLoseDialog)
     }
 
     private fun parseLevel(raw: String?): Int {
@@ -615,7 +621,7 @@ class PlayActivity : AppCompatActivity() {
 
     private fun clearHistoryAndRun(action: () -> Unit) {
         lifecycleScope.launch {
-            viewModel.clearHistory()
+            mViewModel.clearHistory()
             action()
         }
     }

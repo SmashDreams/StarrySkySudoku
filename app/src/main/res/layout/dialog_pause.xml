@@ -45,7 +45,7 @@
                 android:layout_width="30dp"
                 android:layout_height="30dp"
                 android:layout_gravity="center"
-                app:srcCompat="@drawable/ic_pop_close"/>
+                app:srcCompat="@drawable/icon_close"/>
 
             <TextView
                 android:id="@+id/textview27"
@@ -57,7 +57,7 @@
             android:id="@+id/pause_restart"
             android:layout_width="match_parent"
             android:layout_height="92dp"
-            android:background="@drawable/ic_pop_btn_black"
+            android:background="@drawable/dialog_button_dark"
             android:gravity="center|fill_vertical"
             android:text="@string/retry"
             android:textColor="#FFFFFF"
@@ -68,7 +68,7 @@
             android:id="@+id/pause_back"
             android:layout_width="match_parent"
             android:layout_height="92dp"
-            android:background="@drawable/ic_pop_btn_yellow"
+            android:background="@drawable/dialog_button_gold"
             android:gravity="center|fill_vertical"
             android:text="@string/back"
             android:textColor="#FFFFFF"
@@ -85,14 +85,14 @@
                 android:layout_width="wrap_content"
                 android:layout_height="62dp"
                 android:layout_weight="1"
-                app:srcCompat="@drawable/ic_pop_audio_on"/>
+                app:srcCompat="@drawable/icon_sound_on"/>
 
             <ImageView
                 android:id="@+id/pause_music"
                 android:layout_width="wrap_content"
                 android:layout_height="62dp"
                 android:layout_weight="1"
-                app:srcCompat="@drawable/ic_pop_music_on"/>
+                app:srcCompat="@drawable/icon_music_on"/>
         </LinearLayout>
 
         <TextView

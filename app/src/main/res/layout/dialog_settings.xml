@@ -44,7 +44,7 @@
                 android:id="@+id/settings_close"
                 android:layout_width="30dp"
                 android:layout_height="30dp"
-                app:srcCompat="@drawable/ic_pop_close"/>
+                app:srcCompat="@drawable/icon_close"/>
 
             <TextView
                 android:id="@+id/textview9"
@@ -57,7 +57,7 @@
             android:id="@+id/settings_howtoplay"
             android:layout_width="match_parent"
             android:layout_height="92dp"
-            android:background="@drawable/ic_pop_btn_black"
+            android:background="@drawable/dialog_button_dark"
             android:gravity="center|fill_vertical"
             android:text="@string/How"
             android:textColor="#F3F2F2"
@@ -68,7 +68,7 @@
             android:id="@+id/settings_language"
             android:layout_width="match_parent"
             android:layout_height="92dp"
-            android:background="@drawable/ic_pop_btn_black"
+            android:background="@drawable/dialog_button_dark"
             android:gravity="center"
             android:text="@string/language"
             android:textColor="#FFFFFF"
@@ -85,14 +85,14 @@
                 android:layout_width="wrap_content"
                 android:layout_height="62dp"
                 android:layout_weight="1"
-                app:srcCompat="@drawable/ic_pop_audio_on"/>
+                app:srcCompat="@drawable/icon_sound_on"/>
 
             <ImageView
                 android:id="@+id/settings_music"
                 android:layout_width="wrap_content"
                 android:layout_height="62dp"
                 android:layout_weight="1"
-                app:srcCompat="@drawable/ic_pop_music_on"/>
+                app:srcCompat="@drawable/icon_music_on"/>
         </LinearLayout>
 
         <TextView

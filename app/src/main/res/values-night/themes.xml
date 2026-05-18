@@ -5,4 +5,10 @@
 
         <!-- Customize your theme here. -->
     </style>
+
+    <style name="Theme.StarrySkySudoku.Starting" parent="Theme.SplashScreen">
+        <item name="windowSplashScreenBackground">@color/splash_background</item>
+        <item name="windowSplashScreenAnimatedIcon">@drawable/splash_icon_transparent</item>
+        <item name="postSplashScreenTheme">@style/Theme.StarrySkySudoku</item>
+    </style>
 </resources>

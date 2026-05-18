@@ -78,7 +78,7 @@
                 android:layout_width="30dp"
                 android:layout_height="30dp"
                 android:layout_gravity="center"
-                app:srcCompat="@drawable/ic_pop_close"/>
+                app:srcCompat="@drawable/icon_close"/>
 
             <TextView
                 android:id="@+id/textview16"
@@ -106,7 +106,7 @@
                 android:layout_width="70dp"
                 android:layout_height="70dp"
                 android:layout_gravity="center|center_vertical"
-                app:srcCompat="@drawable/ic_pop_star"/>
+                app:srcCompat="@drawable/star_earned"/>
 
             <TextView
                 android:id="@+id/textview22"
@@ -119,7 +119,7 @@
             android:id="@+id/passcheck_start"
             android:layout_width="match_parent"
             android:layout_height="92dp"
-            android:background="@drawable/ic_pop_btn_black"
+            android:background="@drawable/dialog_button_dark"
             android:gravity="center"
             android:text="@string/start"
             android:textColor="#F3F2F2"

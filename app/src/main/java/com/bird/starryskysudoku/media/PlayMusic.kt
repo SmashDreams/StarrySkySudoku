@@ -18,11 +18,11 @@ class PlayMusic private constructor() {
         private const val KEY_AUDIO = "audio"
 
         @Volatile
-        private var instance: PlayMusic? = null
+        private var sInstance: PlayMusic? = null
 
         fun getInstance(): PlayMusic {
-            return instance ?: synchronized(this) {
-                instance ?: PlayMusic().also { instance = it }
+            return sInstance ?: synchronized(this) {
+                sInstance ?: PlayMusic().also { sInstance = it }
             }
         }
     }
@@ -33,77 +33,77 @@ class PlayMusic private constructor() {
         MAPLIGHTSTAR, BGM, TIMESUP
     }
 
-    private lateinit var soundPool: SoundPool
-    private lateinit var timesUpPool: SoundPool
-    private var bgmPlayer: MediaPlayer? = null
-    private lateinit var prefs: SharedPreferences
-    private val musicMap = mutableMapOf<MusicType, Int>()
-    private val soundIdMap = mutableMapOf<MusicType, Int>()
-    private val streamMap = mutableMapOf<MusicType, Int>()
-    private var initialized = false
+    private lateinit var mSoundPool: SoundPool
+    private lateinit var mTimesUpPool: SoundPool
+    private var mBgmPlayer: MediaPlayer? = null
+    private lateinit var mPrefs: SharedPreferences
+    private val mMusicMap = mutableMapOf<MusicType, Int>()
+    private val mSoundIdMap = mutableMapOf<MusicType, Int>()
+    private val mStreamMap = mutableMapOf<MusicType, Int>()
+    private var mInitialized = false
 
     fun init(application: Application) {
-        if (initialized) return
-        prefs = application.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+        if (mInitialized) return
+        mPrefs = application.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
 
         val audioAttrs = AudioAttributes.Builder()
             .setUsage(AudioAttributes.USAGE_GAME)
             .setContentType(AudioAttributes.CONTENT_TYPE_SONIFICATION)
             .build()
 
-        soundPool = SoundPool.Builder()
+        mSoundPool = SoundPool.Builder()
             .setMaxStreams(1)
             .setAudioAttributes(audioAttrs)
             .build()
 
-        timesUpPool = SoundPool.Builder()
+        mTimesUpPool = SoundPool.Builder()
             .setMaxStreams(1)
             .setAudioAttributes(audioAttrs)
             .build()
 
         initResource()
         loadSounds(application)
-        initialized = true
+        mInitialized = true
     }
 
     private fun initResource() {
-        musicMap[MusicType.BUTTONTAP] = R.raw.button_tap
-        musicMap[MusicType.WRONG] = R.raw.wrong_placement
-        musicMap[MusicType.DIALOGSHOW] = R.raw.popup_appear
-        musicMap[MusicType.WINNING] = R.raw.puzzle_complete
-        musicMap[MusicType.LOSING] = R.raw.puzzle_fail
-        musicMap[MusicType.GETSTAR] = R.raw.popup_star
-        musicMap[MusicType.MAPLIGHTSTAR] = R.raw.map_star_on
-        musicMap[MusicType.BGM] = R.raw.bgm
-        musicMap[MusicType.TIMESUP] = R.raw.time
+        mMusicMap[MusicType.BUTTONTAP] = R.raw.button_tap
+        mMusicMap[MusicType.WRONG] = R.raw.wrong_placement
+        mMusicMap[MusicType.DIALOGSHOW] = R.raw.popup_appear
+        mMusicMap[MusicType.WINNING] = R.raw.puzzle_complete
+        mMusicMap[MusicType.LOSING] = R.raw.puzzle_fail
+        mMusicMap[MusicType.GETSTAR] = R.raw.popup_star
+        mMusicMap[MusicType.MAPLIGHTSTAR] = R.raw.map_star_on
+        mMusicMap[MusicType.BGM] = R.raw.bgm
+        mMusicMap[MusicType.TIMESUP] = R.raw.time
     }
 
     private fun loadSounds(context: Context) {
-        val bgmRes = musicMap[MusicType.BGM]!!
-        bgmPlayer = MediaPlayer.create(context, bgmRes).apply {
+        val bgmRes = mMusicMap[MusicType.BGM]!!
+        mBgmPlayer = MediaPlayer.create(context, bgmRes).apply {
             isLooping = true
             setVolume(0.2f, 0.2f)
         }
 
-        for ((type, resId) in musicMap) {
+        for ((type, resId) in mMusicMap) {
             if (type == MusicType.BGM) continue
             val id = if (type == MusicType.TIMESUP) {
-                timesUpPool.load(context, resId, 1)
+                mTimesUpPool.load(context, resId, 1)
             } else {
-                soundPool.load(context, resId, 1)
+                mSoundPool.load(context, resId, 1)
             }
-            soundIdMap[type] = id
+            mSoundIdMap[type] = id
         }
         Log.w(TAG, "Load music success!")
     }
 
-    private fun isOpened(type: String): Boolean = prefs.getBoolean(type, true)
+    private fun isOpened(type: String): Boolean = mPrefs.getBoolean(type, true)
 
     fun playBGM() {
-        if (!initialized) return
+        if (!mInitialized) return
         try {
-            if (isOpened(KEY_MUSIC) && bgmPlayer?.isPlaying == false) {
-                bgmPlayer?.start()
+            if (isOpened(KEY_MUSIC) && mBgmPlayer?.isPlaying == false) {
+                mBgmPlayer?.start()
             }
         } catch (e: IllegalStateException) {
             e.printStackTrace()
@@ -111,69 +111,69 @@ class PlayMusic private constructor() {
     }
 
     fun stopBGM() {
-        if (!initialized) return
-        try { bgmPlayer?.pause() } catch (e: IllegalStateException) { e.printStackTrace() }
+        if (!mInitialized) return
+        try { mBgmPlayer?.pause() } catch (e: IllegalStateException) { e.printStackTrace() }
     }
 
     fun playButtonTap() {
-        if (initialized && isOpened(KEY_AUDIO)) {
-            soundPool.play(soundIdMap[MusicType.BUTTONTAP] ?: return, 0.4f, 0.4f, 1, 0, 1f)
+        if (mInitialized && isOpened(KEY_AUDIO)) {
+            mSoundPool.play(mSoundIdMap[MusicType.BUTTONTAP] ?: return, 0.4f, 0.4f, 1, 0, 1f)
         }
     }
 
     fun playDialogShow() { if (isOpened(KEY_AUDIO)) playSound(MusicType.DIALOGSHOW) }
 
     fun stopDialogShow() {
-        if (!initialized) return
-        soundPool.play(soundIdMap[MusicType.BUTTONTAP] ?: return, 0f, 0f, 1, 0, 1f)
+        if (!mInitialized) return
+        mSoundPool.play(mSoundIdMap[MusicType.BUTTONTAP] ?: return, 0f, 0f, 1, 0, 1f)
     }
 
     fun playWinning() {
-        if (isOpened(KEY_AUDIO)) streamMap[MusicType.WINNING] = playSound(MusicType.WINNING)
+        if (isOpened(KEY_AUDIO)) mStreamMap[MusicType.WINNING] = playSound(MusicType.WINNING)
     }
 
-    fun stopWinning() { if (initialized) streamMap[MusicType.WINNING]?.let { soundPool.stop(it) } }
+    fun stopWinning() { if (mInitialized) mStreamMap[MusicType.WINNING]?.let { mSoundPool.stop(it) } }
 
     fun playLosing() {
-        if (isOpened(KEY_AUDIO)) streamMap[MusicType.LOSING] = playSound(MusicType.LOSING)
+        if (isOpened(KEY_AUDIO)) mStreamMap[MusicType.LOSING] = playSound(MusicType.LOSING)
     }
 
-    fun stopLosing() { if (initialized) streamMap[MusicType.LOSING]?.let { soundPool.stop(it) } }
+    fun stopLosing() { if (mInitialized) mStreamMap[MusicType.LOSING]?.let { mSoundPool.stop(it) } }
 
     fun playGetStar() { if (isOpened(KEY_AUDIO)) playSound(MusicType.GETSTAR) }
 
     fun playInputWrong() {
-        if (initialized && isOpened(KEY_AUDIO)) {
-            soundPool.play(soundIdMap[MusicType.WRONG] ?: return, 0.6f, 0.6f, 1, 0, 1f)
+        if (mInitialized && isOpened(KEY_AUDIO)) {
+            mSoundPool.play(mSoundIdMap[MusicType.WRONG] ?: return, 0.6f, 0.6f, 1, 0, 1f)
         }
     }
 
     fun playTimesUp() {
-        if (initialized && isOpened(KEY_AUDIO)) {
-            streamMap[MusicType.TIMESUP] = timesUpPool.play(
-                soundIdMap[MusicType.TIMESUP] ?: return, 1f, 1f, 1, 0, 1f)
+        if (mInitialized && isOpened(KEY_AUDIO)) {
+            mStreamMap[MusicType.TIMESUP] = mTimesUpPool.play(
+                mSoundIdMap[MusicType.TIMESUP] ?: return, 1f, 1f, 1, 0, 1f)
         }
     }
 
-    fun stopTimesUp() { if (initialized) streamMap[MusicType.TIMESUP]?.let { timesUpPool.stop(it) } }
+    fun stopTimesUp() { if (mInitialized) mStreamMap[MusicType.TIMESUP]?.let { mTimesUpPool.stop(it) } }
 
     fun playMapLightStar() { if (isOpened(KEY_AUDIO)) playSound(MusicType.MAPLIGHTSTAR) }
 
     fun release() {
-        if (!initialized) return
+        if (!mInitialized) return
         try {
-            soundPool.release()
-            timesUpPool.release()
-            bgmPlayer?.apply { stop(); release() }
+            mSoundPool.release()
+            mTimesUpPool.release()
+            mBgmPlayer?.apply { stop(); release() }
         } catch (e: IllegalStateException) { e.printStackTrace() }
-        bgmPlayer = null
-        soundIdMap.clear()
-        streamMap.clear()
-        initialized = false
+        mBgmPlayer = null
+        mSoundIdMap.clear()
+        mStreamMap.clear()
+        mInitialized = false
     }
 
     private fun playSound(type: MusicType): Int {
-        if (!initialized) return 0
-        return soundPool.play(soundIdMap[type] ?: return 0, 1f, 1f, 1, 0, 1f)
+        if (!mInitialized) return 0
+        return mSoundPool.play(mSoundIdMap[type] ?: return 0, 1f, 1f, 1, 0, 1f)
     }
 }

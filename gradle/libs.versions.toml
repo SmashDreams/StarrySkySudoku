@@ -13,6 +13,7 @@ lifecycle = "2.9.0"
 room = "2.7.1"
 coroutines = "1.10.2"
 ksp = "2.0.21-1.0.28"
+splashscreen = "1.0.1"
 
 [libraries]
 junit = { group = "junit", name = "junit", version.ref = "junit" }
@@ -36,6 +37,7 @@ room-compiler = { group = "androidx.room", name = "room-compiler", version.ref =
 
 # Coroutines
 coroutines-android = { group = "org.jetbrains.kotlinx", name = "kotlinx-coroutines-android", version.ref = "coroutines" }
+core-splashscreen = { group = "androidx.core", name = "core-splashscreen", version.ref = "splashscreen" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }

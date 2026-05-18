@@ -21,151 +21,151 @@ import com.bird.starryskysudoku.ui.dialog.MyDialogManager
 import java.util.Locale
 
 class PassListAdapter(
-    private val passList: List<Array<MapEntity?>>,
-    private var lightStar: Int
+    private val mPassList: List<Array<MapEntity?>>,
+    private var mLightStar: Int
 ) : RecyclerView.Adapter<PassListAdapter.LinearViewHolder>() {
 
     interface OpenPlayPage {
         fun onOpen(num: String)
     }
 
-    private var openListener: OpenPlayPage? = null
-    private lateinit var context: Context
-    private lateinit var dialog: MyDialog
-    private lateinit var passNumView: TextView
-    private lateinit var passTimesView: TextView
-    private lateinit var passStarView: ImageView
+    private var mOpenListener: OpenPlayPage? = null
+    private lateinit var mContext: Context
+    private lateinit var mDialog: MyDialog
+    private lateinit var mPassNumView: TextView
+    private lateinit var mPassTimesView: TextView
+    private lateinit var mPassStarView: ImageView
 
-    fun setOpenListener(listener: OpenPlayPage) { openListener = listener }
+    fun setOpenListener(listener: OpenPlayPage) { mOpenListener = listener }
 
     class LinearViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
-        val stars = arrayOf<ImageView>(
+        val mStars = arrayOf<ImageView>(
             itemView.findViewById(R.id.star_1), itemView.findViewById(R.id.star_2),
             itemView.findViewById(R.id.star_3), itemView.findViewById(R.id.star_4)
         )
-        val lines = arrayOf<ImageView>(
+        val mLines = arrayOf<ImageView>(
             itemView.findViewById(R.id.line_0), itemView.findViewById(R.id.line_1),
             itemView.findViewById(R.id.line_2), itemView.findViewById(R.id.line_3),
             itemView.findViewById(R.id.line_4)
         )
-        val lights = arrayOf<ImageView>(
+        val mLights = arrayOf<ImageView>(
             itemView.findViewById(R.id.light_1), itemView.findViewById(R.id.light_2),
             itemView.findViewById(R.id.light_3), itemView.findViewById(R.id.light_4)
         )
-        val nums = arrayOf<TextView>(
+        val mNums = arrayOf<TextView>(
             itemView.findViewById(R.id.num_1), itemView.findViewById(R.id.num_2),
             itemView.findViewById(R.id.num_3), itemView.findViewById(R.id.num_4)
         )
-        val status = arrayOfNulls<String>(4)
+        val mStatus = arrayOfNulls<String>(4)
     }
 
     override fun getItemViewType(position: Int) = position
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): LinearViewHolder {
-        context = parent.context
+        mContext = parent.context
         return if (viewType == 0) {
-            LinearViewHolder(LayoutInflater.from(context).inflate(R.layout.pass_first_item, parent, false))
+            LinearViewHolder(LayoutInflater.from(mContext).inflate(R.layout.pass_first_item, parent, false))
         } else {
-            dialog = MyDialogManager.getInstance().initView(context, R.layout.dialog_passcheck)
-            passNumView = dialog.findViewById(R.id.passcheck_num)
-            passTimesView = dialog.findViewById(R.id.passcheck_passtimes)
-            passStarView = dialog.findViewById(R.id.passcheck_star)
+            mDialog = MyDialogManager.getInstance().initView(mContext, R.layout.dialog_passcheck)
+            mPassNumView = mDialog.findViewById(R.id.passcheck_num)
+            mPassTimesView = mDialog.findViewById(R.id.passcheck_passtimes)
+            mPassStarView = mDialog.findViewById(R.id.passcheck_star)
 
-            dialog.findViewById<View>(R.id.passcheck_close).setOnClickListener {
+            mDialog.findViewById<View>(R.id.passcheck_close).setOnClickListener {
                 PlayMusic.getInstance().playButtonTap()
                 Handler(Looper.getMainLooper()).postDelayed({
-                    MyDialogManager.getInstance().hide(dialog)
+                    MyDialogManager.getInstance().hide(mDialog)
                 }, 200)
             }
 
-            dialog.findViewById<View>(R.id.passcheck_start).setOnClickListener {
+            mDialog.findViewById<View>(R.id.passcheck_start).setOnClickListener {
                 PlayMusic.getInstance().playButtonTap()
                 Handler(Looper.getMainLooper()).postDelayed({
-                    openListener?.onOpen(passNumView.text.toString())
-                    MyDialogManager.getInstance().hide(dialog)
+                    mOpenListener?.onOpen(mPassNumView.text.toString())
+                    MyDialogManager.getInstance().hide(mDialog)
                 }, 165)
             }
 
-            LinearViewHolder(LayoutInflater.from(context).inflate(R.layout.pass_item, parent, false))
+            LinearViewHolder(LayoutInflater.from(mContext).inflate(R.layout.pass_item, parent, false))
         }
     }
 
     override fun onBindViewHolder(holder: LinearViewHolder, position: Int) {
         if (position == 0) return
 
-        val item = passList[passList.size - position]
+        val item = mPassList[mPassList.size - position]
 
         for (i in 0 until 4) {
             val entity = item[i] ?: continue
             val idx = i
-            holder.nums[i].text = String.format(Locale.getDefault(), "%d", entity.passNum)
-            holder.status[i] = entity.status
-            holder.stars[i].setOnClickListener(null)
-            holder.stars[i].clearAnimation()
-            holder.lights[i].clearAnimation()
-            holder.lights[i].visibility = View.GONE
-            holder.lights[i].alpha = 1f
-            holder.lines[i].visibility = View.VISIBLE
+            holder.mNums[i].text = String.format(Locale.getDefault(), "%d", entity.mPassNum)
+            holder.mStatus[i] = entity.mStatus
+            holder.mStars[i].setOnClickListener(null)
+            holder.mStars[i].clearAnimation()
+            holder.mLights[i].clearAnimation()
+            holder.mLights[i].visibility = View.GONE
+            holder.mLights[i].alpha = 1f
+            holder.mLines[i].visibility = View.VISIBLE
 
-            when (entity.status) {
+            when (entity.mStatus) {
                 "已通关" -> {
-                    holder.nums[i].setTextColor(ContextCompat.getColor(context, R.color.map_pass))
-                    holder.stars[i].setImageResource(R.drawable.ic_map_star_small_on)
+                    holder.mNums[i].setTextColor(ContextCompat.getColor(mContext, R.color.map_pass))
+                    holder.mStars[i].setImageResource(R.drawable.map_star_completed)
 
-                    if (entity.passNum == lightStar) {
+                    if (entity.mPassNum == mLightStar) {
                         Handler(Looper.getMainLooper()).postDelayed({
                             PlayMusic.getInstance().playMapLightStar()
-                            animateStar(holder.stars[idx])
+                            animateStar(holder.mStars[idx])
                         }, 180)
                     }
 
-                    holder.stars[i].setOnClickListener {
+                    holder.mStars[i].setOnClickListener {
                         PlayMusic.getInstance().playDialogShow()
-                        passStarView.setImageResource(R.drawable.ic_pop_star)
-                        passNumView.text = holder.nums[idx].text
-                        passTimesView.text = entity.playTime
-                        MyDialogManager.getInstance().show(dialog)
+                        mPassStarView.setImageResource(R.drawable.star_earned)
+                        mPassNumView.text = holder.mNums[idx].text
+                        mPassTimesView.text = entity.mPlayTime
+                        MyDialogManager.getInstance().show(mDialog)
                     }
 
-                    holder.lines[i].setImageResource(R.drawable.ic_map_line_left_on)
-                    if (i == 2) holder.lines[i].setImageResource(R.drawable.ic_map_line_right_on)
+                    holder.mLines[i].setImageResource(R.drawable.map_path_left_unlocked)
+                    if (i == 2) holder.mLines[i].setImageResource(R.drawable.map_path_right_unlocked)
                     if (i == 3) {
-                        holder.lines[i].setImageResource(R.drawable.ic_map_line_right_on)
-                        holder.lines[4].setImageResource(R.drawable.ic_map_line_left_on)
+                        holder.mLines[i].setImageResource(R.drawable.map_path_right_unlocked)
+                        holder.mLines[4].setImageResource(R.drawable.map_path_left_unlocked)
                     }
                 }
                 "待通关" -> {
-                    holder.lights[i].visibility = View.VISIBLE
+                    holder.mLights[i].visibility = View.VISIBLE
                     ValueAnimator.ofFloat(0.1f, 1f).apply {
                         duration = 1500
                         repeatCount = ObjectAnimator.INFINITE
                         repeatMode = ValueAnimator.REVERSE
-                        addUpdateListener { holder.lights[idx].alpha = it.animatedValue as Float }
+                        addUpdateListener { holder.mLights[idx].alpha = it.animatedValue as Float }
                         start()
                     }
-                    holder.lines[i].setImageResource(R.drawable.ic_map_line_left_on)
-                    if (i == 0) holder.lines[0].setImageResource(R.drawable.ic_map_line_left_on)
-                    if (i == 2) holder.lines[i].setImageResource(R.drawable.ic_map_line_right_on)
-                    if (i == 3) holder.lines[i].setImageResource(R.drawable.ic_map_line_right_on)
+                    holder.mLines[i].setImageResource(R.drawable.map_path_left_unlocked)
+                    if (i == 0) holder.mLines[0].setImageResource(R.drawable.map_path_left_unlocked)
+                    if (i == 2) holder.mLines[i].setImageResource(R.drawable.map_path_right_unlocked)
+                    if (i == 3) holder.mLines[i].setImageResource(R.drawable.map_path_right_unlocked)
 
-                    holder.stars[i].setOnClickListener {
+                    holder.mStars[i].setOnClickListener {
                         PlayMusic.getInstance().playDialogShow()
-                        passStarView.setImageResource(R.drawable.ic_pop_star_bg)
-                        passNumView.text = holder.nums[idx].text
-                        passTimesView.text = entity.playTime
-                        MyDialogManager.getInstance().show(dialog)
+                        mPassStarView.setImageResource(R.drawable.star_empty)
+                        mPassNumView.text = holder.mNums[idx].text
+                        mPassTimesView.text = entity.mPlayTime
+                        MyDialogManager.getInstance().show(mDialog)
                     }
                 }
                 else -> {
-                    holder.nums[i].setTextColor("#E7E8E9".toColorInt())
-                    holder.stars[i].setImageResource(R.drawable.ic_map_star_small_off)
-                    holder.lines[i].setImageResource(R.drawable.ic_map_line_left_off)
-                    if (i == 2 || i == 3) holder.lines[i].setImageResource(R.drawable.ic_map_line_right_off)
+                    holder.mNums[i].setTextColor("#E7E8E9".toColorInt())
+                    holder.mStars[i].setImageResource(R.drawable.map_star_locked)
+                    holder.mLines[i].setImageResource(R.drawable.map_path_left_locked)
+                    if (i == 2 || i == 3) holder.mLines[i].setImageResource(R.drawable.map_path_right_locked)
                 }
             }
 
-            if (holder.nums[i].text.toString() == "1") {
-                holder.lines[0].visibility = View.GONE
+            if (holder.mNums[i].text.toString() == "1") {
+                holder.mLines[0].visibility = View.GONE
             }
         }
     }
@@ -177,12 +177,12 @@ class PassListAdapter(
         ObjectAnimator.ofFloat(star, "alpha", 0f, 1f).setDuration(400).start()
     }
 
-    override fun getItemCount() = passList.size + 1
+    override fun getItemCount() = mPassList.size + 1
 
     fun getPosition(): Int {
-        for (i in passList.indices) {
+        for (i in mPassList.indices) {
             for (j in 0 until 4) {
-                if (passList[i][j]?.status == "待通关") return passList.size - i
+                if (mPassList[i][j]?.mStatus == "待通关") return mPassList.size - i
             }
         }
         return 0

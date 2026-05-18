@@ -14,8 +14,8 @@ import com.bird.starryskysudoku.ui.map.MapActivity
 
 class GuideActivity : AppCompatActivity() {
 
-    private lateinit var guides: Array<ConstraintLayout>
-    private lateinit var finalGuide: ConstraintLayout
+    private lateinit var mGuides: Array<ConstraintLayout>
+    private lateinit var mFinalGuide: ConstraintLayout
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -23,12 +23,12 @@ class GuideActivity : AppCompatActivity() {
 
         PlayMusic.getInstance().playBGM()
 
-        guides = arrayOf(
+        mGuides = arrayOf(
             findViewById(R.id.guide_1), findViewById(R.id.guide_2),
             findViewById(R.id.guide_3), findViewById(R.id.guide_4),
             findViewById(R.id.guide_5)
         )
-        finalGuide = findViewById(R.id.guide_6)
+        mFinalGuide = findViewById(R.id.guide_6)
         initTouch()
         initBackHandler()
     }
@@ -36,23 +36,24 @@ class GuideActivity : AppCompatActivity() {
     private fun initTouch() {
         for (i in 0 until 5) {
             val idx = i
-            guides[i].setOnClickListener {
+            mGuides[i].setOnClickListener {
                 PlayMusic.getInstance().playButtonTap()
-                guides[idx].visibility = View.GONE
+                mGuides[idx].visibility = View.GONE
                 if (idx == 4) {
-                    finalGuide.visibility = View.VISIBLE
+                    mFinalGuide.visibility = View.VISIBLE
                 } else {
-                    guides[idx + 1].visibility = View.VISIBLE
+                    mGuides[idx + 1].visibility = View.VISIBLE
                 }
             }
         }
-        finalGuide.setOnClickListener {
+        mFinalGuide.setOnClickListener {
             PlayMusic.getInstance().playButtonTap()
             getSharedPreferences("firstcome", MODE_PRIVATE).edit {
                 putBoolean("first", false)
             }
             startActivityWithTransition(
-                Intent(this, MapActivity::class.java),
+                Intent(this, MapActivity::class.java)
+                    .putExtra(MapActivity.EXTRA_FLASH_HOME, false),
                 R.anim.playpage_show,
                 R.anim.playpage_hide
             )
