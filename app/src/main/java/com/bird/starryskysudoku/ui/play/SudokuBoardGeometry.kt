@@ -75,12 +75,18 @@ object SudokuBoardGeometry {
         top: Float = 0f,
         padding: Float = 0f
     ): BoardRect {
-        val size = cellSize(width)
+        val endRow = startRow + rowSpan
+        val endCol = startCol + colSpan
         return BoardRect(
-            left = left + BORDER_INSET + startCol * size - padding,
-            top = top + BORDER_INSET + startRow * size - padding,
-            right = left + BORDER_INSET + (startCol + colSpan) * size + padding,
-            bottom = top + BORDER_INSET + (startRow + rowSpan) * size + padding
+            left = left + gridLineOffset(width, startCol) - padding,
+            top = top + gridLineOffset(width, startRow) - padding,
+            right = left + gridLineOffset(width, endCol) + padding,
+            bottom = top + gridLineOffset(width, endRow) + padding
         )
+    }
+
+    private fun gridLineOffset(width: Float, index: Int): Float {
+        val inset = if (index % 3 == 0) BORDER_INSET else CELL_INSET
+        return inset + index * cellSize(width)
     }
 }

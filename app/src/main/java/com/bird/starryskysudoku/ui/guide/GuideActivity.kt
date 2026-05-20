@@ -117,7 +117,7 @@ class GuideActivity : AppCompatActivity() {
 
     private fun renderSpotlight(step: GuideStep) {
         when (step) {
-            GuideStep.WELCOME -> mSpotlight.setHighlights(listOf(boardBorderRect(2f)), dimmed = true)
+            GuideStep.WELCOME -> mSpotlight.setHighlights(listOf(boardBorderRect(5f)), dimmed = true)
             GuideStep.RULE_UNIQUE -> mSpotlight.setHighlights(ruleHighlights(), dimmed = true)
             GuideStep.SELECT_CELL -> mSpotlight.setHighlights(listOf(boardCellRect()), dimmed = true)
             GuideStep.ENTER_NUMBER -> mSpotlight.setHighlights(listOf(numberKeyRect(mNumberKeys[DEMO_NUMBER_INDEX])), dimmed = true)
@@ -129,13 +129,16 @@ class GuideActivity : AppCompatActivity() {
     private fun ruleHighlights(): List<RectF> {
         val row = demoCellIndex().first
         val col = demoCellIndex().second
-        val blockRow = row / 3
-        val blockCol = col / 3
-        return listOf(
-            boardAreaRect(row, 0, 1, 9, 1f),
-            boardAreaRect(0, col, 9, 1, 1f),
-            blockAreaRect(blockRow, blockCol, 1f)
-        )
+        return GuideRuleHighlightCells.regionsFor(row, col).map { region ->
+            boardAreaRect(
+                startRow = region.startRow,
+                startCol = region.startCol,
+                rowSpan = region.rowSpan,
+                colSpan = region.colSpan,
+                leftTopPadding = 3f,
+                rightBottomPadding = 2f
+            )
+        }
     }
 
     private fun boardCellRect(): RectF {
@@ -158,10 +161,11 @@ class GuideActivity : AppCompatActivity() {
         startCol: Int,
         rowSpan: Int,
         colSpan: Int,
-        extraPadding: Float
+        leftTopPadding: Float,
+        rightBottomPadding: Float
     ): RectF {
         val origin = viewRect(mBoard, 0f)
-        return SudokuBoardGeometry.boardRegionRect(
+        val rect = SudokuBoardGeometry.boardRegionRect(
             width = mBoard.width.toFloat(),
             startRow = startRow,
             startCol = startCol,
@@ -169,20 +173,13 @@ class GuideActivity : AppCompatActivity() {
             colSpan = colSpan,
             left = origin.left,
             top = origin.top,
-            padding = extraPadding
+            padding = 0f
         ).toRectF()
-    }
-
-    private fun blockAreaRect(blockRow: Int, blockCol: Int, extraPadding: Float): RectF {
-        val origin = viewRect(mBoard, 0f)
-        return SudokuBoardGeometry.blockRect(
-            width = mBoard.width.toFloat(),
-            blockRow = blockRow,
-            blockCol = blockCol,
-            left = origin.left,
-            top = origin.top,
-            padding = extraPadding
-        ).toRectF()
+        rect.left -= leftTopPadding
+        rect.top -= leftTopPadding
+        rect.right += rightBottomPadding
+        rect.bottom += rightBottomPadding
+        return rect
     }
 
     private fun cellAreaRect(row: Int, col: Int, extraPadding: Float): RectF {
@@ -290,7 +287,7 @@ class GuideActivity : AppCompatActivity() {
         private const val DEMO_NUMBER_INDEX = 6
         private const val CENTER_INDEX = 4
         private const val CELL_RIGHT_BOTTOM_ADJUST = 2f
-        private const val NUMBER_KEY_HORIZONTAL_INSET = 7f
+        private const val NUMBER_KEY_HORIZONTAL_INSET = 2f
         private const val NUMBER_KEY_VERTICAL_INSET = 11f
     }
 }

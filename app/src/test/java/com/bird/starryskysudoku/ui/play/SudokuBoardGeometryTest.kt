@@ -51,7 +51,7 @@ class SudokuBoardGeometryTest {
     }
 
     @Test
-    fun `board region rect can describe highlighted rows and columns from border coordinates`() {
+    fun `board region rect uses matching grid line coordinates for rows and columns`() {
         val rect = SudokuBoardGeometry.boardRegionRect(
             width = 370f,
             startRow = 4,
@@ -65,8 +65,28 @@ class SudokuBoardGeometryTest {
         val cellSize = 316f / 9f
 
         assertEquals(10f + 24f - 1f, rect.left, 0.001f)
-        assertEquals(20f + 24f + 4 * cellSize - 1f, rect.top, 0.001f)
+        assertEquals(20f + 28f + 4 * cellSize - 1f, rect.top, 0.001f)
         assertEquals(10f + 24f + 9 * cellSize + 1f, rect.right, 0.001f)
-        assertEquals(20f + 24f + 5 * cellSize + 1f, rect.bottom, 0.001f)
+        assertEquals(20f + 28f + 5 * cellSize + 1f, rect.bottom, 0.001f)
+    }
+
+    @Test
+    fun `board region rect follows thin grid lines for non block boundaries`() {
+        val rect = SudokuBoardGeometry.boardRegionRect(
+            width = 370f,
+            startRow = 4,
+            startCol = 4,
+            rowSpan = 1,
+            colSpan = 1,
+            left = 10f,
+            top = 20f,
+            padding = 0f
+        )
+        val cellSize = 316f / 9f
+
+        assertEquals(10f + 28f + 4 * cellSize, rect.left, 0.001f)
+        assertEquals(20f + 28f + 4 * cellSize, rect.top, 0.001f)
+        assertEquals(10f + 28f + 5 * cellSize, rect.right, 0.001f)
+        assertEquals(20f + 28f + 5 * cellSize, rect.bottom, 0.001f)
     }
 }
