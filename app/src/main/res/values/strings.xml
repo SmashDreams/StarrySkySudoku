@@ -3,12 +3,18 @@
     <string name="app_name">星空数独</string>
     <string name="tap">点击任意位置继续</string>
     <string name="guide_1_1">欢迎！</string>
-    <string name="guide_1_2">要解开一个数独谜题，请在盘上填满数字。</string>
+    <string name="guide_1_2">要解开一个数独谜题，\n请在盘上填满数字。</string>
+    <string name="guide_title_rule">数独规则</string>
+    <string name="guide_title_select_cell">选择空格</string>
+    <string name="guide_title_enter_number">输入数字</string>
+    <string name="guide_title_timer">注意时间</string>
+    <string name="guide_title_good_luck">祝你好运！</string>
+    <string name="guide_start">开始探索星空</string>
     <string name="guide_2">一个数字只能在每行、每列和每个小方块中出现一次。</string>
-    <string name="guide_3">要输入一个数字，先点按一个空格。</string>
+    <string name="guide_3">要输入一个数字，\n请点按一个空格。</string>
     <string name="guide_4">然后点击要输入的数字。</string>
     <string name="guide_5">注意时间限制！</string>
-    <string name="guide_6">这是星空数独的基本规则，祝您好运！</string>
+    <string name="guide_6">这是星空数独的基本规则，\n祝您好运！</string>
 
     <string name="star">星星 - </string>
     <string name="nextlevel">一大波关卡</string>

@@ -3,12 +3,18 @@
     <string name="app_name">STARRY SKY SUDOKU</string>
     <string name="tap">Tap anywhere to continue</string>
     <string name="guide_1_1">Welcome!</string>
-    <string name="guide_1_2">To solve a Sudoku puzzle,fill the board with numbers.</string>
+    <string name="guide_1_2">To solve a Sudoku puzzle,\nfill the board with numbers.</string>
+    <string name="guide_title_rule">Sudoku Rule</string>
+    <string name="guide_title_select_cell">Select a Cell</string>
+    <string name="guide_title_enter_number">Enter a Number</string>
+    <string name="guide_title_timer">Watch the Timer</string>
+    <string name="guide_title_good_luck">Good Luck!</string>
+    <string name="guide_start">Start Exploring</string>
     <string name="guide_2">A number can appear only ONCE in each ROW、COLUMN &amp; BLOCK.</string>
-    <string name="guide_3">To enter a number,tap on an EMPTY cell,</string>
+    <string name="guide_3">To enter a number,\ntap on an EMPTY cell.</string>
     <string name="guide_4">then tap on the appropriate number.</string>
     <string name="guide_5">You have a limited amount of time to complete each puzzle!</string>
-    <string name="guide_6">This covers the basics of Starry Sudoku.Good Luck!</string>
+    <string name="guide_6">This covers the basics of Starry Sudoku.\nGood Luck!</string>
 
     <string name="star">STAR - </string>
     <string name="nextlevel">More Levels</string>
