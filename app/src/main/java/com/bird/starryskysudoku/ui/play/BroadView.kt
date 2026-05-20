@@ -75,8 +75,8 @@ class BroadView : AppCompatImageView {
 
     override fun onSizeChanged(w: Int, h: Int, oldw: Int, oldh: Int) {
         super.onSizeChanged(w, h, oldw, oldh)
-        mWidth = (w - 54) / 9.0f
-        mHeight = (h - 54) / 9.0f
+        mWidth = SudokuBoardGeometry.cellSize(w.toFloat())
+        mHeight = SudokuBoardGeometry.cellSize(h.toFloat())
     }
 
     @SuppressLint("DrawAllocation")
@@ -86,8 +86,8 @@ class BroadView : AppCompatImageView {
         for (i in 0 until 9) {
             for (j in 0 until 9) {
                 rect.set(
-                    (28 + (mWidth * j)).toInt(), (28 + (mWidth * i)).toInt(),
-                    (28 + (mWidth * (j + 1))).toInt(), (28 + (mWidth * (i + 1))).toInt()
+                    (SudokuBoardGeometry.CELL_INSET + (mWidth * j)).toInt(), (SudokuBoardGeometry.CELL_INSET + (mWidth * i)).toInt(),
+                    (SudokuBoardGeometry.CELL_INSET + (mWidth * (j + 1))).toInt(), (SudokuBoardGeometry.CELL_INSET + (mWidth * (i + 1))).toInt()
                 )
                 if (mData[i][j].mType == PROBLEM) {
                     when {
@@ -125,8 +125,8 @@ class BroadView : AppCompatImageView {
         for (i in 0 until 9) {
             for (j in 0 until 9) {
                 if (mData[i][j].mValue == "0") {
-                    val cellLeft = 28 + mWidth * j
-                    val cellTop = 28 + mWidth * i
+                    val cellLeft = SudokuBoardGeometry.CELL_INSET + mWidth * j
+                    val cellTop = SudokuBoardGeometry.CELL_INSET + mWidth * i
                     var position = 0
                     for (m in 0 until 3) {
                         for (n in 0 until 3) {
@@ -157,7 +157,7 @@ class BroadView : AppCompatImageView {
             for (i in 0 until 9) {
                 for (j in 0 until 9) {
                     if (mData[i][j].mValue != "0") {
-                        val cellLeft = 28 + mWidth * j; val cellTop = 28 + mWidth * i
+                        val cellLeft = SudokuBoardGeometry.CELL_INSET + mWidth * j; val cellTop = SudokuBoardGeometry.CELL_INSET + mWidth * i
                         val centerX = cellLeft + mWidth / 2; val centerY = cellTop + mWidth / 2
                         val baseline = centerY - (number.ascent() + number.descent()) / 2
                         canvas.drawText(mData[i][j].mValue, centerX, baseline, number)
@@ -168,7 +168,7 @@ class BroadView : AppCompatImageView {
             number.textSize = 80f; number.typeface = Typeface.DEFAULT_BOLD
             for (i in 0 until 9) {
                 for (j in 0 until 9) {
-                    val cellLeft = 28 + mWidth * j; val cellTop = 28 + mWidth * i
+                    val cellLeft = SudokuBoardGeometry.CELL_INSET + mWidth * j; val cellTop = SudokuBoardGeometry.CELL_INSET + mWidth * i
                     val centerX = cellLeft + mWidth / 2; val centerY = cellTop + mWidth / 2
                     if (i == mLine) {
                         number.textSize = mTextSize.toFloat(); number.alpha = mTextAlpha
@@ -189,8 +189,8 @@ class BroadView : AppCompatImageView {
         for (i in 0 until 9) {
             for (j in 0 until 9) {
                 rect.set(
-                    (28 + (mWidth * j)).toInt(), (28 + (mWidth * i)).toInt(),
-                    (28 + (mWidth * (j + 1))).toInt(), (28 + (mWidth * (i + 1))).toInt()
+                    (SudokuBoardGeometry.CELL_INSET + (mWidth * j)).toInt(), (SudokuBoardGeometry.CELL_INSET + (mWidth * i)).toInt(),
+                    (SudokuBoardGeometry.CELL_INSET + (mWidth * (j + 1))).toInt(), (SudokuBoardGeometry.CELL_INSET + (mWidth * (i + 1))).toInt()
                 )
                 canvas.drawRect(rect, rectangular)
             }
@@ -203,12 +203,12 @@ class BroadView : AppCompatImageView {
         }
         val lineOffset = line.strokeWidth / 2
         for (i in 0 until 4) {
-            val y = 28 - lineOffset + (mWidth * i * 3)
-            canvas.drawLine(28 - lineOffset, y, 28 + (mWidth * 9) + lineOffset, y, line)
+            val y = SudokuBoardGeometry.CELL_INSET - lineOffset + (mWidth * i * 3)
+            canvas.drawLine(SudokuBoardGeometry.CELL_INSET - lineOffset, y, SudokuBoardGeometry.CELL_INSET + (mWidth * SudokuBoardGeometry.BOARD_SIZE) + lineOffset, y, line)
         }
         for (i in 0 until 4) {
-            val x = 28 - lineOffset + (mWidth * i * 3)
-            canvas.drawLine(x, 28 - lineOffset, x, 28 + (mWidth * 9) + lineOffset, line)
+            val x = SudokuBoardGeometry.CELL_INSET - lineOffset + (mWidth * i * 3)
+            canvas.drawLine(x, SudokuBoardGeometry.CELL_INSET - lineOffset, x, SudokuBoardGeometry.CELL_INSET + (mWidth * SudokuBoardGeometry.BOARD_SIZE) + lineOffset, line)
         }
 
         // Outer border
@@ -216,10 +216,10 @@ class BroadView : AppCompatImageView {
             color = Color.WHITE; strokeWidth = 2f
             style = Paint.Style.STROKE; isAntiAlias = true
         }
-        val borderMargin = 24
+        val boardBorder = SudokuBoardGeometry.boardBorderRect(width.toFloat())
         val outerRect = Rect(
-            borderMargin, borderMargin,
-            (borderMargin + mWidth * 9).toInt(), (borderMargin + mWidth * 9).toInt()
+            boardBorder.left.toInt(), boardBorder.top.toInt(),
+            boardBorder.right.toInt(), boardBorder.bottom.toInt()
         )
         canvas.drawRect(outerRect, outerBorder)
     }
@@ -229,9 +229,9 @@ class BroadView : AppCompatImageView {
         when (event.action) {
             MotionEvent.ACTION_DOWN -> {
                 val x = event.x; val y = event.y
-                if (x < 28 || y < 28 || x >= 28 + mWidth * 9 || y >= 28 + mWidth * 9) return false
-                mCol = ((x - 28) / mWidth).toInt().coerceIn(0, 8)
-                mRow = ((y - 28) / mWidth).toInt().coerceIn(0, 8)
+                if (x < SudokuBoardGeometry.CELL_INSET || y < SudokuBoardGeometry.CELL_INSET || x >= SudokuBoardGeometry.CELL_INSET + mWidth * SudokuBoardGeometry.BOARD_SIZE || y >= SudokuBoardGeometry.CELL_INSET + mWidth * SudokuBoardGeometry.BOARD_SIZE) return false
+                mCol = ((x - SudokuBoardGeometry.CELL_INSET) / mWidth).toInt().coerceIn(0, 8)
+                mRow = ((y - SudokuBoardGeometry.CELL_INSET) / mWidth).toInt().coerceIn(0, 8)
                 mBigBlock = getBigBlock(mRow, mCol)
                 return true
             }

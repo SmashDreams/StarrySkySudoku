@@ -16,6 +16,7 @@ import com.bird.starryskysudoku.media.PlayMusic
 import com.bird.starryskysudoku.ui.common.startActivityWithTransition
 import com.bird.starryskysudoku.ui.map.MapActivity
 import com.bird.starryskysudoku.ui.play.BroadView
+import com.bird.starryskysudoku.ui.play.SudokuBoardGeometry
 import kotlinx.coroutines.launch
 
 class GuideActivity : AppCompatActivity() {
@@ -116,7 +117,7 @@ class GuideActivity : AppCompatActivity() {
 
     private fun renderSpotlight(step: GuideStep) {
         when (step) {
-            GuideStep.WELCOME -> mSpotlight.setHighlights(listOf(boardAreaRect(0, 0, 9, 9, 2f)), dimmed = true)
+            GuideStep.WELCOME -> mSpotlight.setHighlights(listOf(boardBorderRect(2f)), dimmed = true)
             GuideStep.RULE_UNIQUE -> mSpotlight.setHighlights(ruleHighlights(), dimmed = true)
             GuideStep.SELECT_CELL -> mSpotlight.setHighlights(listOf(boardCellRect()), dimmed = true)
             GuideStep.ENTER_NUMBER -> mSpotlight.setHighlights(listOf(numberKeyRect(mNumberKeys[DEMO_NUMBER_INDEX])), dimmed = true)
@@ -142,6 +143,16 @@ class GuideActivity : AppCompatActivity() {
         return cellAreaRect(row, col, 1f)
     }
 
+    private fun boardBorderRect(extraPadding: Float): RectF {
+        val origin = viewRect(mBoard, 0f)
+        return SudokuBoardGeometry.boardBorderRect(
+            width = mBoard.width.toFloat(),
+            left = origin.left,
+            top = origin.top,
+            padding = extraPadding
+        ).toRectF()
+    }
+
     private fun boardAreaRect(
         startRow: Int,
         startCol: Int,
@@ -149,33 +160,42 @@ class GuideActivity : AppCompatActivity() {
         colSpan: Int,
         extraPadding: Float
     ): RectF {
-        val boardRect = viewRect(mBoard, 0f)
-        val cellSize = (mBoard.width - BOARD_CELL_SIZE_OFFSET) / 9f
-        val left = boardRect.left + BOARD_BORDER_INSET + startCol * cellSize - extraPadding
-        val top = boardRect.top + BOARD_BORDER_INSET + startRow * cellSize - extraPadding
-        val right = boardRect.left + BOARD_BORDER_INSET + (startCol + colSpan) * cellSize + extraPadding
-        val bottom = boardRect.top + BOARD_BORDER_INSET + (startRow + rowSpan) * cellSize + extraPadding
-        return RectF(left, top, right, bottom)
+        val origin = viewRect(mBoard, 0f)
+        return SudokuBoardGeometry.boardRegionRect(
+            width = mBoard.width.toFloat(),
+            startRow = startRow,
+            startCol = startCol,
+            rowSpan = rowSpan,
+            colSpan = colSpan,
+            left = origin.left,
+            top = origin.top,
+            padding = extraPadding
+        ).toRectF()
     }
 
     private fun blockAreaRect(blockRow: Int, blockCol: Int, extraPadding: Float): RectF {
-        val boardRect = viewRect(mBoard, 0f)
-        val blockSize = (mBoard.width - BOARD_CELL_SIZE_OFFSET) / 3f
-        val left = boardRect.left + BOARD_BORDER_INSET + blockCol * blockSize - extraPadding
-        val top = boardRect.top + BOARD_BORDER_INSET + blockRow * blockSize - extraPadding
-        val right = boardRect.left + BOARD_BORDER_INSET + (blockCol + 1) * blockSize + extraPadding
-        val bottom = boardRect.top + BOARD_BORDER_INSET + (blockRow + 1) * blockSize + extraPadding
-        return RectF(left, top, right, bottom)
+        val origin = viewRect(mBoard, 0f)
+        return SudokuBoardGeometry.blockRect(
+            width = mBoard.width.toFloat(),
+            blockRow = blockRow,
+            blockCol = blockCol,
+            left = origin.left,
+            top = origin.top,
+            padding = extraPadding
+        ).toRectF()
     }
 
     private fun cellAreaRect(row: Int, col: Int, extraPadding: Float): RectF {
-        val boardRect = viewRect(mBoard, 0f)
-        val cellSize = (mBoard.width - BOARD_CELL_SIZE_OFFSET) / 9f
-        val left = boardRect.left + BOARD_CELL_INSET + col * cellSize - extraPadding
-        val top = boardRect.top + BOARD_CELL_INSET + row * cellSize - extraPadding
-        val right = boardRect.left + BOARD_CELL_INSET + (col + 1) * cellSize - CELL_RIGHT_BOTTOM_ADJUST + extraPadding
-        val bottom = boardRect.top + BOARD_CELL_INSET + (row + 1) * cellSize - CELL_RIGHT_BOTTOM_ADJUST + extraPadding
-        return RectF(left, top, right, bottom)
+        val origin = viewRect(mBoard, 0f)
+        return SudokuBoardGeometry.cellRect(
+            width = mBoard.width.toFloat(),
+            row = row,
+            col = col,
+            left = origin.left,
+            top = origin.top,
+            padding = extraPadding,
+            rightBottomAdjust = CELL_RIGHT_BOTTOM_ADJUST
+        ).toRectF()
     }
 
     private fun viewRect(view: View, extraPadding: Float): RectF {
@@ -197,6 +217,10 @@ class GuideActivity : AppCompatActivity() {
         val rect = viewRect(view, 0f)
         rect.inset(NUMBER_KEY_HORIZONTAL_INSET, NUMBER_KEY_VERTICAL_INSET)
         return rect
+    }
+
+    private fun SudokuBoardGeometry.BoardRect.toRectF(): RectF {
+        return RectF(left, top, right, bottom)
     }
 
     private fun demoCellIndex(): Pair<Int, Int> {
@@ -265,9 +289,6 @@ class GuideActivity : AppCompatActivity() {
         private const val FIRST_LEVEL = 1
         private const val DEMO_NUMBER_INDEX = 6
         private const val CENTER_INDEX = 4
-        private const val BOARD_BORDER_INSET = 24f
-        private const val BOARD_CELL_INSET = 28f
-        private const val BOARD_CELL_SIZE_OFFSET = 54f
         private const val CELL_RIGHT_BOTTOM_ADJUST = 2f
         private const val NUMBER_KEY_HORIZONTAL_INSET = 7f
         private const val NUMBER_KEY_VERTICAL_INSET = 11f
