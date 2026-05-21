@@ -1,9 +1,9 @@
 <resources xmlns:tools="http://schemas.android.com/tools">
-    <!-- Base application theme. -->
+    <!-- 应用基础主题。 -->
     <style name="Base.Theme.StarrySkySudoku" parent="Theme.Material3.DayNight.NoActionBar">
-        <!-- Primary brand color. -->
+        <!-- 主品牌色可在这里配置。 -->
 
-        <!-- Customize your theme here. -->
+        <!-- 在这里扩展通用主题配置。 -->
     </style>
 
     <style name="Theme.StarrySkySudoku.Starting" parent="Theme.SplashScreen">

@@ -181,7 +181,9 @@ class BroadView : AppCompatImageView {
             }
         }
 
-        // Grid lines
+        /*
+         * 绘制每个小格子的细边框。
+         */
         val rectangular = Paint().apply {
             color = Color.BLACK; strokeWidth = 1f; style = Paint.Style.STROKE
         }
@@ -196,7 +198,9 @@ class BroadView : AppCompatImageView {
             }
         }
 
-        // Big block lines (3x3)
+        /*
+         * 绘制三乘三宫格的粗分隔线，帮助玩家区分九宫区域。
+         */
         val line = Paint().apply {
             color = Color.BLACK; strokeWidth = 9f
             style = Paint.Style.STROKE; isAntiAlias = true
@@ -211,7 +215,9 @@ class BroadView : AppCompatImageView {
             canvas.drawLine(x, SudokuBoardGeometry.CELL_INSET - lineOffset, x, SudokuBoardGeometry.CELL_INSET + (mWidth * SudokuBoardGeometry.BOARD_SIZE) + lineOffset, line)
         }
 
-        // Outer border
+        /*
+         * 绘制棋盘最外层白色边框，使棋盘从星空背景中突出。
+         */
         val outerBorder = Paint().apply {
             color = Color.WHITE; strokeWidth = 2f
             style = Paint.Style.STROKE; isAntiAlias = true

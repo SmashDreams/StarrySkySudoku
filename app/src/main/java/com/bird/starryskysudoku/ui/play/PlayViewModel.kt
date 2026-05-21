@@ -7,8 +7,6 @@ import androidx.lifecycle.viewModelScope
 import com.bird.starryskysudoku.data.database.AppDatabase
 import com.bird.starryskysudoku.data.entity.HistoryEntity
 import com.bird.starryskysudoku.timer.CountdownTimerContract
-import kotlinx.coroutines.Job
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import java.util.UUID
 
@@ -52,8 +50,7 @@ class PlayViewModel(private val mDb: AppDatabase) : ViewModel() {
     private var mCurrentPassNum = 0
     private var mGameSession = UUID.randomUUID().toString()
 
-    private var mTimerJob: Job? = null
-    private val mRemainingSecondsSource = MutableLiveData(600) // 10min
+    private val mRemainingSecondsSource = MutableLiveData(CountdownTimerContract.DEFAULT_TOTAL_SECONDS)
     val mRemainingSeconds: LiveData<Int> = mRemainingSecondsSource
     private val mTimerFinishedSource = MutableLiveData(false)
     val mTimerFinished: LiveData<Boolean> = mTimerFinishedSource
@@ -83,22 +80,11 @@ class PlayViewModel(private val mDb: AppDatabase) : ViewModel() {
         }
     }
 
-    fun startTimer(onTick: ((Int) -> Unit)? = null) {
-        mTimerJob?.cancel()
-        mTimerJob = viewModelScope.launch {
-            while (mRemainingSecondsSource.value!! > 0) {
-                delay(1000)
-                val current = mRemainingSecondsSource.value!! - 1
-                mRemainingSecondsSource.value = current
-                onTick?.invoke(current)
-            }
-            mTimerFinishedSource.value = true
-        }
-    }
-
-    fun pauseTimer() { mTimerJob?.cancel() }
-
     fun updateRemainingSeconds(seconds: Int) {
+        /*
+         * 后台服务是唯一倒计时源；视图模型只保存广播传来的状态，
+         * 避免页面重建后出现多个计时器同时递减。
+         */
         val safeSeconds = seconds.coerceAtLeast(0)
         mRemainingSecondsSource.value = safeSeconds
         if (safeSeconds == 0 && mTimerFinishedSource.value != true) {
@@ -148,7 +134,9 @@ class PlayViewModel(private val mDb: AppDatabase) : ViewModel() {
         val cell = b[x][y]
         val historyDao = mDb.historyDao()
 
-        // Insert same number = clear
+        /*
+         * 再次输入同一个数字表示清空当前格子，同时记录撤销历史。
+         */
         if (cell.mValue == number) {
             historyDao.insert(newHistory(x, y, TYPE_NUMBER, mLastValue.toIntOrNull() ?: 0))
             historyDao.trimToLimit(mCurrentPassNum, mGameSession)

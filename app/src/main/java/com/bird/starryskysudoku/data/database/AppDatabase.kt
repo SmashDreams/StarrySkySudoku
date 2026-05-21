@@ -17,6 +17,10 @@ import com.bird.starryskysudoku.data.entity.ProblemEntity
     exportSchema = false
 )
 abstract class AppDatabase : RoomDatabase() {
+    /*
+     * 题库、关卡、撤销历史和战绩共享都通过同一个数据库实例访问，
+     * 确保内容提供器和游戏页面看到的数据保持一致。
+     */
     abstract fun problemDao(): ProblemDao
     abstract fun mapDao(): MapDao
     abstract fun historyDao(): HistoryDao

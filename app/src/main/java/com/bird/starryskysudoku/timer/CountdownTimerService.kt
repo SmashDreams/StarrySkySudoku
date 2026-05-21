@@ -7,14 +7,22 @@ import android.os.IBinder
 
 class CountdownTimerService : Service() {
 
+    /*
+     * 后台服务只负责维护倒计时，不直接接触界面控件。
+     * 页面通过动态注册的广播接收器接收剩余时间，避免页面和计时逻辑强耦合。
+     */
     private var mTimer: CountDownTimer? = null
 
     override fun onBind(intent: Intent?): IBinder? = null
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
+        /*
+         * 每次启动服务都使用最新剩余时间重新计时；
+         * 参数会被限制在一局游戏的有效范围内，避免异常调用拖长服务生命周期。
+         */
         val initialSeconds = intent
             ?.getIntExtra(CountdownTimerContract.EXTRA_INITIAL_SECONDS, CountdownTimerContract.DEFAULT_TOTAL_SECONDS)
-            ?.coerceAtLeast(0)
+            ?.let(CountdownTimerContract::normalizeInitialSeconds)
             ?: CountdownTimerContract.DEFAULT_TOTAL_SECONDS
         startCountdown(initialSeconds)
         return START_NOT_STICKY
@@ -35,8 +43,8 @@ class CountdownTimerService : Service() {
         }
 
         /*
-         * Service 负责游戏倒计时，Activity 不直接持有计时器；
-         * 每秒通过系统 Broadcast 把剩余时间发送给前台动态 Receiver。
+         * 后台服务负责游戏倒计时，页面不直接持有计时器；
+         * 每秒通过系统广播把剩余时间发送给前台动态接收器。
          */
         mTimer = object : CountDownTimer(initialSeconds * 1000L, 1000L) {
             override fun onTick(millisUntilFinished: Long) {
@@ -52,6 +60,9 @@ class CountdownTimerService : Service() {
 
     private fun sendCountdownBroadcast(remainingSeconds: Int) {
         val tickIntent = Intent(CountdownTimerContract.ACTION_COUNTDOWN_TICK).apply {
+            /*
+             * 广播只投递给本应用包名，避免把实时游戏状态泄露给其他应用。
+             */
             setPackage(packageName)
             putExtra(CountdownTimerContract.EXTRA_REMAINING_SECONDS, remainingSeconds)
         }

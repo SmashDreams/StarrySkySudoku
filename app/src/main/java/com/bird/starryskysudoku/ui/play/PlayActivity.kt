@@ -10,6 +10,7 @@ import android.content.IntentFilter
 import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
+import android.util.Log
 import android.view.MotionEvent
 import android.view.View
 import android.view.animation.LinearInterpolator
@@ -40,6 +41,7 @@ import java.util.Locale
 class PlayActivity : AppCompatActivity() {
 
     companion object {
+        private const val TAG = "PlayActivity"
         private const val MAX_LEVEL = 40
     }
 
@@ -55,14 +57,16 @@ class PlayActivity : AppCompatActivity() {
                 CountdownTimerContract.DEFAULT_TOTAL_SECONDS
             )
             /*
-             * BroadcastReceiver 是前台与后台 Service 的桥梁：
-             * 只解析广播数据并交给 ViewModel，UI 仍由 LiveData 统一刷新。
+             * 广播接收器是前台页面与后台服务之间的桥梁：
+             * 这里只解析剩余时间并交给视图模型，界面仍由可观察数据统一刷新。
              */
             mViewModel.updateRemainingSeconds(remainingSeconds)
         }
     }
 
-    // UI elements
+    /*
+     * 游戏页面的主要控件引用集中在这里保存，便于统一管理倒计时、棋盘和输入按钮状态。
+     */
     private lateinit var mPlayNum: TextView
     private lateinit var mTimeProgressBar: ProgressBar
     private lateinit var mRemainingMins: TextView
@@ -73,7 +77,9 @@ class PlayActivity : AppCompatActivity() {
     private lateinit var mTag: ImageView
     private lateinit var mPauseButton: ImageView
 
-    // State
+    /*
+     * 页面状态只保存与界面交互强相关的数据；实际棋盘数据和倒计时状态由视图模型维护。
+     */
     private var mMusicOpened = true
     private var mAudioOpened = true
     private var mIsPaused = false
@@ -81,7 +87,9 @@ class PlayActivity : AppCompatActivity() {
     private var mNum = "1"
     private var mTagData = Array(9) { arrayOfNulls<TagData>(9) }
 
-    // Dialogs
+    /*
+     * 暂停、胜利和失败弹窗贯穿游戏流程，统一持有可以避免重复创建窗口。
+     */
     private lateinit var mPauseDialog: MyDialog
     private lateinit var mWinDialog: MyDialog
     private lateinit var mLoseDialog: MyDialog
@@ -105,7 +113,9 @@ class PlayActivity : AppCompatActivity() {
         mMusicOpened = musicPrefs.getBoolean("music", true)
         mAudioOpened = musicPrefs.getBoolean("audio", true)
 
-        // Bind views
+        /*
+         * 进入页面后一次性绑定控件，后续只更新控件内容和可用状态。
+         */
         mPlayNum = findViewById(R.id.play_num); mPlayNum.text = mNum
         mTimeProgressBar = findViewById(R.id.play_time_progressbar)
         mRemainingMins = findViewById(R.id.play_time_min)
@@ -135,7 +145,9 @@ class PlayActivity : AppCompatActivity() {
     private fun initBoard() {
         mViewModel.initBoard(parseLevel(mNum))
         mViewModel.mBoard.observe(this) { board ->
-            // Initialize mTag data for empty cells
+            /*
+             * 只有空格需要候选数标记对象，题目给定数字不允许添加标记。
+             */
             for (i in 0 until 9) {
                 for (j in 0 until 9) {
                     if (board[i][j].mValue == "0" && mTagData[i][j] == null) {
@@ -150,7 +162,9 @@ class PlayActivity : AppCompatActivity() {
         mBroadView.setListener(object : BroadView.Listener {
             override fun onTouch(row: Int, col: Int, block: Int) {
                 if (mViewModel.mCurrentBlock == 0 && mViewModel.mBoard.value?.get(row)?.get(col)?.mType == PlayViewModel.EMPTY) {
-                    // already selected empty - proceed
+                    /*
+                     * 首次点中空格时只更新选中状态，实际填数由数字按钮完成。
+                     */
                 }
                 mViewModel.setCurrentPosition(row, col, block)
                 mViewModel.selectCell(row, col)
@@ -334,6 +348,9 @@ class PlayActivity : AppCompatActivity() {
 
                 if (!mViewModel.mTagMode) {
                     lifecycleScope.launch {
+                        /*
+                         * 普通填数会写入撤销历史；如果填完后达成胜利，再写入公开战绩。
+                         */
                         mViewModel.insertNumber(mViewModel.mCurrentX, mViewModel.mCurrentY, number)
                         mRevoke.alpha = 1f
                         mTag.alpha = 0.55f
@@ -347,7 +364,9 @@ class PlayActivity : AppCompatActivity() {
                         }
                     }
                 } else {
-                    // Tag mode
+                    /*
+                     * 标记模式只修改候选数，不改变棋盘正式答案。
+                     */
                     if (cell.mValue != "0") { PlayMusic.getInstance().playInputWrong(); return@setOnClickListener }
                     PlayMusic.getInstance().playButtonTap()
                     mRevoke.alpha = 1f
@@ -410,7 +429,10 @@ class PlayActivity : AppCompatActivity() {
                     board[history.mRow][history.mCol].mValue = history.mValue.toString()
                     board[history.mRow][history.mCol].mStatus = PlayViewModel.BE_SELECTED
                     if (history.mValue == 0) {
-                        mViewModel.selectCell(history.mRow, history.mCol) // will tap empty
+                        /*
+                         * 撤销到空格时重新走一次选中逻辑，用于恢复同行、同列和同宫高亮。
+                         */
+                        mViewModel.selectCell(history.mRow, history.mCol)
                         mTag.alpha = 1f
                     } else {
                         mViewModel.selectCell(history.mRow, history.mCol)
@@ -418,7 +440,9 @@ class PlayActivity : AppCompatActivity() {
                     }
                     mBroadView.initData(board)
                 } else {
-                    // Tag type undo
+                    /*
+                     * 标记撤销需要反向切换候选数，并同步数字按钮透明度。
+                     */
                     val board = mViewModel.mBoard.value!!
                     board[history.mRow][history.mCol].mStatus = PlayViewModel.BE_SELECTED
                     mTag.alpha = 1f
@@ -458,7 +482,9 @@ class PlayActivity : AppCompatActivity() {
     }
 
     private fun initDialogs(maxNum: Int) {
-        // Pause dialog
+        /*
+         * 暂停弹窗负责恢复、重开和返回地图；显示期间后台倒计时会停止。
+         */
         mPauseDialog = MyDialogManager.getInstance().initView(this, R.layout.dialog_pause)
         mPauseDialog.setCanceledOnTouchOutside(false)
 
@@ -497,7 +523,9 @@ class PlayActivity : AppCompatActivity() {
             }
         }
 
-        // Music toggle in pause dialog
+        /*
+         * 背景音乐开关写入偏好设置，重启页面后仍保持用户选择。
+         */
         val musicBtn = mPauseDialog.findViewById<ImageView>(R.id.pause_music)
         musicBtn.setImageResource(if (mMusicOpened) R.drawable.icon_music_on else R.drawable.icon_music_off)
         musicBtn.setOnClickListener {
@@ -514,7 +542,9 @@ class PlayActivity : AppCompatActivity() {
             }
         }
 
-        // Audio toggle
+        /*
+         * 音效开关与背景音乐分开保存，允许用户只关闭按键和结果音效。
+         */
         val audioBtn = mPauseDialog.findViewById<ImageView>(R.id.pause_audio)
         audioBtn.setImageResource(if (mAudioOpened) R.drawable.icon_sound_on else R.drawable.icon_sound_off)
         audioBtn.setOnClickListener {
@@ -529,7 +559,9 @@ class PlayActivity : AppCompatActivity() {
             }
         }
 
-        // Lose dialog
+        /*
+         * 失败弹窗只提供返回地图和重试，避免超时后继续修改棋盘。
+         */
         mLoseDialog = MyDialogManager.getInstance().initView(this, R.layout.dialog_lose)
         mLoseDialog.setCanceledOnTouchOutside(false)
 
@@ -559,7 +591,9 @@ class PlayActivity : AppCompatActivity() {
             }
         }
 
-        // Win dialog
+        /*
+         * 胜利弹窗负责进入下一关或返回地图，通关状态已在显示前写入数据库。
+         */
         mWinDialog = MyDialogManager.getInstance().initView(this, R.layout.dialog_win)
         mWinDialog.setCanceledOnTouchOutside(false)
 
@@ -614,6 +648,9 @@ class PlayActivity : AppCompatActivity() {
     override fun onStart() {
         super.onStart()
         if (!mCountdownReceiverRegistered) {
+            /*
+             * 动态注册接收器，生命周期跟随页面可见状态，避免静态接收器长期占用资源。
+             */
             ContextCompat.registerReceiver(
                 this,
                 mCountdownReceiver,
@@ -637,6 +674,9 @@ class PlayActivity : AppCompatActivity() {
 
     override fun onStop() {
         if (mCountdownReceiverRegistered) {
+            /*
+             * 页面不可见时立即解绑接收器，防止页面销毁后仍收到倒计时广播。
+             */
             unregisterReceiver(mCountdownReceiver)
             mCountdownReceiverRegistered = false
         }
@@ -669,8 +709,8 @@ class PlayActivity : AppCompatActivity() {
     private fun startCountdownService() {
         if (mViewModel.mHasWon.value == true || mViewModel.mTimerFinished.value == true) return
         /*
-         * Activity 启动 Service，但不直接倒计时；
-         * Service tick -> BroadcastReceiver -> ViewModel -> UI LiveData。
+         * 页面启动后台服务，但不直接倒计时；
+         * 数据流为：后台服务发送广播，接收器更新视图模型，界面观察数据变化后刷新。
          */
         startService(
             Intent(this, CountdownTimerService::class.java)
@@ -684,30 +724,44 @@ class PlayActivity : AppCompatActivity() {
 
     private suspend fun saveAndQueryGameResultThroughProvider(levelNum: Int, completed: Boolean) {
         if (mResultRecorded) return
-        mResultRecorded = true
         val remainingSeconds = mViewModel.getRemainingSeconds()
         val elapsedSeconds = (CountdownTimerContract.DEFAULT_TOTAL_SECONDS - remainingSeconds).coerceAtLeast(0)
         /*
-         * Activity 作为 Provider 客户端，通过 ContentResolver 写入和查询战绩；
-         * 外部 App 也可使用同一 URI 读取玩家公开战绩。
+         * 页面作为内容提供器客户端，通过内容解析器写入和查询战绩；
+         * 外部应用也可使用同一地址读取玩家公开战绩。
          */
-        withContext(Dispatchers.IO) {
-            val values = GameResultContract.Results.toContentValues(
-                level = levelNum,
-                elapsedSeconds = elapsedSeconds,
-                remainingSeconds = remainingSeconds,
-                completed = completed
-            )
-            val insertedUri = contentResolver.insert(GameResultContract.Results.CONTENT_URI, values)
-            if (insertedUri != null) {
-                contentResolver.query(insertedUri, null, null, null, null)?.use { cursor ->
-                    if (cursor.moveToFirst()) {
-                        cursor.getInt(cursor.getColumnIndexOrThrow(GameResultContract.Results.COLUMN_LEVEL))
-                        cursor.getInt(cursor.getColumnIndexOrThrow(GameResultContract.Results.COLUMN_ELAPSED_SECONDS))
-                        cursor.getInt(cursor.getColumnIndexOrThrow(GameResultContract.Results.COLUMN_COMPLETED))
+        val saved = withContext(Dispatchers.IO) {
+            try {
+                val values = GameResultContract.Results.toContentValues(
+                    level = levelNum,
+                    elapsedSeconds = elapsedSeconds,
+                    remainingSeconds = remainingSeconds,
+                    completed = completed
+                )
+                val insertedUri = contentResolver.insert(GameResultContract.Results.CONTENT_URI, values)
+                if (insertedUri != null) {
+                    contentResolver.query(insertedUri, null, null, null, null)?.use { cursor ->
+                        if (cursor.moveToFirst()) {
+                            /*
+                             * 查询示例保留字段读取，证明页面使用的是标准内容提供器接口；
+                             * 当前界面不展示这些值，后续可接排行榜或成就页。
+                             */
+                            cursor.getInt(cursor.getColumnIndexOrThrow(GameResultContract.Results.COLUMN_LEVEL))
+                            cursor.getInt(cursor.getColumnIndexOrThrow(GameResultContract.Results.COLUMN_ELAPSED_SECONDS))
+                            cursor.getInt(cursor.getColumnIndexOrThrow(GameResultContract.Results.COLUMN_COMPLETED))
+                        }
                     }
+                    true
+                } else {
+                    false
                 }
+            } catch (e: RuntimeException) {
+                Log.w(TAG, "通过内容提供器保存战绩失败", e)
+                false
             }
+        }
+        if (saved) {
+            mResultRecorded = true
         }
     }
 

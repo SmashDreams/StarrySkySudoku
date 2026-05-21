@@ -202,7 +202,9 @@ class MapActivity : AppCompatActivity() {
 
     private fun initList() {
         mRecyclerView.layoutManager = LinearLayoutManager(this@MapActivity)
-        // Set empty mAdapter immediately to avoid "No mAdapter attached" warning
+        /*
+         * 先设置空适配器，避免列表在数据加载前出现未绑定适配器警告。
+         */
         mAdapter = PassListAdapter(emptyList(), mLightStars)
         mRecyclerView.adapter = mAdapter
 

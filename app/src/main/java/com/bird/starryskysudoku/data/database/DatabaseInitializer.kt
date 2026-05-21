@@ -17,6 +17,10 @@ object DatabaseInitializer {
 
     private val sMigration2To3 = object : Migration(2, 3) {
         override fun migrate(db: SupportSQLiteDatabase) {
+            /*
+             * 第三个数据库版本新增公开战绩表。
+             * 主键列名遵循内容提供器游标的通用约定。
+             */
             db.execSQL(
                 """
                 CREATE TABLE IF NOT EXISTS game_result (
@@ -42,6 +46,10 @@ object DatabaseInitializer {
     }
 
     private fun buildDatabase(context: Context): AppDatabase {
+        /*
+         * 初始题库仍从内置资源创建，后续版本只通过迁移补齐新增表结构。
+         * 这样既保留已有题库数据，也能让旧用户平滑升级。
+         */
         return Room.databaseBuilder(context.applicationContext, AppDatabase::class.java, DB_NAME)
             .createFromAsset(DB_NAME)
             .addMigrations(sMigration1To2, sMigration2To3)

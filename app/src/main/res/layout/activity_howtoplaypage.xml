@@ -7,7 +7,7 @@
     android:background="#0A1628"
     android:orientation="vertical">
 
-    <!-- Title Bar -->
+    <!-- 标题栏 -->
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="56dp"
@@ -34,7 +34,7 @@
             android:textStyle="bold" />
     </LinearLayout>
 
-    <!-- Content -->
+    <!-- 玩法内容 -->
     <ScrollView
         android:layout_width="match_parent"
         android:layout_height="match_parent"
@@ -46,7 +46,7 @@
             android:layout_height="wrap_content"
             android:orientation="vertical">
 
-            <!-- Rule 1 -->
+            <!-- 规则一：介绍数独目标 -->
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
@@ -73,7 +73,7 @@
                     android:textSize="15sp" />
             </LinearLayout>
 
-            <!-- Rule 2 -->
+            <!-- 规则二：介绍棋盘结构 -->
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
@@ -107,7 +107,7 @@
                     android:src="@drawable/how_to_play_board_structure" />
             </LinearLayout>
 
-            <!-- Rule 3 -->
+            <!-- 规则三：介绍填写规则 -->
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
@@ -153,7 +153,7 @@
                 </LinearLayout>
             </LinearLayout>
 
-            <!-- Rule 4 -->
+            <!-- 规则四：介绍通关条件 -->
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"

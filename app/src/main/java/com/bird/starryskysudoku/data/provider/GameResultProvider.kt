@@ -12,6 +12,9 @@ import com.bird.starryskysudoku.data.entity.GameResultEntity
 class GameResultProvider : ContentProvider() {
 
     companion object {
+        /*
+         * 只开放战绩集合和单条战绩两类地址，避免外部调用方访问未定义路径。
+         */
         private const val MATCH_RESULTS = 1
         private const val MATCH_RESULT_ID = 2
 
@@ -39,8 +42,8 @@ class GameResultProvider : ContentProvider() {
         sortOrder: String?
     ): Cursor {
         /*
-         * ContentProvider 对外暴露 Cursor；Room DAO 直接返回 Cursor，
-         * 避免手动 MatrixCursor 搬运数据，保持 Room 作为唯一数据源。
+         * 内容提供器对外暴露游标；数据库访问对象直接返回游标，
+         * 避免手动搬运数据，保持本地数据库作为唯一数据源。
          */
         val appContext = requireNotNull(context?.applicationContext)
         val dao = DatabaseInitializer.getDatabase(appContext).gameResultDao()
@@ -59,10 +62,15 @@ class GameResultProvider : ContentProvider() {
         }
         val safeValues = values ?: throw IllegalArgumentException("ContentValues must not be null")
         val appContext = requireNotNull(context?.applicationContext)
+        /*
+         * 清单文件中的写权限负责拦截普通外部应用。
+         * 落库前的字段校验负责拦截同签名调用方传入的异常数据。
+         */
         val id = DatabaseInitializer.getDatabase(appContext)
             .gameResultDao()
             .insert(GameResultEntity.fromContentValues(safeValues))
         val resultUri = ContentUris.withAppendedId(GameResultContract.Results.CONTENT_URI, id)
+        appContext.contentResolver.notifyChange(GameResultContract.Results.CONTENT_URI, null)
         appContext.contentResolver.notifyChange(resultUri, null)
         return resultUri
     }
@@ -76,6 +84,10 @@ class GameResultProvider : ContentProvider() {
             .gameResultDao()
             .deleteById(ContentUris.parseId(uri))
         if (rows > 0) {
+            /*
+             * 同时通知集合地址和单条地址，确保外部观察者能刷新列表或详情。
+             */
+            appContext.contentResolver.notifyChange(GameResultContract.Results.CONTENT_URI, null)
             appContext.contentResolver.notifyChange(uri, null)
         }
         return rows

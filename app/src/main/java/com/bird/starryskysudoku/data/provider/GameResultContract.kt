@@ -5,12 +5,17 @@ import android.net.Uri
 
 object GameResultContract {
     const val AUTHORITY = "com.bird.starryskysudoku.provider"
+    const val WRITE_PERMISSION = "com.bird.starryskysudoku.permission.WRITE_RESULTS"
     const val CONTENT_URI_BASE = "content://$AUTHORITY"
 
     object Results {
+        const val MIN_LEVEL = 1
+        const val MAX_LEVEL = 40
+        const val MAX_GAME_SECONDS = 600
+
         const val PATH = "results"
         const val CONTENT_URI_STRING = "$CONTENT_URI_BASE/$PATH"
-        val CONTENT_URI: Uri = Uri.parse(CONTENT_URI_STRING)
+        val CONTENT_URI: Uri by lazy { Uri.parse(CONTENT_URI_STRING) }
 
         const val CONTENT_TYPE = "vnd.android.cursor.dir/vnd.com.bird.starryskysudoku.result"
         const val CONTENT_ITEM_TYPE = "vnd.android.cursor.item/vnd.com.bird.starryskysudoku.result"
@@ -29,6 +34,10 @@ object GameResultContract {
             completed: Boolean,
             createdAt: Long = System.currentTimeMillis()
         ): ContentValues {
+            /*
+             * 这里仅负责按公开字段组装写入数据，方便本应用和外部调用方复用。
+             * 真正的安全校验放在实体转换阶段，不能信任调用方传入的数据。
+             */
             return ContentValues().apply {
                 put(COLUMN_LEVEL, level)
                 put(COLUMN_ELAPSED_SECONDS, elapsedSeconds)
