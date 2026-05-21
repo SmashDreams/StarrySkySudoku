@@ -6,6 +6,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.bird.starryskysudoku.data.database.AppDatabase
 import com.bird.starryskysudoku.data.entity.HistoryEntity
+import com.bird.starryskysudoku.timer.CountdownTimerContract
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -61,6 +62,8 @@ class PlayViewModel(private val mDb: AppDatabase) : ViewModel() {
         viewModelScope.launch {
             mCurrentPassNum = levelNum
             mGameSession = UUID.randomUUID().toString()
+            mRemainingSecondsSource.value = CountdownTimerContract.DEFAULT_TOTAL_SECONDS
+            mTimerFinishedSource.value = false
             mDb.historyDao().deleteForPass(levelNum)
             val values = mDb.problemDao().getValuesForLevel(levelNum)
             if (values.size != 81 || values.any { it !in 0..9 }) return@launch
@@ -94,6 +97,18 @@ class PlayViewModel(private val mDb: AppDatabase) : ViewModel() {
     }
 
     fun pauseTimer() { mTimerJob?.cancel() }
+
+    fun updateRemainingSeconds(seconds: Int) {
+        val safeSeconds = seconds.coerceAtLeast(0)
+        mRemainingSecondsSource.value = safeSeconds
+        if (safeSeconds == 0 && mTimerFinishedSource.value != true) {
+            mTimerFinishedSource.value = true
+        }
+    }
+
+    fun getRemainingSeconds(): Int {
+        return mRemainingSecondsSource.value ?: CountdownTimerContract.DEFAULT_TOTAL_SECONDS
+    }
 
     fun setCurrentPosition(x: Int, y: Int, block: Int) {
         mCurrentX = x; mCurrentY = y; mCurrentBlock = block

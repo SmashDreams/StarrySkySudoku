@@ -3,7 +3,10 @@ package com.bird.starryskysudoku.ui.play
 import android.animation.AnimatorSet
 import android.animation.ObjectAnimator
 import android.annotation.SuppressLint
+import android.content.BroadcastReceiver
+import android.content.Context
 import android.content.Intent
+import android.content.IntentFilter
 import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
@@ -21,12 +24,17 @@ import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.lifecycleScope
 import com.bird.starryskysudoku.R
 import com.bird.starryskysudoku.data.database.DatabaseInitializer
+import com.bird.starryskysudoku.data.provider.GameResultContract
 import com.bird.starryskysudoku.media.PlayMusic
+import com.bird.starryskysudoku.timer.CountdownTimerContract
+import com.bird.starryskysudoku.timer.CountdownTimerService
 import com.bird.starryskysudoku.ui.common.startActivityWithTransition
 import com.bird.starryskysudoku.ui.dialog.MyDialog
 import com.bird.starryskysudoku.ui.dialog.MyDialogManager
 import com.bird.starryskysudoku.ui.map.MapActivity
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import java.util.Locale
 
 class PlayActivity : AppCompatActivity() {
@@ -38,6 +46,21 @@ class PlayActivity : AppCompatActivity() {
     private val mHandler = Handler(Looper.getMainLooper())
     private lateinit var mViewModel: PlayViewModel
     private lateinit var mBroadView: BroadView
+    private var mCountdownReceiverRegistered = false
+    private val mCountdownReceiver = object : BroadcastReceiver() {
+        override fun onReceive(context: Context?, intent: Intent?) {
+            if (intent?.action != CountdownTimerContract.ACTION_COUNTDOWN_TICK) return
+            val remainingSeconds = intent.getIntExtra(
+                CountdownTimerContract.EXTRA_REMAINING_SECONDS,
+                CountdownTimerContract.DEFAULT_TOTAL_SECONDS
+            )
+            /*
+             * BroadcastReceiver 是前台与后台 Service 的桥梁：
+             * 只解析广播数据并交给 ViewModel，UI 仍由 LiveData 统一刷新。
+             */
+            mViewModel.updateRemainingSeconds(remainingSeconds)
+        }
+    }
 
     // UI elements
     private lateinit var mPlayNum: TextView
@@ -54,6 +77,7 @@ class PlayActivity : AppCompatActivity() {
     private var mMusicOpened = true
     private var mAudioOpened = true
     private var mIsPaused = false
+    private var mResultRecorded = false
     private var mNum = "1"
     private var mTagData = Array(9) { arrayOfNulls<TagData>(9) }
 
@@ -96,7 +120,7 @@ class PlayActivity : AppCompatActivity() {
         mRevoke = findViewById(R.id.play_revoke); mTag = findViewById(R.id.play_tag)
         mPauseButton = findViewById(R.id.play_pause)
 
-        mTimeProgressBar.max = 600
+        mTimeProgressBar.max = CountdownTimerContract.DEFAULT_TOTAL_SECONDS
 
         initBoard()
         initTimer()
@@ -180,11 +204,9 @@ class PlayActivity : AppCompatActivity() {
             if (finished) failed()
         }
 
-        mViewModel.startTimer()
-
         mViewModel.mHasWon.observe(this) { won ->
             if (won && !mIsPaused) {
-                mViewModel.pauseTimer()
+                stopCountdownService()
                 PlayMusic.getInstance().stopTimesUp()
                 PlayMusic.getInstance().playWinning()
                 playWinAnimation()
@@ -244,6 +266,9 @@ class PlayActivity : AppCompatActivity() {
         mBroadView.setWrong(true)
         PlayMusic.getInstance().stopTimesUp()
         PlayMusic.getInstance().playLosing()
+        lifecycleScope.launch {
+            saveAndQueryGameResultThroughProvider(parseLevel(mNum), completed = false)
+        }
         mHandler.postDelayed({
             MyDialogManager.getInstance().show(mLoseDialog)
         }, 1500)
@@ -318,6 +343,7 @@ class PlayActivity : AppCompatActivity() {
                         if (mViewModel.mHasWon.value == true) {
                             val levelNum = mNum.toInt()
                             mViewModel.updatePassStatus(levelNum, levelNum + 1)
+                            saveAndQueryGameResultThroughProvider(levelNum, completed = true)
                         }
                     }
                 } else {
@@ -425,7 +451,8 @@ class PlayActivity : AppCompatActivity() {
             if (mViewModel.mHasWon.value == true) return@setOnClickListener
             PlayMusic.getInstance().playDialogShow()
             PlayMusic.getInstance().stopTimesUp()
-            mViewModel.pauseTimer()
+            mIsPaused = true
+            stopCountdownService()
             MyDialogManager.getInstance().show(mPauseDialog)
         }
     }
@@ -439,7 +466,7 @@ class PlayActivity : AppCompatActivity() {
             PlayMusic.getInstance().playButtonTap()
             MyDialogManager.getInstance().hide(mPauseDialog)
             mIsPaused = false
-            mViewModel.startTimer()
+            startCountdownService()
         }
 
         mPauseDialog.findViewById<View>(R.id.pause_restart).setOnClickListener {
@@ -575,7 +602,8 @@ class PlayActivity : AppCompatActivity() {
     private fun initBackHandler() {
         onBackPressedDispatcher.addCallback(this, object : OnBackPressedCallback(true) {
             override fun handleOnBackPressed() {
-                mViewModel.pauseTimer()
+                mIsPaused = true
+                stopCountdownService()
                 PlayMusic.getInstance().stopTimesUp()
                 PlayMusic.getInstance().playDialogShow()
                 MyDialogManager.getInstance().show(mPauseDialog)
@@ -583,15 +611,36 @@ class PlayActivity : AppCompatActivity() {
         })
     }
 
+    override fun onStart() {
+        super.onStart()
+        if (!mCountdownReceiverRegistered) {
+            ContextCompat.registerReceiver(
+                this,
+                mCountdownReceiver,
+                IntentFilter(CountdownTimerContract.ACTION_COUNTDOWN_TICK),
+                ContextCompat.RECEIVER_NOT_EXPORTED
+            )
+            mCountdownReceiverRegistered = true
+        }
+    }
+
     override fun onPause() {
         super.onPause()
         mIsPaused = true
         PlayMusic.getInstance().stopBGM()
         PlayMusic.getInstance().stopTimesUp()
-        mViewModel.pauseTimer()
+        stopCountdownService()
         if (mViewModel.mHasWon.value == true) {
             PlayMusic.getInstance().stopWinning()
         }
+    }
+
+    override fun onStop() {
+        if (mCountdownReceiverRegistered) {
+            unregisterReceiver(mCountdownReceiver)
+            mCountdownReceiverRegistered = false
+        }
+        super.onStop()
     }
 
     override fun onResume() {
@@ -603,16 +652,63 @@ class PlayActivity : AppCompatActivity() {
             MyDialogManager.getInstance().show(mLoseDialog)
         } else if (mIsPaused && !mPauseDialog.isShowing) {
             MyDialogManager.getInstance().show(mPauseDialog)
+        } else if (!mIsPaused) {
+            startCountdownService()
         }
     }
 
     override fun onDestroy() {
         super.onDestroy()
         mHandler.removeCallbacksAndMessages(null)
-        mViewModel.pauseTimer()
+        stopCountdownService()
         MyDialogManager.getInstance().hide(mPauseDialog)
         MyDialogManager.getInstance().hide(mWinDialog)
         MyDialogManager.getInstance().hide(mLoseDialog)
+    }
+
+    private fun startCountdownService() {
+        if (mViewModel.mHasWon.value == true || mViewModel.mTimerFinished.value == true) return
+        /*
+         * Activity 启动 Service，但不直接倒计时；
+         * Service tick -> BroadcastReceiver -> ViewModel -> UI LiveData。
+         */
+        startService(
+            Intent(this, CountdownTimerService::class.java)
+                .putExtra(CountdownTimerContract.EXTRA_INITIAL_SECONDS, mViewModel.getRemainingSeconds())
+        )
+    }
+
+    private fun stopCountdownService() {
+        stopService(Intent(this, CountdownTimerService::class.java))
+    }
+
+    private suspend fun saveAndQueryGameResultThroughProvider(levelNum: Int, completed: Boolean) {
+        if (mResultRecorded) return
+        mResultRecorded = true
+        val remainingSeconds = mViewModel.getRemainingSeconds()
+        val elapsedSeconds = (CountdownTimerContract.DEFAULT_TOTAL_SECONDS - remainingSeconds).coerceAtLeast(0)
+        /*
+         * Activity 作为 Provider 客户端，通过 ContentResolver 写入和查询战绩；
+         * 外部 App 也可使用同一 URI 读取玩家公开战绩。
+         */
+        withContext(Dispatchers.IO) {
+            val values = GameResultContract.Results.toContentValues(
+                level = levelNum,
+                elapsedSeconds = elapsedSeconds,
+                remainingSeconds = remainingSeconds,
+                completed = completed
+            )
+            val insertedUri = contentResolver.insert(GameResultContract.Results.CONTENT_URI, values)
+            if (insertedUri != null) {
+                contentResolver.query(insertedUri, null, null, null, null)?.use { cursor ->
+                    if (cursor.moveToFirst()) {
+                        cursor.getInt(cursor.getColumnIndexOrThrow(GameResultContract.Results.COLUMN_LEVEL))
+                        cursor.getInt(cursor.getColumnIndexOrThrow(GameResultContract.Results.COLUMN_ELAPSED_SECONDS))
+                        cursor.getInt(cursor.getColumnIndexOrThrow(GameResultContract.Results.COLUMN_COMPLETED))
+                    }
+                }
+            }
+        }
     }
 
     private fun parseLevel(raw: String?): Int {

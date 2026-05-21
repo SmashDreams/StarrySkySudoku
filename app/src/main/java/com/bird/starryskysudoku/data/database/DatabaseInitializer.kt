@@ -15,6 +15,23 @@ object DatabaseInitializer {
         }
     }
 
+    private val sMigration2To3 = object : Migration(2, 3) {
+        override fun migrate(db: SupportSQLiteDatabase) {
+            db.execSQL(
+                """
+                CREATE TABLE IF NOT EXISTS game_result (
+                    _id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
+                    level INTEGER NOT NULL,
+                    elapsed_seconds INTEGER NOT NULL,
+                    remaining_seconds INTEGER NOT NULL,
+                    completed INTEGER NOT NULL,
+                    created_at INTEGER NOT NULL
+                )
+                """.trimIndent()
+            )
+        }
+    }
+
     @Volatile
     private var sInstance: AppDatabase? = null
 
@@ -27,7 +44,7 @@ object DatabaseInitializer {
     private fun buildDatabase(context: Context): AppDatabase {
         return Room.databaseBuilder(context.applicationContext, AppDatabase::class.java, DB_NAME)
             .createFromAsset(DB_NAME)
-            .addMigrations(sMigration1To2)
+            .addMigrations(sMigration1To2, sMigration2To3)
             .build()
     }
 }
