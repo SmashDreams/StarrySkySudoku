@@ -20,3 +20,4 @@ local.properties
 CODE_REVIEW_REPORT.md
 CLAUDE.md
 docs/
+.worktrees/
