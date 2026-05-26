@@ -36,6 +36,29 @@ object DatabaseInitializer {
         }
     }
 
+    private val sMigration3To4 = object : Migration(3, 4) {
+        override fun migrate(db: SupportSQLiteDatabase) {
+            db.execSQL(
+                """
+                CREATE TABLE IF NOT EXISTS user_map (
+                    username TEXT NOT NULL,
+                    pass_num INTEGER NOT NULL,
+                    status TEXT NOT NULL,
+                    play_time TEXT NOT NULL,
+                    PRIMARY KEY(username, pass_num)
+                )
+                """.trimIndent()
+            )
+            db.execSQL(
+                """
+                INSERT OR IGNORE INTO user_map(username, pass_num, status, play_time)
+                SELECT 'guest', pass_num, status, play_time FROM map
+                """.trimIndent()
+            )
+            db.execSQL("ALTER TABLE game_result ADD COLUMN username TEXT NOT NULL DEFAULT 'guest'")
+        }
+    }
+
     @Volatile
     private var sInstance: AppDatabase? = null
 
@@ -52,7 +75,7 @@ object DatabaseInitializer {
          */
         return Room.databaseBuilder(context.applicationContext, AppDatabase::class.java, DB_NAME)
             .createFromAsset(DB_NAME)
-            .addMigrations(sMigration1To2, sMigration2To3)
+            .addMigrations(sMigration1To2, sMigration2To3, sMigration3To4)
             .build()
     }
 }

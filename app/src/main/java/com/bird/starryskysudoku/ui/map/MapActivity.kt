@@ -100,7 +100,7 @@ class MapActivity : AppCompatActivity() {
 
     private fun initMapData() {
         mMapLoaded = true
-        mViewModel.loadMapData()
+        mViewModel.loadMapData(mCurrentUsername)
         consumeNavigationExtras()
     }
 
@@ -138,7 +138,7 @@ class MapActivity : AppCompatActivity() {
 
     private fun handleCheckNum(num: String) {
         val passNum = parseLevel(num) ?: return
-        mViewModel.getPassStatus(passNum) { status ->
+        mViewModel.getPassStatus(mCurrentUsername, passNum) { status ->
             when (status) {
                 "待通关" -> openPassCheck(passNum.toString())
                 "已通关" -> openRetryCheck(passNum.toString())
@@ -194,7 +194,7 @@ class MapActivity : AppCompatActivity() {
             findViewById<ImageView>(R.id.passcheck_star).setImageResource(R.drawable.star_empty)
             findViewById<TextView>(R.id.passcheck_num).text = checkNum
 
-            mViewModel.getPassTimes(checkNum.toInt()) { times ->
+            mViewModel.getPassTimes(mCurrentUsername, checkNum.toInt()) { times ->
                 findViewById<TextView>(R.id.passcheck_passtimes).text = times
             }
 

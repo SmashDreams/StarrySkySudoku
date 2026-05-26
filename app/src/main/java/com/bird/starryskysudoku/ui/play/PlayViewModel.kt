@@ -4,8 +4,10 @@ import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.bird.starryskysudoku.account.LauncherSessionReader
 import com.bird.starryskysudoku.data.database.AppDatabase
 import com.bird.starryskysudoku.data.entity.HistoryEntity
+import com.bird.starryskysudoku.data.entity.UserMapEntity
 import com.bird.starryskysudoku.timer.CountdownTimerContract
 import kotlinx.coroutines.launch
 import java.util.UUID
@@ -202,12 +204,22 @@ class PlayViewModel(private val mDb: AppDatabase) : ViewModel() {
         if (mCurrentPassNum != 0) mDb.historyDao().deleteForSession(mCurrentPassNum, mGameSession)
     }
 
-    suspend fun updatePassStatus(passNum: Int, nextPassNum: Int) {
-        mDb.mapDao().updateStatus(passNum, "已通关")
-        val map = mDb.mapDao().getMapByNum(passNum)
+    suspend fun updatePassStatus(
+        username: String,
+        passNum: Int,
+        nextPassNum: Int
+    ) {
+        val safeUsername = ensureUserMap(username)
+        val userMapDao = mDb.userMapDao()
+        userMapDao.updateStatus(safeUsername, passNum, "已通关")
+        val map = userMapDao.getByUserAndPass(safeUsername, passNum)
         val newTimes = ((map?.mPlayTime?.toIntOrNull() ?: 0) + 1).toString()
-        mDb.mapDao().updatePlayTime(passNum, newTimes)
-        if (passNum < 40) mDb.mapDao().updateStatus(nextPassNum, "待通关")
+        userMapDao.updatePlayTime(safeUsername, passNum, newTimes)
+        if (passNum < 40) userMapDao.updateStatus(safeUsername, nextPassNum, "待通关")
+    }
+
+    suspend fun updatePassStatus(passNum: Int, nextPassNum: Int) {
+        updatePassStatus(LauncherSessionReader.GUEST_USERNAME, passNum, nextPassNum)
     }
 
     fun clearWinState() { mHasWonSource.value = false }
@@ -215,6 +227,22 @@ class PlayViewModel(private val mDb: AppDatabase) : ViewModel() {
     private fun isValidCell(x: Int, y: Int) = x in 0..8 && y in 0..8
 
     private fun isValidNumber(number: String) = number.toIntOrNull() in 1..9
+
+    private suspend fun ensureUserMap(username: String): String {
+        val safeUsername = username.trim().ifEmpty { LauncherSessionReader.GUEST_USERNAME }
+        if (mDb.userMapDao().getAllForUser(safeUsername).isNotEmpty()) return safeUsername
+
+        val userRows = mDb.mapDao().getAllMaps().mapIndexed { index, map ->
+            UserMapEntity(
+                mUsername = safeUsername,
+                mPassNum = map.mPassNum,
+                mStatus = if (index == 0) "待通关" else "未通关",
+                mPlayTime = "0"
+            )
+        }
+        mDb.userMapDao().insertAll(userRows)
+        return safeUsername
+    }
 
     private fun newHistory(row: Int, col: Int, type: Int, value: Int): HistoryEntity {
         return HistoryEntity(

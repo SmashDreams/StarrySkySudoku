@@ -24,6 +24,7 @@ import androidx.core.content.edit
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.lifecycleScope
 import com.bird.starryskysudoku.R
+import com.bird.starryskysudoku.account.LauncherSessionReader
 import com.bird.starryskysudoku.data.database.DatabaseInitializer
 import com.bird.starryskysudoku.data.provider.GameResultContract
 import com.bird.starryskysudoku.media.PlayMusic
@@ -85,6 +86,7 @@ class PlayActivity : AppCompatActivity() {
     private var mIsPaused = false
     private var mResultRecorded = false
     private var mNum = "1"
+    private var mCurrentUsername = LauncherSessionReader.GUEST_USERNAME
     private var mTagData = Array(9) { arrayOfNulls<TagData>(9) }
 
     /*
@@ -98,7 +100,8 @@ class PlayActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_play)
 
-        mNum = parseLevel(intent.getStringExtra("mNum")).toString()
+        mNum = parseLevel(intent.getStringExtra("mNum") ?: intent.getStringExtra("num")).toString()
+        mCurrentUsername = LauncherSessionReader.readUsername(contentResolver)
         val maxNum = MAX_LEVEL
 
         val db = DatabaseInitializer.getDatabase(this)
@@ -359,7 +362,7 @@ class PlayActivity : AppCompatActivity() {
 
                         if (mViewModel.mHasWon.value == true) {
                             val levelNum = mNum.toInt()
-                            mViewModel.updatePassStatus(levelNum, levelNum + 1)
+                            mViewModel.updatePassStatus(mCurrentUsername, levelNum, levelNum + 1)
                             saveAndQueryGameResultThroughProvider(levelNum, completed = true)
                         }
                     }

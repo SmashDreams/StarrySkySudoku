@@ -4,6 +4,7 @@ import android.content.ContentValues
 import androidx.room.ColumnInfo
 import androidx.room.Entity
 import androidx.room.PrimaryKey
+import com.bird.starryskysudoku.account.LauncherSessionReader
 import com.bird.starryskysudoku.data.provider.GameResultContract
 
 @Entity(tableName = "game_result")
@@ -14,7 +15,8 @@ data class GameResultEntity(
     @ColumnInfo(name = "elapsed_seconds") val mElapsedSeconds: Int,
     @ColumnInfo(name = "remaining_seconds") val mRemainingSeconds: Int,
     @ColumnInfo(name = "completed") val mCompleted: Int,
-    @ColumnInfo(name = "created_at") val mCreatedAt: Long
+    @ColumnInfo(name = "created_at") val mCreatedAt: Long,
+    @ColumnInfo(name = "username") val mUsername: String = LauncherSessionReader.GUEST_USERNAME
 ) {
     companion object {
         fun fromContentValues(values: ContentValues): GameResultEntity {
@@ -45,7 +47,8 @@ data class GameResultEntity(
             elapsedSeconds: Int,
             remainingSeconds: Int,
             completed: Boolean,
-            createdAt: Long = System.currentTimeMillis()
+            createdAt: Long = System.currentTimeMillis(),
+            username: String = LauncherSessionReader.GUEST_USERNAME
         ): GameResultEntity {
             /*
              * 字段级校验不依赖系统框架类，便于单元测试覆盖边界条件。
@@ -66,13 +69,15 @@ data class GameResultEntity(
                 "elapsed_seconds + remaining_seconds must not exceed one game window"
             }
             require(createdAt > 0L) { "created_at must be positive" }
+            val safeUsername = username.trim().ifEmpty { LauncherSessionReader.GUEST_USERNAME }
 
             return GameResultEntity(
                 mLevel = level,
                 mElapsedSeconds = elapsedSeconds,
                 mRemainingSeconds = remainingSeconds,
                 mCompleted = if (completed) 1 else 0,
-                mCreatedAt = createdAt
+                mCreatedAt = createdAt,
+                mUsername = safeUsername
             )
         }
     }
