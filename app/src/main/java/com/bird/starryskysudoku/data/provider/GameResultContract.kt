@@ -2,6 +2,7 @@ package com.bird.starryskysudoku.data.provider
 
 import android.content.ContentValues
 import android.net.Uri
+import com.bird.starryskysudoku.account.LauncherSessionReader
 
 object GameResultContract {
     const val AUTHORITY = "com.bird.starryskysudoku.provider"
@@ -26,13 +27,17 @@ object GameResultContract {
         const val COLUMN_REMAINING_SECONDS = "remaining_seconds"
         const val COLUMN_COMPLETED = "completed"
         const val COLUMN_CREATED_AT = "created_at"
+        const val COLUMN_USERNAME = "username"
+
+        fun selectionForUsername(): String = "$COLUMN_USERNAME=?"
 
         fun toContentValues(
             level: Int,
             elapsedSeconds: Int,
             remainingSeconds: Int,
             completed: Boolean,
-            createdAt: Long = System.currentTimeMillis()
+            createdAt: Long = System.currentTimeMillis(),
+            username: String = LauncherSessionReader.GUEST_USERNAME
         ): ContentValues {
             /*
              * 这里仅负责按公开字段组装写入数据，方便本应用和外部调用方复用。
@@ -44,6 +49,7 @@ object GameResultContract {
                 put(COLUMN_REMAINING_SECONDS, remainingSeconds)
                 put(COLUMN_COMPLETED, if (completed) 1 else 0)
                 put(COLUMN_CREATED_AT, createdAt)
+                put(COLUMN_USERNAME, username)
             }
         }
     }

@@ -32,13 +32,16 @@ data class GameResultEntity(
             val completed = values.getAsInteger(GameResultContract.Results.COLUMN_COMPLETED) ?: 0
             val createdAt = values.getAsLong(GameResultContract.Results.COLUMN_CREATED_AT)
                 ?: System.currentTimeMillis()
+            val username = values.getAsString(GameResultContract.Results.COLUMN_USERNAME)
+                ?: LauncherSessionReader.GUEST_USERNAME
 
             return fromFields(
                 level = level,
                 elapsedSeconds = elapsedSeconds,
                 remainingSeconds = remainingSeconds,
                 completed = completed != 0,
-                createdAt = createdAt
+                createdAt = createdAt,
+                username = username
             )
         }
 

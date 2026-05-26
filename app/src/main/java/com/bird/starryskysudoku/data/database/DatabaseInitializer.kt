@@ -36,7 +36,7 @@ object DatabaseInitializer {
         }
     }
 
-    private val sMigration3To4 = object : Migration(3, 4) {
+    internal val sMigration3To4 = object : Migration(3, 4) {
         override fun migrate(db: SupportSQLiteDatabase) {
             db.execSQL(
                 """

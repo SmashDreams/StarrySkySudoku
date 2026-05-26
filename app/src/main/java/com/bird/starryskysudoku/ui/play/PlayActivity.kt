@@ -739,7 +739,8 @@ class PlayActivity : AppCompatActivity() {
                     level = levelNum,
                     elapsedSeconds = elapsedSeconds,
                     remainingSeconds = remainingSeconds,
-                    completed = completed
+                    completed = completed,
+                    username = mCurrentUsername
                 )
                 val insertedUri = contentResolver.insert(GameResultContract.Results.CONTENT_URI, values)
                 if (insertedUri != null) {
