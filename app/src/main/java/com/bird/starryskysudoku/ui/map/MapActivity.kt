@@ -119,6 +119,8 @@ class MapActivity : AppCompatActivity() {
     }
 
     private fun consumeNavigationExtras() {
+        mNextNum = null
+        mLoseNum = null
         intent.getStringExtra("roll")?.let { mRecyclerView.scrollToPosition(getRollingPosition(it)) }
         mNextNum = intent.getStringExtra("next")?.takeIf { parseLevel(it) != null }
         mLoseNum = intent.getStringExtra("lose")?.takeIf { parseLevel(it) != null }

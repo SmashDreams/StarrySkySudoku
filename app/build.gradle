@@ -64,6 +64,7 @@ dependencies {
     implementation libs.coroutines.android
 
     testImplementation libs.junit
+    testImplementation 'org.robolectric:robolectric:4.13'
     androidTestImplementation libs.ext.junit
     androidTestImplementation libs.espresso.core
 }
