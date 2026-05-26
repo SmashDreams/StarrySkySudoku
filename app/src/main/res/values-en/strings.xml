@@ -24,6 +24,8 @@
     <string name="start">PLAY</string>
 
     <string name="pressagain">Press Again To Exit</string>
+    <string name="login_guest">Guest</string>
+    <string name="login_prompt_teahouse">Please sign in from Starry Tea House</string>
 
     <string name="setting">SETTINGS</string>
     <string name="how">How to play</string>

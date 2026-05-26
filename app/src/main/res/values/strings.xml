@@ -24,6 +24,8 @@
     <string name="start">开始玩</string>
 
     <string name="pressagain">再按一次退出程序</string>
+    <string name="login_guest">游客</string>
+    <string name="login_prompt_teahouse">请到星空茶苑登录</string>
 
     <string name="setting">设置</string>
     <string name="how">玩法说明</string>

@@ -8,6 +8,7 @@
         android:protectionLevel="signature" />
 
     <uses-permission android:name="com.bird.starryskysudoku.permission.WRITE_RESULTS" />
+    <uses-permission android:name="com.bird.launcher.permission.READ_SESSION" />
 
     <application
         android:name=".StarrySkySudokuApp"

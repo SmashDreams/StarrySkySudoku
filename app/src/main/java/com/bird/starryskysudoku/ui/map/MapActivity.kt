@@ -19,6 +19,7 @@ import androidx.lifecycle.ViewModelProvider
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.bird.starryskysudoku.R
+import com.bird.starryskysudoku.account.LauncherSessionReader
 import com.bird.starryskysudoku.data.database.DatabaseInitializer
 import com.bird.starryskysudoku.media.PlayMusic
 import com.bird.starryskysudoku.ui.common.flashThreeTimes
@@ -42,6 +43,7 @@ class MapActivity : AppCompatActivity() {
     private lateinit var mSmallShootingStar: ImageView
     private lateinit var mBackgroundStars: ImageView
     private lateinit var mRecyclerView: RecyclerView
+    private lateinit var mLoginStatus: TextView
     private lateinit var mAdapter: PassListAdapter
     private lateinit var mViewModel: MapViewModel
 
@@ -53,6 +55,8 @@ class MapActivity : AppCompatActivity() {
     private var mDelayTime = 0
     private var mLightStars = 0
     private var mBackPressCount = 0
+    private var mCurrentUsername = LauncherSessionReader.GUEST_USERNAME
+    private var mMapLoaded = false
     private val mHandler = Handler(Looper.getMainLooper())
 
     private lateinit var mSettingsDialog: MyDialog
@@ -79,10 +83,15 @@ class MapActivity : AppCompatActivity() {
         mSmallShootingStar = findViewById(R.id.sstar_small)
         mBackgroundStars = findViewById(R.id.map_bgstar)
         mSettings = findViewById(R.id.settings)
+        mLoginStatus = findViewById(R.id.login_status)
+        mLoginStatus.setOnClickListener {
+            Toast.makeText(this, R.string.login_prompt_teahouse, Toast.LENGTH_SHORT).show()
+        }
 
         initList()
         initSettingDialog()
         initShootingStar()
+        refreshLoginState()
         initMapData()
         initBackHandler()
         if (consumeHomeFlashRequest()) flashHome()
@@ -90,8 +99,23 @@ class MapActivity : AppCompatActivity() {
     }
 
     private fun initMapData() {
+        mMapLoaded = true
         mViewModel.loadMapData()
         consumeNavigationExtras()
+    }
+
+    private fun refreshLoginState() {
+        val username = LauncherSessionReader.readUsername(contentResolver)
+        mLoginStatus.text = if (username == LauncherSessionReader.GUEST_USERNAME) {
+            getString(R.string.login_guest)
+        } else {
+            username
+        }
+
+        if (username != mCurrentUsername) {
+            mCurrentUsername = username
+            if (mMapLoaded) initMapData()
+        }
     }
 
     private fun consumeNavigationExtras() {
@@ -340,8 +364,7 @@ class MapActivity : AppCompatActivity() {
     override fun onResume() {
         super.onResume()
         PlayMusic.getInstance().playBGM()
-        mViewModel.loadMapData()
-        consumeNavigationExtras()
+        refreshLoginState()
     }
 
     override fun onDestroy() {
