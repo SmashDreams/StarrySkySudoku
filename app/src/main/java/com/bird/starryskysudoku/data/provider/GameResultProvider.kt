@@ -9,6 +9,11 @@ import android.net.Uri
 import com.bird.starryskysudoku.data.database.DatabaseInitializer
 import com.bird.starryskysudoku.data.entity.GameResultEntity
 
+internal sealed class ResultQueryFilter {
+    data object All : ResultQueryFilter()
+    data class Username(val value: String) : ResultQueryFilter()
+}
+
 class GameResultProvider : ContentProvider() {
 
     companion object {
@@ -21,6 +26,23 @@ class GameResultProvider : ContentProvider() {
         private val sUriMatcher = UriMatcher(UriMatcher.NO_MATCH).apply {
             addURI(GameResultContract.AUTHORITY, GameResultContract.Results.PATH, MATCH_RESULTS)
             addURI(GameResultContract.AUTHORITY, "${GameResultContract.Results.PATH}/#", MATCH_RESULT_ID)
+        }
+
+        internal fun resolveResultsQueryFilter(
+            selection: String?,
+            selectionArgs: Array<out String>?
+        ): ResultQueryFilter {
+            if (selection == null) {
+                return ResultQueryFilter.All
+            }
+            if (selection != GameResultContract.Results.selectionForUsername()) {
+                throw IllegalArgumentException("Unsupported results selection: $selection")
+            }
+            val username = selectionArgs?.firstOrNull()?.trim()
+            if (username.isNullOrBlank()) {
+                throw IllegalArgumentException("Username selection requires a nonblank argument")
+            }
+            return ResultQueryFilter.Username(username)
         }
     }
 
@@ -48,13 +70,9 @@ class GameResultProvider : ContentProvider() {
         val appContext = requireNotNull(context?.applicationContext)
         val dao = DatabaseInitializer.getDatabase(appContext).gameResultDao()
         val cursor = when (sUriMatcher.match(uri)) {
-            MATCH_RESULTS -> {
-                val username = selectionArgs?.firstOrNull()
-                if (selection == GameResultContract.Results.selectionForUsername() && !username.isNullOrBlank()) {
-                    dao.queryByUsername(username)
-                } else {
-                    dao.queryAll()
-                }
+            MATCH_RESULTS -> when (val filter = resolveResultsQueryFilter(selection, selectionArgs)) {
+                ResultQueryFilter.All -> dao.queryAll()
+                is ResultQueryFilter.Username -> dao.queryByUsername(filter.value)
             }
             MATCH_RESULT_ID -> dao.queryById(ContentUris.parseId(uri))
             else -> throw IllegalArgumentException("Unsupported uri: $uri")
