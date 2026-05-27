@@ -6,6 +6,7 @@ import com.bird.starryskysudoku.account.LauncherSessionReader
 
 object GameResultContract {
     const val AUTHORITY = "com.bird.starryskysudoku.provider"
+    const val READ_PERMISSION = "com.bird.starryskysudoku.permission.READ_RESULTS"
     const val WRITE_PERMISSION = "com.bird.starryskysudoku.permission.WRITE_RESULTS"
     const val CONTENT_URI_BASE = "content://$AUTHORITY"
 

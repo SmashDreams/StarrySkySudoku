@@ -11,6 +11,7 @@ class GameResultContractTest {
     @Test
     fun contentUriUsesStableAuthorityAndResultsPath() {
         assertEquals("com.bird.starryskysudoku.provider", GameResultContract.AUTHORITY)
+        assertEquals("com.bird.starryskysudoku.permission.READ_RESULTS", GameResultContract.READ_PERMISSION)
         assertEquals("com.bird.starryskysudoku.permission.WRITE_RESULTS", GameResultContract.WRITE_PERMISSION)
         assertEquals("results", GameResultContract.Results.PATH)
         assertEquals("content://com.bird.starryskysudoku.provider/results", GameResultContract.Results.CONTENT_URI_STRING)

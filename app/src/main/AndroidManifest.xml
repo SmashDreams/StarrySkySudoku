@@ -2,11 +2,16 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools">
 
-    <!-- 外部应用可以读取公开战绩，但写入战绩只允许同签名应用执行。 -->
+    <!-- 读写战绩只允许同签名应用执行。 -->
+    <permission
+        android:name="com.bird.starryskysudoku.permission.READ_RESULTS"
+        android:protectionLevel="signature" />
+
     <permission
         android:name="com.bird.starryskysudoku.permission.WRITE_RESULTS"
         android:protectionLevel="signature" />
 
+    <uses-permission android:name="com.bird.starryskysudoku.permission.READ_RESULTS" />
     <uses-permission android:name="com.bird.starryskysudoku.permission.WRITE_RESULTS" />
     <uses-permission android:name="com.bird.launcher.permission.READ_SESSION" />
 
@@ -34,6 +39,7 @@
             android:authorities="com.bird.starryskysudoku.provider"
             android:exported="true"
             android:grantUriPermissions="false"
+            android:readPermission="com.bird.starryskysudoku.permission.READ_RESULTS"
             android:writePermission="com.bird.starryskysudoku.permission.WRITE_RESULTS" />
 
         <activity
