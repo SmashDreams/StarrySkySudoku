@@ -41,8 +41,11 @@ class GameResultProvider : ContentProvider() {
             if (selection != GameResultContract.Results.selectionForUsername()) {
                 throw IllegalArgumentException("Unsupported results selection: $selection")
             }
-            val username = selectionArgs?.firstOrNull()?.trim()
-            if (username.isNullOrBlank()) {
+            if (selectionArgs?.size != 1) {
+                throw IllegalArgumentException("Username selection requires exactly one argument")
+            }
+            val username = selectionArgs[0].trim()
+            if (username.isBlank()) {
                 throw IllegalArgumentException("Username selection requires a nonblank argument")
             }
             return ResultQueryFilter.Username(username)

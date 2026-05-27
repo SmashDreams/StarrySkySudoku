@@ -88,6 +88,16 @@ class GameResultProviderQueryFilterTest {
     }
 
     @Test
+    fun resolveResultsQueryRejectsMultipleUsernameSelectionArgs() {
+        assertThrows(IllegalArgumentException::class.java) {
+            GameResultProvider.resolveResultsQueryFilter(
+                GameResultContract.Results.selectionForUsername(),
+                arrayOf("alice", "bob")
+            )
+        }
+    }
+
+    @Test
     fun resolveResultsQueryRejectsUnsupportedSelection() {
         assertThrows(IllegalArgumentException::class.java) {
             GameResultProvider.resolveResultsQueryFilter("level=?", arrayOf("1"))
