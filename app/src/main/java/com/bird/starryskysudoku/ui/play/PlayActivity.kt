@@ -44,6 +44,7 @@ class PlayActivity : AppCompatActivity() {
     companion object {
         private const val TAG = "PlayActivity"
         private const val MAX_LEVEL = 40
+        const val EXTRA_USERNAME = "username"
     }
 
     private val mHandler = Handler(Looper.getMainLooper())
@@ -101,7 +102,9 @@ class PlayActivity : AppCompatActivity() {
         setContentView(R.layout.activity_play)
 
         mNum = parseLevel(intent.getStringExtra("mNum") ?: intent.getStringExtra("num")).toString()
-        mCurrentUsername = LauncherSessionReader.readUsername(contentResolver)
+        mCurrentUsername = intent.getStringExtra(EXTRA_USERNAME)
+            ?.takeIf { it.isNotBlank() }
+            ?: LauncherSessionReader.readUsername(contentResolver)
         val maxNum = MAX_LEVEL
 
         val db = DatabaseInitializer.getDatabase(this)
@@ -753,6 +756,7 @@ class PlayActivity : AppCompatActivity() {
                             cursor.getInt(cursor.getColumnIndexOrThrow(GameResultContract.Results.COLUMN_LEVEL))
                             cursor.getInt(cursor.getColumnIndexOrThrow(GameResultContract.Results.COLUMN_ELAPSED_SECONDS))
                             cursor.getInt(cursor.getColumnIndexOrThrow(GameResultContract.Results.COLUMN_COMPLETED))
+                            cursor.getString(cursor.getColumnIndexOrThrow(GameResultContract.Results.COLUMN_USERNAME))
                         }
                     }
                     true

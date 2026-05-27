@@ -174,7 +174,8 @@ class MapActivity : AppCompatActivity() {
                 mHandler.postDelayed({
                     startActivityWithTransition(
                         Intent(this@MapActivity, PlayActivity::class.java)
-                            .putExtra("num", checkNum),
+                            .putExtra("num", checkNum)
+                            .putExtra(PlayActivity.EXTRA_USERNAME, mCurrentUsername),
                         R.anim.playpage_show,
                         R.anim.playpage_hide
                     )
@@ -212,7 +213,8 @@ class MapActivity : AppCompatActivity() {
                     intent.removeExtra("lose")
                     startActivityWithTransition(
                         Intent(this@MapActivity, PlayActivity::class.java)
-                            .putExtra("num", checkNum),
+                            .putExtra("num", checkNum)
+                            .putExtra(PlayActivity.EXTRA_USERNAME, mCurrentUsername),
                         R.anim.playpage_show,
                         R.anim.playpage_hide
                     )
@@ -244,7 +246,8 @@ class MapActivity : AppCompatActivity() {
                 override fun onOpen(num: String) {
                     startActivityWithTransition(
                         Intent(this@MapActivity, PlayActivity::class.java)
-                            .putExtra("num", num),
+                            .putExtra("num", num)
+                            .putExtra(PlayActivity.EXTRA_USERNAME, mCurrentUsername),
                         R.anim.playpage_show,
                         R.anim.playpage_hide
                     )
