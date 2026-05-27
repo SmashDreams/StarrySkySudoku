@@ -33,6 +33,9 @@ class GameResultProvider : ContentProvider() {
             selectionArgs: Array<out String>?
         ): ResultQueryFilter {
             if (selection == null) {
+                if (!selectionArgs.isNullOrEmpty()) {
+                    throw IllegalArgumentException("Selection arguments require a selection")
+                }
                 return ResultQueryFilter.All
             }
             if (selection != GameResultContract.Results.selectionForUsername()) {
@@ -113,6 +116,7 @@ class GameResultProvider : ContentProvider() {
         if (sUriMatcher.match(uri) != MATCH_RESULT_ID) {
             throw IllegalArgumentException("Delete only supports item uri: $uri")
         }
+        requireUnfilteredItemQuery(selection, selectionArgs)
         val appContext = requireNotNull(context?.applicationContext)
         val rows = DatabaseInitializer.getDatabase(appContext)
             .gameResultDao()
