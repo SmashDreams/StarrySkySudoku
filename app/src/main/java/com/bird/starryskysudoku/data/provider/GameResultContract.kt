@@ -29,6 +29,7 @@ object GameResultContract {
         const val COLUMN_COMPLETED = "completed"
         const val COLUMN_CREATED_AT = "created_at"
         const val COLUMN_USERNAME = "username"
+        const val SORT_NEWEST_FIRST = "$COLUMN_CREATED_AT DESC"
 
         fun selectionForUsername(): String = "$COLUMN_USERNAME=?"
 

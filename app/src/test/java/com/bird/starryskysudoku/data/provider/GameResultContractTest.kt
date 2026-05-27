@@ -28,6 +28,7 @@ class GameResultContractTest {
         assertEquals("completed", GameResultContract.Results.COLUMN_COMPLETED)
         assertEquals("created_at", GameResultContract.Results.COLUMN_CREATED_AT)
         assertEquals("username", GameResultContract.Results.COLUMN_USERNAME)
+        assertEquals("created_at DESC", GameResultContract.Results.SORT_NEWEST_FIRST)
         assertEquals("username=?", GameResultContract.Results.selectionForUsername())
     }
 

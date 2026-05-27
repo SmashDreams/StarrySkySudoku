@@ -51,6 +51,12 @@ class GameResultProvider : ContentProvider() {
             return ResultQueryFilter.Username(username)
         }
 
+        internal fun requireSupportedSortOrder(sortOrder: String?) {
+            if (sortOrder != null && sortOrder != GameResultContract.Results.SORT_NEWEST_FIRST) {
+                throw IllegalArgumentException("Unsupported results sort order: $sortOrder")
+            }
+        }
+
         internal fun requireUnfilteredItemQuery(selection: String?, selectionArgs: Array<out String>?) {
             if (selection != null || !selectionArgs.isNullOrEmpty()) {
                 throw IllegalArgumentException("Item uri queries do not support selection filters")
@@ -82,9 +88,12 @@ class GameResultProvider : ContentProvider() {
         val appContext = requireNotNull(context?.applicationContext)
         val dao = DatabaseInitializer.getDatabase(appContext).gameResultDao()
         val cursor = when (sUriMatcher.match(uri)) {
-            MATCH_RESULTS -> when (val filter = resolveResultsQueryFilter(selection, selectionArgs)) {
-                ResultQueryFilter.All -> dao.queryAll()
-                is ResultQueryFilter.Username -> dao.queryByUsername(filter.value)
+            MATCH_RESULTS -> {
+                requireSupportedSortOrder(sortOrder)
+                when (val filter = resolveResultsQueryFilter(selection, selectionArgs)) {
+                    ResultQueryFilter.All -> dao.queryAll()
+                    is ResultQueryFilter.Username -> dao.queryByUsername(filter.value)
+                }
             }
             MATCH_RESULT_ID -> {
                 requireUnfilteredItemQuery(selection, selectionArgs)

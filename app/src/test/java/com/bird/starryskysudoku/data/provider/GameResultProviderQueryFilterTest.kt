@@ -56,6 +56,24 @@ class GameResultProviderQueryFilterTest {
         }
     }
 
+
+    @Test
+    fun queryRejectsUnsupportedSortOrderForCollectionUri() {
+        val provider = Robolectric.buildContentProvider(GameResultProvider::class.java)
+            .create()
+            .get()
+
+        assertThrows(IllegalArgumentException::class.java) {
+            provider.query(
+                GameResultContract.Results.CONTENT_URI,
+                null,
+                null,
+                null,
+                "level ASC"
+            )
+        }
+    }
+
     @Test
     fun resolveResultsQueryTrimsUsernameForUsernameSelection() {
         assertEquals(
