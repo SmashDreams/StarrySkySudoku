@@ -44,6 +44,12 @@ class GameResultProvider : ContentProvider() {
             }
             return ResultQueryFilter.Username(username)
         }
+
+        internal fun requireUnfilteredItemQuery(selection: String?, selectionArgs: Array<out String>?) {
+            if (selection != null || !selectionArgs.isNullOrEmpty()) {
+                throw IllegalArgumentException("Item uri queries do not support selection filters")
+            }
+        }
     }
 
     override fun onCreate(): Boolean = true
@@ -74,7 +80,10 @@ class GameResultProvider : ContentProvider() {
                 ResultQueryFilter.All -> dao.queryAll()
                 is ResultQueryFilter.Username -> dao.queryByUsername(filter.value)
             }
-            MATCH_RESULT_ID -> dao.queryById(ContentUris.parseId(uri))
+            MATCH_RESULT_ID -> {
+                requireUnfilteredItemQuery(selection, selectionArgs)
+                dao.queryById(ContentUris.parseId(uri))
+            }
             else -> throw IllegalArgumentException("Unsupported uri: $uri")
         }
         cursor.setNotificationUri(appContext.contentResolver, uri)
