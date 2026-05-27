@@ -48,7 +48,14 @@ class GameResultProvider : ContentProvider() {
         val appContext = requireNotNull(context?.applicationContext)
         val dao = DatabaseInitializer.getDatabase(appContext).gameResultDao()
         val cursor = when (sUriMatcher.match(uri)) {
-            MATCH_RESULTS -> dao.queryAll()
+            MATCH_RESULTS -> {
+                val username = selectionArgs?.firstOrNull()
+                if (selection == GameResultContract.Results.selectionForUsername() && !username.isNullOrBlank()) {
+                    dao.queryByUsername(username)
+                } else {
+                    dao.queryAll()
+                }
+            }
             MATCH_RESULT_ID -> dao.queryById(ContentUris.parseId(uri))
             else -> throw IllegalArgumentException("Unsupported uri: $uri")
         }

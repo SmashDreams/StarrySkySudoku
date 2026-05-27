@@ -42,4 +42,36 @@ class GameResultDaoTest {
             assertEquals("alice", cursor.getString(cursor.getColumnIndexOrThrow("username")))
         }
     }
+
+    @Test
+    fun queryByUsernameReturnsOnlyMatchingUsername() {
+        val dao = mDb.gameResultDao()
+        dao.insert(
+            GameResultEntity.fromFields(
+                level = 1,
+                elapsedSeconds = 60,
+                remainingSeconds = 540,
+                completed = false,
+                createdAt = 1_800_000_000_000L,
+                username = "guest"
+            )
+        )
+        dao.insert(
+            GameResultEntity.fromFields(
+                level = 2,
+                elapsedSeconds = 120,
+                remainingSeconds = 480,
+                completed = true,
+                createdAt = 1_800_000_000_001L,
+                username = "alice"
+            )
+        )
+
+        dao.queryByUsername("alice").use { cursor ->
+            assertEquals(1, cursor.count)
+            assertTrue(cursor.moveToFirst())
+            assertEquals("alice", cursor.getString(cursor.getColumnIndexOrThrow("username")))
+            assertEquals(2, cursor.getInt(cursor.getColumnIndexOrThrow("level")))
+        }
+    }
 }

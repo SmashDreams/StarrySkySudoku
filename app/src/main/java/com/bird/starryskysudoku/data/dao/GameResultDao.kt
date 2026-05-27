@@ -16,6 +16,12 @@ interface GameResultDao {
     fun queryAll(): Cursor
 
     /*
+     * 外部启动器按账号读取战绩时必须限定用户名，避免把其他用户的结果泄露到当前会话。
+     */
+    @Query("SELECT _id, level, elapsed_seconds, remaining_seconds, completed, created_at, username FROM game_result WHERE username = :username ORDER BY created_at DESC")
+    fun queryByUsername(username: String): Cursor
+
+    /*
      * 单条查询用于内容地址后追加编号的场景，例如外部应用查看某一次游戏战绩。
      */
     @Query("SELECT _id, level, elapsed_seconds, remaining_seconds, completed, created_at, username FROM game_result WHERE _id = :id")
