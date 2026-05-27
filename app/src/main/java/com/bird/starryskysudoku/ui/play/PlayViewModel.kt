@@ -215,7 +215,10 @@ class PlayViewModel(private val mDb: AppDatabase) : ViewModel() {
         val map = userMapDao.getByUserAndPass(safeUsername, passNum)
         val newTimes = ((map?.mPlayTime?.toIntOrNull() ?: 0) + 1).toString()
         userMapDao.updatePlayTime(safeUsername, passNum, newTimes)
-        if (passNum < 40) userMapDao.updateStatus(safeUsername, nextPassNum, "待通关")
+        val nextMap = userMapDao.getByUserAndPass(safeUsername, nextPassNum)
+        if (passNum < 40 && nextMap?.mStatus != "已通关") {
+            userMapDao.updateStatus(safeUsername, nextPassNum, "待通关")
+        }
     }
 
     suspend fun updatePassStatus(passNum: Int, nextPassNum: Int) {
