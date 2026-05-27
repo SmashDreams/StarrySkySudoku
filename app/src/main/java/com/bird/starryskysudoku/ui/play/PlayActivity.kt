@@ -507,7 +507,9 @@ class PlayActivity : AppCompatActivity() {
             clearHistoryAndRun {
                 finish()
                 startActivityWithTransition(
-                    Intent(this, PlayActivity::class.java).putExtra("mNum", mNum),
+                    Intent(this, PlayActivity::class.java)
+                        .putExtra("mNum", mNum)
+                        .putExtra(EXTRA_USERNAME, mCurrentUsername),
                     R.anim.playpage_show,
                     R.anim.playpage_hide
                 )
@@ -590,7 +592,9 @@ class PlayActivity : AppCompatActivity() {
             clearHistoryAndRun {
                 finish()
                 startActivityWithTransition(
-                    Intent(this, PlayActivity::class.java).putExtra("mNum", mNum),
+                    Intent(this, PlayActivity::class.java)
+                        .putExtra("mNum", mNum)
+                        .putExtra(EXTRA_USERNAME, mCurrentUsername),
                     R.anim.playpage_show,
                     R.anim.playpage_hide
                 )
@@ -630,7 +634,8 @@ class PlayActivity : AppCompatActivity() {
                 } else {
                     startActivityWithTransition(
                         Intent(this, PlayActivity::class.java)
-                            .putExtra("mNum", (level + 1).toString()),
+                            .putExtra("mNum", (level + 1).toString())
+                            .putExtra(EXTRA_USERNAME, mCurrentUsername),
                         R.anim.playpage_show,
                         R.anim.playpage_hide
                     )

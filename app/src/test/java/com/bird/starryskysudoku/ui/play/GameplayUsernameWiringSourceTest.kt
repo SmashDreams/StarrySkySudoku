@@ -44,6 +44,26 @@ class GameplayUsernameWiringSourceTest {
         )
     }
 
+    @Test
+    fun playActivityPassesCurrentUsernameToInternalPlayActivityIntents() {
+        val source = sourceRoot.resolve("ui/play/PlayActivity.kt").readText()
+        val internalPlayIntentPattern = Regex(
+            """Intent\(this,\s*PlayActivity::class\.java\)([\s\S]*?)(?:R\.anim|$)"""
+        )
+        val internalPlayIntents = internalPlayIntentPattern.findAll(source).toList()
+
+        assertTrue(
+            "Expected PlayActivity to create internal PlayActivity intents",
+            internalPlayIntents.isNotEmpty()
+        )
+        internalPlayIntents.forEach { match ->
+            assertTrue(
+                "Internal PlayActivity intent must preserve current username: ${match.value}",
+                match.value.contains(".putExtra(EXTRA_USERNAME, mCurrentUsername)")
+            )
+        }
+    }
+
     private fun locateSourceRoot(): File {
         var dir = File(System.getProperty("user.dir")).absoluteFile
         while (dir.parentFile != null) {
