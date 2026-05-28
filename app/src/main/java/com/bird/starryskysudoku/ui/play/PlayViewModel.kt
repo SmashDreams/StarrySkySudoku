@@ -7,7 +7,7 @@ import androidx.lifecycle.viewModelScope
 import com.bird.starryskysudoku.account.LauncherSessionReader
 import com.bird.starryskysudoku.data.database.AppDatabase
 import com.bird.starryskysudoku.data.entity.HistoryEntity
-import com.bird.starryskysudoku.data.entity.UserMapEntity
+import com.bird.starryskysudoku.data.repository.UserProgressRepository
 import com.bird.starryskysudoku.timer.CountdownTimerContract
 import kotlinx.coroutines.launch
 import java.util.UUID
@@ -51,6 +51,8 @@ class PlayViewModel(private val mDb: AppDatabase) : ViewModel() {
     var mCurrentBlock = 0
     private var mCurrentPassNum = 0
     private var mGameSession = UUID.randomUUID().toString()
+    private val mUserProgressRepository = UserProgressRepository(mDb)
+    private val mGameResultRecordGate = GameResultRecordGate()
 
     private val mRemainingSecondsSource = MutableLiveData(CountdownTimerContract.DEFAULT_TOTAL_SECONDS)
     val mRemainingSeconds: LiveData<Int> = mRemainingSecondsSource
@@ -209,16 +211,7 @@ class PlayViewModel(private val mDb: AppDatabase) : ViewModel() {
         passNum: Int,
         nextPassNum: Int
     ) {
-        val safeUsername = ensureUserMap(username)
-        val userMapDao = mDb.userMapDao()
-        userMapDao.updateStatus(safeUsername, passNum, "已通关")
-        val map = userMapDao.getByUserAndPass(safeUsername, passNum)
-        val newTimes = ((map?.mPlayTime?.toIntOrNull() ?: 0) + 1).toString()
-        userMapDao.updatePlayTime(safeUsername, passNum, newTimes)
-        val nextMap = userMapDao.getByUserAndPass(safeUsername, nextPassNum)
-        if (passNum < 40 && nextMap?.mStatus != "已通关") {
-            userMapDao.updateStatus(safeUsername, nextPassNum, "待通关")
-        }
+        mUserProgressRepository.completePass(username, passNum, nextPassNum)
     }
 
     suspend fun updatePassStatus(passNum: Int, nextPassNum: Int) {
@@ -227,25 +220,17 @@ class PlayViewModel(private val mDb: AppDatabase) : ViewModel() {
 
     fun clearWinState() { mHasWonSource.value = false }
 
+    fun markGameResultRecordStarted(levelNum: Int, completed: Boolean): Boolean {
+        return mGameResultRecordGate.markIfFirst(levelNum, completed)
+    }
+
+    fun clearGameResultRecordMark(levelNum: Int, completed: Boolean) {
+        mGameResultRecordGate.unmark()
+    }
+
     private fun isValidCell(x: Int, y: Int) = x in 0..8 && y in 0..8
 
     private fun isValidNumber(number: String) = number.toIntOrNull() in 1..9
-
-    private suspend fun ensureUserMap(username: String): String {
-        val safeUsername = username.trim().ifEmpty { LauncherSessionReader.GUEST_USERNAME }
-        if (mDb.userMapDao().getAllForUser(safeUsername).isNotEmpty()) return safeUsername
-
-        val userRows = mDb.mapDao().getAllMaps().mapIndexed { index, map ->
-            UserMapEntity(
-                mUsername = safeUsername,
-                mPassNum = map.mPassNum,
-                mStatus = if (index == 0) "待通关" else "未通关",
-                mPlayTime = "0"
-            )
-        }
-        mDb.userMapDao().insertAll(userRows)
-        return safeUsername
-    }
 
     private fun newHistory(row: Int, col: Int, type: Int, value: Int): HistoryEntity {
         return HistoryEntity(

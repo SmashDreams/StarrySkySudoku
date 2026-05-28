@@ -65,13 +65,13 @@ class GameplayUsernameWiringSourceTest {
     }
 
     private fun locateSourceRoot(): File {
-        var dir = File(System.getProperty("user.dir")).absoluteFile
-        while (dir.parentFile != null) {
+        var dir = File(requireNotNull(System.getProperty("user.dir"))).absoluteFile
+        while (true) {
             val sourceRoot = dir.resolve("src/main/java/com/bird/starryskysudoku")
             if (sourceRoot.isDirectory) return sourceRoot
             val appSourceRoot = dir.resolve("app/src/main/java/com/bird/starryskysudoku")
             if (appSourceRoot.isDirectory) return appSourceRoot
-            dir = dir.parentFile
+            dir = dir.parentFile ?: break
         }
         error("Unable to locate app source root")
     }

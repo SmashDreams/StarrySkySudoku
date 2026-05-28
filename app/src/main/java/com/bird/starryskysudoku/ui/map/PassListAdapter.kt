@@ -2,9 +2,6 @@ package com.bird.starryskysudoku.ui.map
 
 import android.animation.ObjectAnimator
 import android.animation.ValueAnimator
-import android.content.Context
-import android.os.Handler
-import android.os.Looper
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -15,9 +12,10 @@ import androidx.core.graphics.toColorInt
 import androidx.recyclerview.widget.RecyclerView
 import com.bird.starryskysudoku.R
 import com.bird.starryskysudoku.data.entity.MapEntity
+import com.bird.starryskysudoku.data.repository.PassStatus
+import com.bird.starryskysudoku.databinding.PassFirstItemBinding
+import com.bird.starryskysudoku.databinding.PassItemBinding
 import com.bird.starryskysudoku.media.PlayMusic
-import com.bird.starryskysudoku.ui.dialog.MyDialog
-import com.bird.starryskysudoku.ui.dialog.MyDialogManager
 import java.util.Locale
 
 class PassListAdapter(
@@ -25,74 +23,90 @@ class PassListAdapter(
     private var mLightStar: Int
 ) : RecyclerView.Adapter<PassListAdapter.LinearViewHolder>() {
 
+    companion object {
+        private const val VIEW_TYPE_HEADER = 0
+        private const val VIEW_TYPE_PASS_ROW = 1
+    }
+
     interface OpenPlayPage {
-        fun onOpen(num: String)
+        fun onOpen(entity: MapEntity)
     }
 
     private var mOpenListener: OpenPlayPage? = null
-    private lateinit var mContext: Context
-    private lateinit var mDialog: MyDialog
-    private lateinit var mPassNumView: TextView
-    private lateinit var mPassTimesView: TextView
-    private lateinit var mPassStarView: ImageView
 
     fun setOpenListener(listener: OpenPlayPage) { mOpenListener = listener }
 
-    class LinearViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
-        val mStars = arrayOf<ImageView>(
-            itemView.findViewById(R.id.star_1), itemView.findViewById(R.id.star_2),
-            itemView.findViewById(R.id.star_3), itemView.findViewById(R.id.star_4)
-        )
-        val mLines = arrayOf<ImageView>(
-            itemView.findViewById(R.id.line_0), itemView.findViewById(R.id.line_1),
-            itemView.findViewById(R.id.line_2), itemView.findViewById(R.id.line_3),
-            itemView.findViewById(R.id.line_4)
-        )
-        val mLights = arrayOf<ImageView>(
-            itemView.findViewById(R.id.light_1), itemView.findViewById(R.id.light_2),
-            itemView.findViewById(R.id.light_3), itemView.findViewById(R.id.light_4)
-        )
-        val mNums = arrayOf<TextView>(
-            itemView.findViewById(R.id.num_1), itemView.findViewById(R.id.num_2),
-            itemView.findViewById(R.id.num_3), itemView.findViewById(R.id.num_4)
-        )
+    class LinearViewHolder private constructor(
+        itemView: View,
+        val mStars: Array<ImageView>,
+        val mLines: Array<ImageView>,
+        val mLights: Array<ImageView>,
+        val mNums: Array<TextView>
+    ) : RecyclerView.ViewHolder(itemView) {
+        companion object {
+            fun fromHeader(binding: PassFirstItemBinding): LinearViewHolder {
+                return LinearViewHolder(binding.root, emptyArray(), emptyArray(), emptyArray(), emptyArray())
+            }
+
+            fun fromPassRow(binding: PassItemBinding): LinearViewHolder {
+                return LinearViewHolder(
+                    binding.root,
+                    arrayOf(binding.star1, binding.star2, binding.star3, binding.star4),
+                    arrayOf(binding.line0, binding.line1, binding.line2, binding.line3, binding.line4),
+                    arrayOf(binding.light1, binding.light2, binding.light3, binding.light4),
+                    arrayOf(binding.num1, binding.num2, binding.num3, binding.num4)
+                )
+            }
+        }
+
         val mStatus = arrayOfNulls<String>(4)
+        private val mLightAnimators = arrayOfNulls<ValueAnimator>(4)
+        private val mLightStarRunnables = arrayOfNulls<Runnable>(4)
+
+        fun setLightAnimator(index: Int, animator: ValueAnimator) {
+            mLightAnimators[index]?.cancel()
+            mLightAnimators[index] = animator
+        }
+
+        fun setLightStarRunnable(index: Int, runnable: Runnable) {
+            mLightStarRunnables[index]?.let(itemView::removeCallbacks)
+            mLightStarRunnables[index] = runnable
+            itemView.postDelayed(runnable, 180)
+        }
+
+        fun cancelPendingAnimations() {
+            for (i in mLightAnimators.indices) {
+                mLightAnimators[i]?.cancel()
+                mLightAnimators[i] = null
+                mLightStarRunnables[i]?.let(itemView::removeCallbacks)
+                mLightStarRunnables[i] = null
+                mLights.getOrNull(i)?.clearAnimation()
+                mLights.getOrNull(i)?.visibility = View.GONE
+                mLights.getOrNull(i)?.alpha = 1f
+                mStars.getOrNull(i)?.clearAnimation()
+                mStars.getOrNull(i)?.animate()?.cancel()
+            }
+        }
     }
 
-    override fun getItemViewType(position: Int) = position
+    override fun getItemViewType(position: Int): Int {
+        return if (position == 0) VIEW_TYPE_HEADER else VIEW_TYPE_PASS_ROW
+    }
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): LinearViewHolder {
-        mContext = parent.context
-        return if (viewType == 0) {
-            LinearViewHolder(LayoutInflater.from(mContext).inflate(R.layout.pass_first_item, parent, false))
+        val inflater = LayoutInflater.from(parent.context)
+        return if (viewType == VIEW_TYPE_HEADER) {
+            LinearViewHolder.fromHeader(PassFirstItemBinding.inflate(inflater, parent, false))
         } else {
-            mDialog = MyDialogManager.getInstance().initView(mContext, R.layout.dialog_passcheck)
-            mPassNumView = mDialog.findViewById(R.id.passcheck_num)
-            mPassTimesView = mDialog.findViewById(R.id.passcheck_passtimes)
-            mPassStarView = mDialog.findViewById(R.id.passcheck_star)
-
-            mDialog.findViewById<View>(R.id.passcheck_close).setOnClickListener {
-                PlayMusic.getInstance().playButtonTap()
-                Handler(Looper.getMainLooper()).postDelayed({
-                    MyDialogManager.getInstance().hide(mDialog)
-                }, 200)
-            }
-
-            mDialog.findViewById<View>(R.id.passcheck_start).setOnClickListener {
-                PlayMusic.getInstance().playButtonTap()
-                Handler(Looper.getMainLooper()).postDelayed({
-                    mOpenListener?.onOpen(mPassNumView.text.toString())
-                    MyDialogManager.getInstance().hide(mDialog)
-                }, 165)
-            }
-
-            LinearViewHolder(LayoutInflater.from(mContext).inflate(R.layout.pass_item, parent, false))
+            LinearViewHolder.fromPassRow(PassItemBinding.inflate(inflater, parent, false))
         }
     }
 
     override fun onBindViewHolder(holder: LinearViewHolder, position: Int) {
         if (position == 0) return
 
+        holder.cancelPendingAnimations()
+        val context = holder.itemView.context
         val item = mPassList[mPassList.size - position]
 
         for (i in 0 until 4) {
@@ -101,30 +115,23 @@ class PassListAdapter(
             holder.mNums[i].text = String.format(Locale.getDefault(), "%d", entity.mPassNum)
             holder.mStatus[i] = entity.mStatus
             holder.mStars[i].setOnClickListener(null)
-            holder.mStars[i].clearAnimation()
-            holder.mLights[i].clearAnimation()
-            holder.mLights[i].visibility = View.GONE
-            holder.mLights[i].alpha = 1f
             holder.mLines[i].visibility = View.VISIBLE
 
             when (entity.mStatus) {
-                "已通关" -> {
-                    holder.mNums[i].setTextColor(ContextCompat.getColor(mContext, R.color.map_pass))
+                PassStatus.COMPLETED -> {
+                    holder.mNums[i].setTextColor(ContextCompat.getColor(context, R.color.map_pass))
                     holder.mStars[i].setImageResource(R.drawable.map_star_completed)
 
                     if (entity.mPassNum == mLightStar) {
-                        Handler(Looper.getMainLooper()).postDelayed({
+                        holder.setLightStarRunnable(idx, Runnable {
                             PlayMusic.getInstance().playMapLightStar()
                             animateStar(holder.mStars[idx])
-                        }, 180)
+                        })
                     }
 
                     holder.mStars[i].setOnClickListener {
                         PlayMusic.getInstance().playDialogShow()
-                        mPassStarView.setImageResource(R.drawable.star_earned)
-                        mPassNumView.text = holder.mNums[idx].text
-                        mPassTimesView.text = entity.mPlayTime
-                        MyDialogManager.getInstance().show(mDialog)
+                        mOpenListener?.onOpen(entity)
                     }
 
                     holder.mLines[i].setImageResource(R.drawable.map_path_left_unlocked)
@@ -134,7 +141,7 @@ class PassListAdapter(
                         holder.mLines[4].setImageResource(R.drawable.map_path_left_unlocked)
                     }
                 }
-                "待通关" -> {
+                PassStatus.TODO -> {
                     holder.mLights[i].visibility = View.VISIBLE
                     ValueAnimator.ofFloat(0.1f, 1f).apply {
                         duration = 1500
@@ -142,6 +149,7 @@ class PassListAdapter(
                         repeatMode = ValueAnimator.REVERSE
                         addUpdateListener { holder.mLights[idx].alpha = it.animatedValue as Float }
                         start()
+                        holder.setLightAnimator(idx, this)
                     }
                     holder.mLines[i].setImageResource(R.drawable.map_path_left_unlocked)
                     if (i == 0) holder.mLines[0].setImageResource(R.drawable.map_path_left_unlocked)
@@ -150,10 +158,7 @@ class PassListAdapter(
 
                     holder.mStars[i].setOnClickListener {
                         PlayMusic.getInstance().playDialogShow()
-                        mPassStarView.setImageResource(R.drawable.star_empty)
-                        mPassNumView.text = holder.mNums[idx].text
-                        mPassTimesView.text = entity.mPlayTime
-                        MyDialogManager.getInstance().show(mDialog)
+                        mOpenListener?.onOpen(entity)
                     }
                 }
                 else -> {
@@ -170,6 +175,11 @@ class PassListAdapter(
         }
     }
 
+    override fun onViewRecycled(holder: LinearViewHolder) {
+        holder.cancelPendingAnimations()
+        super.onViewRecycled(holder)
+    }
+
     private fun animateStar(star: ImageView) {
         star.scaleX = 0f; star.scaleY = 0f
         ObjectAnimator.ofFloat(star, "scaleY", 0f, 1.2f, 1f).setDuration(400).start()
@@ -182,7 +192,7 @@ class PassListAdapter(
     fun getPosition(): Int {
         for (i in mPassList.indices) {
             for (j in 0 until 4) {
-                if (mPassList[i][j]?.mStatus == "待通关") return mPassList.size - i
+                if (mPassList[i][j]?.mStatus == PassStatus.TODO) return mPassList.size - i
             }
         }
         return 0

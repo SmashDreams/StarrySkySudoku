@@ -59,6 +59,48 @@ object DatabaseInitializer {
         }
     }
 
+    internal val sMigration4To5 = object : Migration(4, 5) {
+        override fun migrate(db: SupportSQLiteDatabase) {
+            db.execSQL(
+                """
+                CREATE TABLE map_v5 (
+                    pass_num INTEGER NOT NULL PRIMARY KEY,
+                    status TEXT NOT NULL,
+                    play_time INTEGER NOT NULL
+                )
+                """.trimIndent()
+            )
+            db.execSQL(
+                """
+                INSERT INTO map_v5(pass_num, status, play_time)
+                SELECT pass_num, status, CAST(play_time AS INTEGER) FROM map
+                """.trimIndent()
+            )
+            db.execSQL("DROP TABLE map")
+            db.execSQL("ALTER TABLE map_v5 RENAME TO map")
+
+            db.execSQL(
+                """
+                CREATE TABLE user_map_v5 (
+                    username TEXT NOT NULL,
+                    pass_num INTEGER NOT NULL,
+                    status TEXT NOT NULL,
+                    play_time INTEGER NOT NULL,
+                    PRIMARY KEY(username, pass_num)
+                )
+                """.trimIndent()
+            )
+            db.execSQL(
+                """
+                INSERT INTO user_map_v5(username, pass_num, status, play_time)
+                SELECT username, pass_num, status, CAST(play_time AS INTEGER) FROM user_map
+                """.trimIndent()
+            )
+            db.execSQL("DROP TABLE user_map")
+            db.execSQL("ALTER TABLE user_map_v5 RENAME TO user_map")
+        }
+    }
+
     @Volatile
     private var sInstance: AppDatabase? = null
 
@@ -75,7 +117,7 @@ object DatabaseInitializer {
          */
         return Room.databaseBuilder(context.applicationContext, AppDatabase::class.java, DB_NAME)
             .createFromAsset(DB_NAME)
-            .addMigrations(sMigration1To2, sMigration2To3, sMigration3To4)
+            .addMigrations(sMigration1To2, sMigration2To3, sMigration3To4, sMigration4To5)
             .build()
     }
 }

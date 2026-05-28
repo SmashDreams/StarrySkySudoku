@@ -29,9 +29,9 @@ class UserMapDaoTest {
         val dao = mDb.userMapDao()
         dao.insertAll(
             listOf(
-                UserMapEntity("alice", 2, "未通关", "0"),
-                UserMapEntity("bob", 1, "待通关", "3"),
-                UserMapEntity("alice", 1, "待通关", "1")
+                UserMapEntity("alice", 2, "未通关", 0),
+                UserMapEntity("bob", 1, "待通关", 3),
+                UserMapEntity("alice", 1, "待通关", 1)
             )
         )
 
@@ -46,21 +46,21 @@ class UserMapDaoTest {
         val dao = mDb.userMapDao()
         dao.insertAll(
             listOf(
-                UserMapEntity("alice", 1, "待通关", "0"),
-                UserMapEntity("alice", 1, "已通关", "8"),
-                UserMapEntity("bob", 1, "待通关", "0")
+                UserMapEntity("alice", 1, "待通关", 0),
+                UserMapEntity("alice", 1, "已通关", 8),
+                UserMapEntity("bob", 1, "待通关", 0)
             )
         )
 
         dao.updateStatus("alice", 1, "已通关")
-        dao.updatePlayTime("alice", 1, "1")
+        dao.updatePlayTime("alice", 1, 1)
 
         val alice = requireNotNull(dao.getByUserAndPass("alice", 1))
         val bob = requireNotNull(dao.getByUserAndPass("bob", 1))
         assertEquals("已通关", alice.mStatus)
-        assertEquals("1", alice.mPlayTime)
+        assertEquals(1, alice.mPlayTime)
         assertEquals("待通关", bob.mStatus)
-        assertEquals("0", bob.mPlayTime)
+        assertEquals(0, bob.mPlayTime)
     }
 
     @Test
@@ -68,8 +68,8 @@ class UserMapDaoTest {
         val dao = mDb.userMapDao()
         dao.insertAll(
             listOf(
-                UserMapEntity("alice", 1, "待通关", "0"),
-                UserMapEntity("alice", 2, "已通关", "1")
+                UserMapEntity("alice", 1, "待通关", 0),
+                UserMapEntity("alice", 2, "已通关", 1)
             )
         )
 
@@ -78,7 +78,7 @@ class UserMapDaoTest {
         val firstPass = requireNotNull(dao.getByUserAndPass("alice", 1))
         val secondPass = requireNotNull(dao.getByUserAndPass("alice", 2))
         assertEquals("已通关", firstPass.mStatus)
-        assertEquals("1", firstPass.mPlayTime)
+        assertEquals(1, firstPass.mPlayTime)
         assertEquals("已通关", secondPass.mStatus)
     }
 }

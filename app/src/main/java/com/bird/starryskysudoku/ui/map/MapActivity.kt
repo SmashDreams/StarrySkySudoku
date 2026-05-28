@@ -28,9 +28,15 @@ import androidx.core.os.LocaleListCompat
 import androidx.lifecycle.ViewModelProvider
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
+import com.bird.starryskysudoku.AppSettings
 import com.bird.starryskysudoku.R
 import com.bird.starryskysudoku.account.LauncherSessionReader
 import com.bird.starryskysudoku.data.database.DatabaseInitializer
+import com.bird.starryskysudoku.data.entity.MapEntity
+import com.bird.starryskysudoku.data.repository.PassStatus
+import com.bird.starryskysudoku.databinding.ActivityMappageBinding
+import com.bird.starryskysudoku.databinding.DialogPasscheckBinding
+import com.bird.starryskysudoku.databinding.DialogSettingsBinding
 import com.bird.starryskysudoku.media.PlayMusic
 import com.bird.starryskysudoku.notification.NotificationPermissionPolicy
 import com.bird.starryskysudoku.timer.CountdownTimerContract
@@ -55,6 +61,7 @@ class MapActivity : AppCompatActivity() {
     }
 
     private lateinit var mSettings: ImageView
+    private lateinit var mBinding: ActivityMappageBinding
     private lateinit var mBigShootingStar: ImageView
     private lateinit var mSmallShootingStar: ImageView
     private lateinit var mBackgroundStars: ImageView
@@ -89,7 +96,8 @@ class MapActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        setContentView(R.layout.activity_mappage)
+        mBinding = ActivityMappageBinding.inflate(layoutInflater)
+        setContentView(mBinding.root)
 
         val db = DatabaseInitializer.getDatabase(this)
         mViewModel = ViewModelProvider(this, object : ViewModelProvider.Factory {
@@ -99,17 +107,18 @@ class MapActivity : AppCompatActivity() {
             }
         })[MapViewModel::class.java]
 
-        val musicPrefs = getSharedPreferences("music_set", MODE_PRIVATE)
-        mMusicOpened = musicPrefs.getBoolean("music", true)
-        mAudioOpened = musicPrefs.getBoolean("audio", true)
-        mLanguage = getSharedPreferences("mLanguage", MODE_PRIVATE).getString("mLanguage", "zh") ?: "zh"
+        val musicPrefs = getSharedPreferences(AppSettings.PREFS_MUSIC, MODE_PRIVATE)
+        mMusicOpened = musicPrefs.getBoolean(AppSettings.KEY_MUSIC, true)
+        mAudioOpened = musicPrefs.getBoolean(AppSettings.KEY_AUDIO, true)
+        mLanguage = getSharedPreferences(AppSettings.PREFS_LANGUAGE, MODE_PRIVATE)
+            .getString(AppSettings.KEY_LANGUAGE, AppSettings.DEFAULT_LANGUAGE) ?: AppSettings.DEFAULT_LANGUAGE
 
-        mRecyclerView = findViewById(R.id.pass_list)
-        mBigShootingStar = findViewById(R.id.sstar_big)
-        mSmallShootingStar = findViewById(R.id.sstar_small)
-        mBackgroundStars = findViewById(R.id.map_bgstar)
-        mSettings = findViewById(R.id.settings)
-        mLoginStatus = findViewById(R.id.login_status)
+        mRecyclerView = mBinding.passList
+        mBigShootingStar = mBinding.sstarBig
+        mSmallShootingStar = mBinding.sstarSmall
+        mBackgroundStars = mBinding.mapBgstar
+        mSettings = mBinding.settings
+        mLoginStatus = mBinding.loginStatus
         mLoginStatus.setOnClickListener {
             Toast.makeText(this, R.string.login_prompt_teahouse, Toast.LENGTH_SHORT).show()
         }
@@ -166,8 +175,8 @@ class MapActivity : AppCompatActivity() {
         val passNum = parseLevel(num) ?: return
         mViewModel.getPassStatus(mCurrentUsername, passNum) { status ->
             when (status) {
-                "待通关" -> openPassCheck(passNum.toString())
-                "已通关" -> openRetryCheck(passNum.toString())
+                PassStatus.TODO -> openPassCheck(passNum.toString())
+                PassStatus.COMPLETED -> openRetryCheck(passNum.toString())
             }
         }
     }
@@ -183,29 +192,32 @@ class MapActivity : AppCompatActivity() {
             }, 700)
         }
 
-        val dialog = MyDialogManager.getInstance().initView(this, R.layout.dialog_passcheck).apply {
-            findViewById<TextView>(R.id.passcheck_num).text = checkNum
-            findViewById<TextView>(R.id.passcheck_passtimes).text = "0"
-            findViewById<ImageView>(R.id.passcheck_star).setImageResource(R.drawable.star_empty)
+        val passCheckBinding = DialogPasscheckBinding.inflate(layoutInflater)
+        val dialog = MyDialogManager.getInstance()
+            .initView(this, R.layout.dialog_passcheck, passCheckBinding.root)
+            .apply {
+                passCheckBinding.passcheckNum.text = checkNum
+                passCheckBinding.passcheckPasstimes.text = "0"
+                passCheckBinding.passcheckStar.setImageResource(R.drawable.star_empty)
 
-            findViewById<View>(R.id.passcheck_close).setOnClickListener {
-                PlayMusic.getInstance().playButtonTap()
-                mHandler.postDelayed({
-                    MyDialogManager.getInstance().hide(this)
-                }, 200)
-            }
+                passCheckBinding.passcheckClose.setOnClickListener {
+                    PlayMusic.getInstance().playButtonTap()
+                    mHandler.postDelayed({
+                        MyDialogManager.getInstance().hide(this)
+                    }, 200)
+                }
 
-            findViewById<View>(R.id.passcheck_start).setOnClickListener {
-                PlayMusic.getInstance().playButtonTap()
-                mHandler.postDelayed({
-                    MyDialogManager.getInstance().hide(this)
-                    openPlayPageAfterNotificationPermission(
-                        createPlayIntent(checkNum),
-                        finishMapAfterStart = true
-                    )
-                }, 165)
+                passCheckBinding.passcheckStart.setOnClickListener {
+                    PlayMusic.getInstance().playButtonTap()
+                    mHandler.postDelayed({
+                        MyDialogManager.getInstance().hide(this)
+                        openPlayPageAfterNotificationPermission(
+                            createPlayIntent(checkNum),
+                            finishMapAfterStart = true
+                        )
+                    }, 165)
+                }
             }
-        }
 
         mHandler.postDelayed({
             MyDialogManager.getInstance().show(dialog)
@@ -213,34 +225,37 @@ class MapActivity : AppCompatActivity() {
     }
 
     private fun openRetryCheck(checkNum: String) {
-        val dialog = MyDialogManager.getInstance().initView(this, R.layout.dialog_passcheck).apply {
-            findViewById<ImageView>(R.id.passcheck_star).setImageResource(R.drawable.star_empty)
-            findViewById<TextView>(R.id.passcheck_num).text = checkNum
+        val passCheckBinding = DialogPasscheckBinding.inflate(layoutInflater)
+        val dialog = MyDialogManager.getInstance()
+            .initView(this, R.layout.dialog_passcheck, passCheckBinding.root)
+            .apply {
+                passCheckBinding.passcheckStar.setImageResource(R.drawable.star_empty)
+                passCheckBinding.passcheckNum.text = checkNum
 
-            mViewModel.getPassTimes(mCurrentUsername, checkNum.toInt()) { times ->
-                findViewById<TextView>(R.id.passcheck_passtimes).text = times
-            }
+                mViewModel.getPassTimes(mCurrentUsername, checkNum.toInt()) { times ->
+                    passCheckBinding.passcheckPasstimes.text = times
+                }
 
-            findViewById<View>(R.id.passcheck_close).setOnClickListener {
-                PlayMusic.getInstance().playButtonTap()
-                mHandler.postDelayed({
-                    MyDialogManager.getInstance().hide(this)
-                }, 200)
-            }
+                passCheckBinding.passcheckClose.setOnClickListener {
+                    PlayMusic.getInstance().playButtonTap()
+                    mHandler.postDelayed({
+                        MyDialogManager.getInstance().hide(this)
+                    }, 200)
+                }
 
-            findViewById<View>(R.id.passcheck_start).setOnClickListener {
-                PlayMusic.getInstance().playButtonTap()
-                mHandler.postDelayed({
-                    intent.removeExtra("next")
-                    intent.removeExtra("lose")
-                    MyDialogManager.getInstance().hide(this)
-                    openPlayPageAfterNotificationPermission(
-                        createPlayIntent(checkNum),
-                        finishMapAfterStart = false
-                    )
-                }, 165)
+                passCheckBinding.passcheckStart.setOnClickListener {
+                    PlayMusic.getInstance().playButtonTap()
+                    mHandler.postDelayed({
+                        intent.removeExtra("next")
+                        intent.removeExtra("lose")
+                        MyDialogManager.getInstance().hide(this)
+                        openPlayPageAfterNotificationPermission(
+                            createPlayIntent(checkNum),
+                            finishMapAfterStart = false
+                        )
+                    }, 165)
+                }
             }
-        }
 
         mHandler.postDelayed({
             MyDialogManager.getInstance().show(dialog)
@@ -262,22 +277,24 @@ class MapActivity : AppCompatActivity() {
             mRecyclerView.smoothScrollBy(0, 150)
 
             mAdapter.setOpenListener(object : PassListAdapter.OpenPlayPage {
-                override fun onOpen(num: String) {
-                    openPlayPageAfterNotificationPermission(
-                        createPlayIntent(num),
-                        finishMapAfterStart = true
-                    )
+                override fun onOpen(entity: MapEntity) {
+                    when (entity.mStatus) {
+                        PassStatus.TODO -> openPassCheck(entity.mPassNum.toString())
+                        PassStatus.COMPLETED -> openRetryCheck(entity.mPassNum.toString())
+                    }
                 }
             })
         }
     }
 
     private fun initSettingDialog() {
-        mSettingsDialog = MyDialogManager.getInstance().initView(this, R.layout.dialog_settings)
+        val settingsBinding = DialogSettingsBinding.inflate(layoutInflater)
+        mSettingsDialog = MyDialogManager.getInstance()
+            .initView(this, R.layout.dialog_settings, settingsBinding.root)
         mSettingsDialog.setCanceledOnTouchOutside(true)
 
-        val musicSwitch = mSettingsDialog.findViewById<ImageView>(R.id.settings_music)
-        val audioSwitch = mSettingsDialog.findViewById<ImageView>(R.id.settings_audio)
+        val musicSwitch = settingsBinding.settingsMusic
+        val audioSwitch = settingsBinding.settingsAudio
 
         mSettings.setOnClickListener {
             PlayMusic.getInstance().playDialogShow()
@@ -290,12 +307,12 @@ class MapActivity : AppCompatActivity() {
             MyDialogManager.getInstance().show(mSettingsDialog)
         }
 
-        mSettingsDialog.findViewById<View>(R.id.settings_close).setOnClickListener {
+        settingsBinding.settingsClose.setOnClickListener {
             PlayMusic.getInstance().playButtonTap()
             MyDialogManager.getInstance().hide(mSettingsDialog)
         }
 
-        mSettingsDialog.findViewById<View>(R.id.settings_howtoplay).setOnClickListener {
+        settingsBinding.settingsHowtoplay.setOnClickListener {
             PlayMusic.getInstance().playButtonTap()
             startActivityWithTransition(
                 Intent(this, HowToPlayActivity::class.java),
@@ -304,11 +321,12 @@ class MapActivity : AppCompatActivity() {
             )
         }
 
-        mSettingsDialog.findViewById<View>(R.id.settings_language).setOnClickListener {
+        settingsBinding.settingsLanguage.setOnClickListener {
             PlayMusic.getInstance().playButtonTap()
             val newLang = if (mLanguage == "zh") "en" else "zh"
-            getSharedPreferences("mLanguage", MODE_PRIVATE).edit {
-                putString("mLanguage", newLang)
+            mLanguage = newLang
+            getSharedPreferences(AppSettings.PREFS_LANGUAGE, MODE_PRIVATE).edit {
+                putString(AppSettings.KEY_LANGUAGE, newLang)
             }
             getSharedPreferences(PREFS_UI_STATE, MODE_PRIVATE).edit {
                 putBoolean(KEY_FLASH_HOME, true)
@@ -319,30 +337,30 @@ class MapActivity : AppCompatActivity() {
 
         musicSwitch.setOnClickListener {
             PlayMusic.getInstance().playButtonTap()
-            val prefs = getSharedPreferences("music_set", MODE_PRIVATE)
+            val prefs = getSharedPreferences(AppSettings.PREFS_MUSIC, MODE_PRIVATE)
             if (mMusicOpened) {
                 musicSwitch.setImageResource(R.drawable.icon_music_off)
                 mMusicOpened = false
-                prefs.edit { putBoolean("music", false) }
+                prefs.edit { putBoolean(AppSettings.KEY_MUSIC, false) }
                 PlayMusic.getInstance().stopBGM()
             } else {
                 musicSwitch.setImageResource(R.drawable.icon_music_on)
                 mMusicOpened = true
-                prefs.edit { putBoolean("music", true) }
+                prefs.edit { putBoolean(AppSettings.KEY_MUSIC, true) }
                 PlayMusic.getInstance().playBGM()
             }
         }
 
         audioSwitch.setOnClickListener {
-            val prefs = getSharedPreferences("music_set", MODE_PRIVATE)
+            val prefs = getSharedPreferences(AppSettings.PREFS_MUSIC, MODE_PRIVATE)
             if (mAudioOpened) {
                 audioSwitch.setImageResource(R.drawable.icon_sound_off)
                 mAudioOpened = false
-                prefs.edit { putBoolean("audio", false) }
+                prefs.edit { putBoolean(AppSettings.KEY_AUDIO, false) }
             } else {
                 audioSwitch.setImageResource(R.drawable.icon_sound_on)
                 mAudioOpened = true
-                prefs.edit { putBoolean("audio", true) }
+                prefs.edit { putBoolean(AppSettings.KEY_AUDIO, true) }
                 PlayMusic.getInstance().playButtonTap()
             }
         }
@@ -555,8 +573,8 @@ class MapActivity : AppCompatActivity() {
     }
 
     private fun flashHome() {
-        findViewById<View>(android.R.id.content).post {
-            findViewById<View>(android.R.id.content).flashThreeTimes()
+        mBinding.root.post {
+            mBinding.root.flashThreeTimes()
         }
     }
 }

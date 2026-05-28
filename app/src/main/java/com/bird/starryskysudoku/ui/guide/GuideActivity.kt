@@ -12,6 +12,7 @@ import androidx.core.content.edit
 import androidx.lifecycle.lifecycleScope
 import com.bird.starryskysudoku.R
 import com.bird.starryskysudoku.data.database.DatabaseInitializer
+import com.bird.starryskysudoku.databinding.ActivityGuidepageBinding
 import com.bird.starryskysudoku.media.PlayMusic
 import com.bird.starryskysudoku.ui.common.startActivityWithTransition
 import com.bird.starryskysudoku.ui.map.MapActivity
@@ -22,6 +23,7 @@ import kotlinx.coroutines.launch
 class GuideActivity : AppCompatActivity() {
 
     private val mSteps = GuideStep.entries.toTypedArray()
+    private lateinit var mBinding: ActivityGuidepageBinding
     private lateinit var mRoot: View
     private lateinit var mDescription: TextView
     private lateinit var mBoard: BroadView
@@ -36,7 +38,8 @@ class GuideActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        setContentView(R.layout.activity_guidepage)
+        mBinding = ActivityGuidepageBinding.inflate(layoutInflater)
+        setContentView(mBinding.root)
 
         PlayMusic.getInstance().playBGM()
 
@@ -48,24 +51,24 @@ class GuideActivity : AppCompatActivity() {
     }
 
     private fun bindViews() {
-        mRoot = findViewById(R.id.guide_root)
-        mDescription = findViewById(R.id.guide_description)
-        mBoard = findViewById(R.id.guide_board)
-        mTimerFocus = findViewById(R.id.guide_timer_focus)
-        mTimeProgress = findViewById(R.id.guide_time_progressbar)
-        mNumberPanel = findViewById(R.id.guide_number_panel)
-        mSpotlight = findViewById(R.id.guide_spotlight)
-        mHint = findViewById(R.id.guide_hint)
+        mRoot = mBinding.guideRoot
+        mDescription = mBinding.guideDescription
+        mBoard = mBinding.guideBoard
+        mTimerFocus = mBinding.guideTimerFocus
+        mTimeProgress = mBinding.guideTimeProgressbar
+        mNumberPanel = mBinding.guideNumberPanel
+        mSpotlight = mBinding.guideSpotlight
+        mHint = mBinding.guideHint
         mNumberKeys = arrayOf(
-            findViewById(R.id.guide_num_1),
-            findViewById(R.id.guide_num_2),
-            findViewById(R.id.guide_num_3),
-            findViewById(R.id.guide_num_4),
-            findViewById(R.id.guide_num_5),
-            findViewById(R.id.guide_num_6),
-            findViewById(R.id.guide_num_7),
-            findViewById(R.id.guide_num_8),
-            findViewById(R.id.guide_num_9)
+            mBinding.guideNum1,
+            mBinding.guideNum2,
+            mBinding.guideNum3,
+            mBinding.guideNum4,
+            mBinding.guideNum5,
+            mBinding.guideNum6,
+            mBinding.guideNum7,
+            mBinding.guideNum8,
+            mBinding.guideNum9
         )
     }
 

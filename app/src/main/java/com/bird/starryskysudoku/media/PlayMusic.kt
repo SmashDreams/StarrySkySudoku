@@ -7,15 +7,13 @@ import android.media.AudioAttributes
 import android.media.MediaPlayer
 import android.media.SoundPool
 import android.util.Log
+import com.bird.starryskysudoku.AppSettings
 import com.bird.starryskysudoku.R
 
 class PlayMusic private constructor() {
 
     companion object {
         private const val TAG = "PlayMusic"
-        private const val PREFS_NAME = "music_set"
-        private const val KEY_MUSIC = "music"
-        private const val KEY_AUDIO = "audio"
 
         @Volatile
         private var sInstance: PlayMusic? = null
@@ -44,7 +42,7 @@ class PlayMusic private constructor() {
 
     fun init(application: Application) {
         if (mInitialized) return
-        mPrefs = application.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+        mPrefs = application.getSharedPreferences(AppSettings.PREFS_MUSIC, Context.MODE_PRIVATE)
 
         val audioAttrs = AudioAttributes.Builder()
             .setUsage(AudioAttributes.USAGE_GAME)
@@ -102,7 +100,7 @@ class PlayMusic private constructor() {
     fun playBGM() {
         if (!mInitialized) return
         try {
-            if (isOpened(KEY_MUSIC) && mBgmPlayer?.isPlaying == false) {
+            if (isOpened(AppSettings.KEY_MUSIC) && mBgmPlayer?.isPlaying == false) {
                 mBgmPlayer?.start()
             }
         } catch (e: IllegalStateException) {
@@ -116,12 +114,12 @@ class PlayMusic private constructor() {
     }
 
     fun playButtonTap() {
-        if (mInitialized && isOpened(KEY_AUDIO)) {
+        if (mInitialized && isOpened(AppSettings.KEY_AUDIO)) {
             mSoundPool.play(mSoundIdMap[MusicType.BUTTONTAP] ?: return, 0.4f, 0.4f, 1, 0, 1f)
         }
     }
 
-    fun playDialogShow() { if (isOpened(KEY_AUDIO)) playSound(MusicType.DIALOGSHOW) }
+    fun playDialogShow() { if (isOpened(AppSettings.KEY_AUDIO)) playSound(MusicType.DIALOGSHOW) }
 
     fun stopDialogShow() {
         if (!mInitialized) return
@@ -129,27 +127,27 @@ class PlayMusic private constructor() {
     }
 
     fun playWinning() {
-        if (isOpened(KEY_AUDIO)) mStreamMap[MusicType.WINNING] = playSound(MusicType.WINNING)
+        if (isOpened(AppSettings.KEY_AUDIO)) mStreamMap[MusicType.WINNING] = playSound(MusicType.WINNING)
     }
 
     fun stopWinning() { if (mInitialized) mStreamMap[MusicType.WINNING]?.let { mSoundPool.stop(it) } }
 
     fun playLosing() {
-        if (isOpened(KEY_AUDIO)) mStreamMap[MusicType.LOSING] = playSound(MusicType.LOSING)
+        if (isOpened(AppSettings.KEY_AUDIO)) mStreamMap[MusicType.LOSING] = playSound(MusicType.LOSING)
     }
 
     fun stopLosing() { if (mInitialized) mStreamMap[MusicType.LOSING]?.let { mSoundPool.stop(it) } }
 
-    fun playGetStar() { if (isOpened(KEY_AUDIO)) playSound(MusicType.GETSTAR) }
+    fun playGetStar() { if (isOpened(AppSettings.KEY_AUDIO)) playSound(MusicType.GETSTAR) }
 
     fun playInputWrong() {
-        if (mInitialized && isOpened(KEY_AUDIO)) {
+        if (mInitialized && isOpened(AppSettings.KEY_AUDIO)) {
             mSoundPool.play(mSoundIdMap[MusicType.WRONG] ?: return, 0.6f, 0.6f, 1, 0, 1f)
         }
     }
 
     fun playTimesUp() {
-        if (mInitialized && isOpened(KEY_AUDIO)) {
+        if (mInitialized && isOpened(AppSettings.KEY_AUDIO)) {
             mStreamMap[MusicType.TIMESUP] = mTimesUpPool.play(
                 mSoundIdMap[MusicType.TIMESUP] ?: return, 1f, 1f, 1, 0, 1f)
         }
@@ -157,7 +155,7 @@ class PlayMusic private constructor() {
 
     fun stopTimesUp() { if (mInitialized) mStreamMap[MusicType.TIMESUP]?.let { mTimesUpPool.stop(it) } }
 
-    fun playMapLightStar() { if (isOpened(KEY_AUDIO)) playSound(MusicType.MAPLIGHTSTAR) }
+    fun playMapLightStar() { if (isOpened(AppSettings.KEY_AUDIO)) playSound(MusicType.MAPLIGHTSTAR) }
 
     fun release() {
         if (!mInitialized) return

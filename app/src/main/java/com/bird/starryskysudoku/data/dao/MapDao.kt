@@ -16,5 +16,5 @@ interface MapDao {
     suspend fun updateStatus(passNum: Int, status: String)
 
     @Query("UPDATE map SET play_time = :times WHERE pass_num = :passNum")
-    suspend fun updatePlayTime(passNum: Int, times: String)
+    suspend fun updatePlayTime(passNum: Int, times: Int)
 }

@@ -2,19 +2,33 @@ package com.bird.starryskysudoku.ui.dialog
 
 import android.content.Context
 import android.util.Log
+import android.view.View
 import androidx.activity.ComponentDialog
 import androidx.activity.OnBackPressedCallback
 import com.bird.starryskysudoku.R
 import com.bird.starryskysudoku.media.PlayMusic
 
-class MyDialog(context: Context, private val layout: Int, style: Int, gravity: Int) : ComponentDialog(context, style) {
+class MyDialog : ComponentDialog {
 
     companion object {
         private const val TAG = "MyDialog"
     }
 
-    init {
+    private val layout: Int
+
+    constructor(context: Context, layout: Int, style: Int, gravity: Int) : super(context, style) {
+        this.layout = layout
         setContentView(layout)
+        initWindow(gravity)
+    }
+
+    constructor(context: Context, layout: Int, contentView: View, style: Int, gravity: Int) : super(context, style) {
+        this.layout = layout
+        setContentView(contentView)
+        initWindow(gravity)
+    }
+
+    private fun initWindow(gravity: Int) {
         window?.setGravity(gravity)
         window?.attributes?.windowAnimations = R.style.SlideInFromBottomDialogAnimation
         onBackPressedDispatcher.addCallback(this, object : OnBackPressedCallback(true) {

@@ -8,16 +8,18 @@ import com.bird.starryskysudoku.account.LauncherSessionReader
 import com.bird.starryskysudoku.data.database.AppDatabase
 import com.bird.starryskysudoku.data.entity.MapEntity
 import com.bird.starryskysudoku.data.entity.UserMapEntity
+import com.bird.starryskysudoku.data.repository.UserProgressRepository
 import kotlinx.coroutines.launch
 
 class MapViewModel(private val mDb: AppDatabase) : ViewModel() {
 
+    private val mUserProgressRepository = UserProgressRepository(mDb)
     private val mMapDataSource = MutableLiveData<List<Array<MapEntity?>>>()
     val mMapData: LiveData<List<Array<MapEntity?>>> = mMapDataSource
 
     fun loadMapData(username: String = LauncherSessionReader.GUEST_USERNAME) {
         viewModelScope.launch {
-            val safeUsername = ensureUserMap(username)
+            val safeUsername = mUserProgressRepository.ensureUserMap(username)
             val allMaps = mDb.userMapDao().getAllForUser(safeUsername).map { it.toMapEntity() }
             val grouped = allMaps.chunked(4).map { chunk ->
                 arrayOf(
@@ -35,7 +37,7 @@ class MapViewModel(private val mDb: AppDatabase) : ViewModel() {
         callback: (String?) -> Unit
     ) {
         viewModelScope.launch {
-            val safeUsername = ensureUserMap(username)
+            val safeUsername = mUserProgressRepository.ensureUserMap(username)
             callback(mDb.userMapDao().getByUserAndPass(safeUsername, passNum)?.mStatus)
         }
     }
@@ -50,8 +52,8 @@ class MapViewModel(private val mDb: AppDatabase) : ViewModel() {
         callback: (String) -> Unit
     ) {
         viewModelScope.launch {
-            val safeUsername = ensureUserMap(username)
-            callback(mDb.userMapDao().getByUserAndPass(safeUsername, passNum)?.mPlayTime ?: "0")
+            val safeUsername = mUserProgressRepository.ensureUserMap(username)
+            callback((mDb.userMapDao().getByUserAndPass(safeUsername, passNum)?.mPlayTime ?: 0).toString())
         }
     }
 
@@ -65,7 +67,7 @@ class MapViewModel(private val mDb: AppDatabase) : ViewModel() {
         status: String
     ) {
         viewModelScope.launch {
-            val safeUsername = ensureUserMap(username)
+            val safeUsername = mUserProgressRepository.ensureUserMap(username)
             mDb.userMapDao().updateStatus(safeUsername, passNum, status)
         }
     }
@@ -76,31 +78,15 @@ class MapViewModel(private val mDb: AppDatabase) : ViewModel() {
 
     fun updateCompleteNum(username: String = LauncherSessionReader.GUEST_USERNAME, passNum: Int) {
         viewModelScope.launch {
-            val safeUsername = ensureUserMap(username)
+            val safeUsername = mUserProgressRepository.ensureUserMap(username)
             val map = mDb.userMapDao().getByUserAndPass(safeUsername, passNum)
-            val newTimes = ((map?.mPlayTime?.toIntOrNull() ?: 0) + 1).toString()
+            val newTimes = (map?.mPlayTime ?: 0) + 1
             mDb.userMapDao().updatePlayTime(safeUsername, passNum, newTimes)
         }
     }
 
     fun updateCompleteNum(passNum: Int) {
         updateCompleteNum(LauncherSessionReader.GUEST_USERNAME, passNum)
-    }
-
-    private suspend fun ensureUserMap(username: String): String {
-        val safeUsername = username.trim().ifEmpty { LauncherSessionReader.GUEST_USERNAME }
-        if (mDb.userMapDao().getAllForUser(safeUsername).isNotEmpty()) return safeUsername
-
-        val userRows = mDb.mapDao().getAllMaps().mapIndexed { index, map ->
-            UserMapEntity(
-                mUsername = safeUsername,
-                mPassNum = map.mPassNum,
-                mStatus = if (index == 0) "待通关" else "未通关",
-                mPlayTime = "0"
-            )
-        }
-        mDb.userMapDao().insertAll(userRows)
-        return safeUsername
     }
 
     private fun UserMapEntity.toMapEntity() = MapEntity(

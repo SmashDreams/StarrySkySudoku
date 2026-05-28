@@ -7,6 +7,7 @@ import android.widget.ImageView
 import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.app.AppCompatDelegate
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
+import com.bird.starryskysudoku.AppSettings
 import com.bird.starryskysudoku.R
 import com.bird.starryskysudoku.ui.common.flashThreeTimes
 import com.bird.starryskysudoku.ui.common.startActivityWithTransition
@@ -17,9 +18,7 @@ class AppEntryActivity : AppCompatActivity() {
 
     companion object {
         private const val PREFS_FIRST = "firstcome"
-        private const val PREFS_LANGUAGE = "language"
         private const val KEY_FIRST = "first"
-        private const val KEY_LANGUAGE = "language"
         private const val ENGLISH = "en"
     }
 
@@ -53,7 +52,8 @@ class AppEntryActivity : AppCompatActivity() {
 
     private fun getSplashImageRes(): Int {
         val language = AppCompatDelegate.getApplicationLocales()[0]?.language
-            ?: getSharedPreferences(PREFS_LANGUAGE, MODE_PRIVATE).getString(KEY_LANGUAGE, "zh")
+            ?: getSharedPreferences(AppSettings.PREFS_LANGUAGE, MODE_PRIVATE)
+                .getString(AppSettings.KEY_LANGUAGE, AppSettings.DEFAULT_LANGUAGE)
         return if (language == ENGLISH) R.drawable.splash_screen_en else R.drawable.splash_screen_zh
     }
 }

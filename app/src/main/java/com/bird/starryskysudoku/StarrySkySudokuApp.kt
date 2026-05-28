@@ -10,8 +10,8 @@ import com.bird.starryskysudoku.media.PlayMusic
 class StarrySkySudokuApp : Application() {
     override fun onCreate() {
         super.onCreate()
-        val language = getSharedPreferences("language", Context.MODE_PRIVATE)
-            .getString("language", "zh") ?: "zh"
+        val language = getSharedPreferences(AppSettings.PREFS_LANGUAGE, Context.MODE_PRIVATE)
+            .getString(AppSettings.KEY_LANGUAGE, AppSettings.DEFAULT_LANGUAGE) ?: AppSettings.DEFAULT_LANGUAGE
         AppCompatDelegate.setApplicationLocales(LocaleListCompat.forLanguageTags(language))
         PlayMusic.getInstance().init(this)
         DatabaseInitializer.getDatabase(this)

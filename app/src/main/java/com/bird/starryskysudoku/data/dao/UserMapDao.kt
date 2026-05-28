@@ -21,5 +21,5 @@ interface UserMapDao {
     suspend fun updateStatus(username: String, passNum: Int, status: String)
 
     @Query("UPDATE user_map SET play_time = :times WHERE username = :username AND pass_num = :passNum")
-    suspend fun updatePlayTime(username: String, passNum: Int, times: String)
+    suspend fun updatePlayTime(username: String, passNum: Int, times: Int)
 }

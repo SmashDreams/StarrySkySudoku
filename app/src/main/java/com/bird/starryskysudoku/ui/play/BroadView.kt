@@ -1,6 +1,5 @@
 package com.bird.starryskysudoku.ui.play
 
-import android.annotation.SuppressLint
 import android.content.Context
 import android.graphics.*
 import android.util.AttributeSet
@@ -41,6 +40,35 @@ class BroadView : AppCompatImageView {
     private lateinit var mEmptyLight: Bitmap
     private lateinit var mEmptyWrong: Bitmap
     private lateinit var mEmptySelected: Bitmap
+    private val mBitmapPaint = Paint(Paint.ANTI_ALIAS_FLAG or Paint.FILTER_BITMAP_FLAG)
+    private val mCellRect = Rect()
+    private val mOuterRect = Rect()
+    private val mTagPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+        textSize = 33f
+        color = Color.GRAY
+        typeface = Typeface.DEFAULT_BOLD
+        textAlign = Paint.Align.CENTER
+    }
+    private val mNumberPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+        color = Color.BLACK
+        textAlign = Paint.Align.CENTER
+        typeface = Typeface.DEFAULT_BOLD
+    }
+    private val mThinBorderPaint = Paint().apply {
+        color = Color.BLACK
+        strokeWidth = 1f
+        style = Paint.Style.STROKE
+    }
+    private val mBlockLinePaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+        color = Color.BLACK
+        strokeWidth = 9f
+        style = Paint.Style.STROKE
+    }
+    private val mOuterBorderPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+        color = Color.WHITE
+        strokeWidth = 2f
+        style = Paint.Style.STROKE
+    }
 
     interface Listener {
         fun onTouch(row: Int, col: Int, block: Int)
@@ -79,33 +107,31 @@ class BroadView : AppCompatImageView {
         mHeight = SudokuBoardGeometry.cellSize(h.toFloat())
     }
 
-    @SuppressLint("DrawAllocation")
     override fun onDraw(canvas: Canvas) {
         super.onDraw(canvas)
-        val rect = Rect()
         for (i in 0 until 9) {
             for (j in 0 until 9) {
-                rect.set(
+                mCellRect.set(
                     (SudokuBoardGeometry.CELL_INSET + (mWidth * j)).toInt(), (SudokuBoardGeometry.CELL_INSET + (mWidth * i)).toInt(),
                     (SudokuBoardGeometry.CELL_INSET + (mWidth * (j + 1))).toInt(), (SudokuBoardGeometry.CELL_INSET + (mWidth * (i + 1))).toInt()
                 )
                 if (mData[i][j].mType == PROBLEM) {
                     when {
                         mData[i][j].mStatus == SELECT_ON || mData[i][j].mStatus == BE_SELECTED ->
-                            canvas.drawBitmap(mProblemLight, null, rect, Paint())
+                            canvas.drawBitmap(mProblemLight, null, mCellRect, mBitmapPaint)
                         mData[i][j].mStatus == WRONG ->
-                            canvas.drawBitmap(mProblemWrong, null, rect, Paint())
-                        else -> canvas.drawBitmap(mProblemNormal, null, rect, Paint())
+                            canvas.drawBitmap(mProblemWrong, null, mCellRect, mBitmapPaint)
+                        else -> canvas.drawBitmap(mProblemNormal, null, mCellRect, mBitmapPaint)
                     }
                 } else if (mData[i][j].mType == EMPTY) {
                     when {
                         mData[i][j].mStatus == BE_SELECTED ->
-                            canvas.drawBitmap(mEmptySelected, null, rect, Paint())
+                            canvas.drawBitmap(mEmptySelected, null, mCellRect, mBitmapPaint)
                         mData[i][j].mStatus == SELECT_ON ->
-                            canvas.drawBitmap(mEmptyLight, null, rect, Paint())
+                            canvas.drawBitmap(mEmptyLight, null, mCellRect, mBitmapPaint)
                         mData[i][j].mStatus == WRONG ->
-                            canvas.drawBitmap(mEmptyWrong, null, rect, Paint())
-                        else -> canvas.drawBitmap(mEmptyNormal, null, rect, Paint())
+                            canvas.drawBitmap(mEmptyWrong, null, mCellRect, mBitmapPaint)
+                        else -> canvas.drawBitmap(mEmptyNormal, null, mCellRect, mBitmapPaint)
                     }
                 }
             }
@@ -114,11 +140,6 @@ class BroadView : AppCompatImageView {
 
     override fun dispatchDraw(canvas: Canvas) {
         super.dispatchDraw(canvas)
-        val tag = Paint().apply {
-            textSize = 33f; color = Color.GRAY
-            typeface = Typeface.DEFAULT_BOLD; isAntiAlias = true
-            textAlign = Paint.Align.CENTER
-        }
         val subWidth = mWidth / 3
         val subHeight = mHeight / 3
 
@@ -134,8 +155,8 @@ class BroadView : AppCompatImageView {
                             if (tagText != "0") {
                                 val subCenterX = cellLeft + n * subWidth + subWidth / 2
                                 val subCenterY = cellTop + m * subHeight + subHeight / 2
-                                val baseline = subCenterY - (tag.ascent() + tag.descent()) / 2
-                                canvas.drawText(tagText, subCenterX, baseline, tag)
+                                val baseline = subCenterY - (mTagPaint.ascent() + mTagPaint.descent()) / 2
+                                canvas.drawText(tagText, subCenterX, baseline, mTagPaint)
                             }
                             position++
                         }
@@ -147,36 +168,32 @@ class BroadView : AppCompatImageView {
 
     override fun onDrawForeground(canvas: Canvas) {
         super.onDrawForeground(canvas)
-        val number = Paint().apply {
-            isAntiAlias = true; color = Color.BLACK
-            textAlign = Paint.Align.CENTER
-        }
 
         if (!mHasDone) {
-            number.textSize = 80f; number.typeface = Typeface.DEFAULT_BOLD
+            mNumberPaint.textSize = 80f
+            mNumberPaint.alpha = 255
             for (i in 0 until 9) {
                 for (j in 0 until 9) {
                     if (mData[i][j].mValue != "0") {
                         val cellLeft = SudokuBoardGeometry.CELL_INSET + mWidth * j; val cellTop = SudokuBoardGeometry.CELL_INSET + mWidth * i
                         val centerX = cellLeft + mWidth / 2; val centerY = cellTop + mWidth / 2
-                        val baseline = centerY - (number.ascent() + number.descent()) / 2
-                        canvas.drawText(mData[i][j].mValue, centerX, baseline, number)
+                        val baseline = centerY - (mNumberPaint.ascent() + mNumberPaint.descent()) / 2
+                        canvas.drawText(mData[i][j].mValue, centerX, baseline, mNumberPaint)
                     }
                 }
             }
         } else {
-            number.textSize = 80f; number.typeface = Typeface.DEFAULT_BOLD
             for (i in 0 until 9) {
                 for (j in 0 until 9) {
                     val cellLeft = SudokuBoardGeometry.CELL_INSET + mWidth * j; val cellTop = SudokuBoardGeometry.CELL_INSET + mWidth * i
                     val centerX = cellLeft + mWidth / 2; val centerY = cellTop + mWidth / 2
                     if (i == mLine) {
-                        number.textSize = mTextSize.toFloat(); number.alpha = mTextAlpha
+                        mNumberPaint.textSize = mTextSize.toFloat(); mNumberPaint.alpha = mTextAlpha
                     } else {
-                        number.textSize = 80f; number.alpha = 255
+                        mNumberPaint.textSize = 80f; mNumberPaint.alpha = 255
                     }
-                    val baseline = centerY - (number.ascent() + number.descent()) / 2
-                    canvas.drawText(mData[i][j].mValue, centerX, baseline, number)
+                    val baseline = centerY - (mNumberPaint.ascent() + mNumberPaint.descent()) / 2
+                    canvas.drawText(mData[i][j].mValue, centerX, baseline, mNumberPaint)
                 }
             }
         }
@@ -184,50 +201,38 @@ class BroadView : AppCompatImageView {
         /*
          * 绘制每个小格子的细边框。
          */
-        val rectangular = Paint().apply {
-            color = Color.BLACK; strokeWidth = 1f; style = Paint.Style.STROKE
-        }
-        val rect = Rect()
         for (i in 0 until 9) {
             for (j in 0 until 9) {
-                rect.set(
+                mCellRect.set(
                     (SudokuBoardGeometry.CELL_INSET + (mWidth * j)).toInt(), (SudokuBoardGeometry.CELL_INSET + (mWidth * i)).toInt(),
                     (SudokuBoardGeometry.CELL_INSET + (mWidth * (j + 1))).toInt(), (SudokuBoardGeometry.CELL_INSET + (mWidth * (i + 1))).toInt()
                 )
-                canvas.drawRect(rect, rectangular)
+                canvas.drawRect(mCellRect, mThinBorderPaint)
             }
         }
 
         /*
          * 绘制三乘三宫格的粗分隔线，帮助玩家区分九宫区域。
          */
-        val line = Paint().apply {
-            color = Color.BLACK; strokeWidth = 9f
-            style = Paint.Style.STROKE; isAntiAlias = true
-        }
-        val lineOffset = line.strokeWidth / 2
+        val lineOffset = mBlockLinePaint.strokeWidth / 2
         for (i in 0 until 4) {
             val y = SudokuBoardGeometry.CELL_INSET - lineOffset + (mWidth * i * 3)
-            canvas.drawLine(SudokuBoardGeometry.CELL_INSET - lineOffset, y, SudokuBoardGeometry.CELL_INSET + (mWidth * SudokuBoardGeometry.BOARD_SIZE) + lineOffset, y, line)
+            canvas.drawLine(SudokuBoardGeometry.CELL_INSET - lineOffset, y, SudokuBoardGeometry.CELL_INSET + (mWidth * SudokuBoardGeometry.BOARD_SIZE) + lineOffset, y, mBlockLinePaint)
         }
         for (i in 0 until 4) {
             val x = SudokuBoardGeometry.CELL_INSET - lineOffset + (mWidth * i * 3)
-            canvas.drawLine(x, SudokuBoardGeometry.CELL_INSET - lineOffset, x, SudokuBoardGeometry.CELL_INSET + (mWidth * SudokuBoardGeometry.BOARD_SIZE) + lineOffset, line)
+            canvas.drawLine(x, SudokuBoardGeometry.CELL_INSET - lineOffset, x, SudokuBoardGeometry.CELL_INSET + (mWidth * SudokuBoardGeometry.BOARD_SIZE) + lineOffset, mBlockLinePaint)
         }
 
         /*
          * 绘制棋盘最外层白色边框，使棋盘从星空背景中突出。
          */
-        val outerBorder = Paint().apply {
-            color = Color.WHITE; strokeWidth = 2f
-            style = Paint.Style.STROKE; isAntiAlias = true
-        }
         val boardBorder = SudokuBoardGeometry.boardBorderRect(width.toFloat())
-        val outerRect = Rect(
+        mOuterRect.set(
             boardBorder.left.toInt(), boardBorder.top.toInt(),
             boardBorder.right.toInt(), boardBorder.bottom.toInt()
         )
-        canvas.drawRect(outerRect, outerBorder)
+        canvas.drawRect(mOuterRect, mOuterBorderPaint)
     }
 
     override fun onTouchEvent(event: MotionEvent): Boolean {

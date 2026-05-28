@@ -24,10 +24,15 @@ import androidx.core.content.ContextCompat
 import androidx.core.content.edit
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.lifecycleScope
+import com.bird.starryskysudoku.AppSettings
 import com.bird.starryskysudoku.R
 import com.bird.starryskysudoku.account.LauncherSessionReader
 import com.bird.starryskysudoku.data.database.DatabaseInitializer
 import com.bird.starryskysudoku.data.provider.GameResultContract
+import com.bird.starryskysudoku.databinding.ActivityPlayBinding
+import com.bird.starryskysudoku.databinding.DialogLoseBinding
+import com.bird.starryskysudoku.databinding.DialogPauseBinding
+import com.bird.starryskysudoku.databinding.DialogWinBinding
 import com.bird.starryskysudoku.media.PlayMusic
 import com.bird.starryskysudoku.timer.CountdownTimerContract
 import com.bird.starryskysudoku.timer.CountdownTimerService
@@ -49,6 +54,7 @@ class PlayActivity : AppCompatActivity() {
     }
 
     private val mHandler = Handler(Looper.getMainLooper())
+    private lateinit var mBinding: ActivityPlayBinding
     private lateinit var mViewModel: PlayViewModel
     private lateinit var mBroadView: BroadView
     private var mCountdownReceiverRegistered = false
@@ -86,7 +92,6 @@ class PlayActivity : AppCompatActivity() {
     private var mMusicOpened = true
     private var mAudioOpened = true
     private var mIsPaused = false
-    private var mResultRecorded = false
     private var mNum = "1"
     private var mCurrentUsername = LauncherSessionReader.GUEST_USERNAME
     private var mTagData = Array(9) { arrayOfNulls<TagData>(9) }
@@ -97,10 +102,14 @@ class PlayActivity : AppCompatActivity() {
     private lateinit var mPauseDialog: MyDialog
     private lateinit var mWinDialog: MyDialog
     private lateinit var mLoseDialog: MyDialog
+    private lateinit var mPauseDialogBinding: DialogPauseBinding
+    private lateinit var mWinDialogBinding: DialogWinBinding
+    private lateinit var mLoseDialogBinding: DialogLoseBinding
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        setContentView(R.layout.activity_play)
+        mBinding = ActivityPlayBinding.inflate(layoutInflater)
+        setContentView(mBinding.root)
 
         mNum = parseLevel(intent.getStringExtra("mNum") ?: intent.getStringExtra("num")).toString()
         mCurrentUsername = intent.getStringExtra(EXTRA_USERNAME)
@@ -116,26 +125,26 @@ class PlayActivity : AppCompatActivity() {
             }
         })[PlayViewModel::class.java]
 
-        val musicPrefs = getSharedPreferences("music_set", MODE_PRIVATE)
-        mMusicOpened = musicPrefs.getBoolean("music", true)
-        mAudioOpened = musicPrefs.getBoolean("audio", true)
+        val musicPrefs = getSharedPreferences(AppSettings.PREFS_MUSIC, MODE_PRIVATE)
+        mMusicOpened = musicPrefs.getBoolean(AppSettings.KEY_MUSIC, true)
+        mAudioOpened = musicPrefs.getBoolean(AppSettings.KEY_AUDIO, true)
 
         /*
          * 进入页面后一次性绑定控件，后续只更新控件内容和可用状态。
          */
-        mPlayNum = findViewById(R.id.play_num); mPlayNum.text = mNum
-        mTimeProgressBar = findViewById(R.id.play_time_progressbar)
-        mRemainingMins = findViewById(R.id.play_time_min)
-        mRemainingSecs = findViewById(R.id.play_time_sec)
-        mColon = findViewById(R.id.textview74)
-        mBroadView = findViewById(R.id.play_broad)
-        mNumbers[0] = findViewById(R.id.play_1); mNumbers[1] = findViewById(R.id.play_2)
-        mNumbers[2] = findViewById(R.id.play_3); mNumbers[3] = findViewById(R.id.play_4)
-        mNumbers[4] = findViewById(R.id.play_5); mNumbers[5] = findViewById(R.id.play_6)
-        mNumbers[6] = findViewById(R.id.play_7); mNumbers[7] = findViewById(R.id.play_8)
-        mNumbers[8] = findViewById(R.id.play_9)
-        mRevoke = findViewById(R.id.play_revoke); mTag = findViewById(R.id.play_tag)
-        mPauseButton = findViewById(R.id.play_pause)
+        mPlayNum = mBinding.playNum; mPlayNum.text = mNum
+        mTimeProgressBar = mBinding.playTimeProgressbar
+        mRemainingMins = mBinding.playTimeMin
+        mRemainingSecs = mBinding.playTimeSec
+        mColon = mBinding.textview74
+        mBroadView = mBinding.playBroad
+        mNumbers[0] = mBinding.play1; mNumbers[1] = mBinding.play2
+        mNumbers[2] = mBinding.play3; mNumbers[3] = mBinding.play4
+        mNumbers[4] = mBinding.play5; mNumbers[5] = mBinding.play6
+        mNumbers[6] = mBinding.play7; mNumbers[7] = mBinding.play8
+        mNumbers[8] = mBinding.play9
+        mRevoke = mBinding.playRevoke; mTag = mBinding.playTag
+        mPauseButton = mBinding.playPause
 
         mTimeProgressBar.max = CountdownTimerContract.DEFAULT_TOTAL_SECONDS
 
@@ -276,7 +285,7 @@ class PlayActivity : AppCompatActivity() {
         mHandler.postDelayed({
             MyDialogManager.getInstance().show(mWinDialog)
             PlayMusic.getInstance().playGetStar()
-            val winStar = mWinDialog.findViewById<ImageView>(R.id.win_star_on)
+            val winStar = mWinDialogBinding.winStarOn
             ObjectAnimator.ofFloat(winStar, "alpha", 0f, 1f).setDuration(500).start()
             ObjectAnimator.ofFloat(winStar, "scaleX", 0.5f, 1.1f, 1f).setDuration(500).start()
             ObjectAnimator.ofFloat(winStar, "scaleY", 0.5f, 1.1f, 1f).setDuration(500).start()
@@ -492,17 +501,19 @@ class PlayActivity : AppCompatActivity() {
         /*
          * 暂停弹窗负责恢复、重开和返回地图；显示期间后台倒计时会停止。
          */
-        mPauseDialog = MyDialogManager.getInstance().initView(this, R.layout.dialog_pause)
+        mPauseDialogBinding = DialogPauseBinding.inflate(layoutInflater)
+        mPauseDialog = MyDialogManager.getInstance()
+            .initView(this, R.layout.dialog_pause, mPauseDialogBinding.root)
         mPauseDialog.setCanceledOnTouchOutside(false)
 
-        mPauseDialog.findViewById<View>(R.id.pause_close).setOnClickListener {
+        mPauseDialogBinding.pauseClose.setOnClickListener {
             PlayMusic.getInstance().playButtonTap()
             MyDialogManager.getInstance().hide(mPauseDialog)
             mIsPaused = false
             startCountdownService()
         }
 
-        mPauseDialog.findViewById<View>(R.id.pause_restart).setOnClickListener {
+        mPauseDialogBinding.pauseRestart.setOnClickListener {
             PlayMusic.getInstance().playButtonTap()
             MyDialogManager.getInstance().hide(mPauseDialog)
             clearHistoryAndRun {
@@ -517,7 +528,7 @@ class PlayActivity : AppCompatActivity() {
             }
         }
 
-        mPauseDialog.findViewById<View>(R.id.pause_back).setOnClickListener {
+        mPauseDialogBinding.pauseBack.setOnClickListener {
             PlayMusic.getInstance().playButtonTap()
             MyDialogManager.getInstance().hide(mPauseDialog)
             clearHistoryAndRun {
@@ -535,18 +546,18 @@ class PlayActivity : AppCompatActivity() {
         /*
          * 背景音乐开关写入偏好设置，重启页面后仍保持用户选择。
          */
-        val musicBtn = mPauseDialog.findViewById<ImageView>(R.id.pause_music)
+        val musicBtn = mPauseDialogBinding.pauseMusic
         musicBtn.setImageResource(if (mMusicOpened) R.drawable.icon_music_on else R.drawable.icon_music_off)
         musicBtn.setOnClickListener {
             PlayMusic.getInstance().playButtonTap()
-            val prefs = getSharedPreferences("music_set", MODE_PRIVATE)
+            val prefs = getSharedPreferences(AppSettings.PREFS_MUSIC, MODE_PRIVATE)
             if (mMusicOpened) {
                 musicBtn.setImageResource(R.drawable.icon_music_off)
-                mMusicOpened = false; prefs.edit { putBoolean("music", false) }
+                mMusicOpened = false; prefs.edit { putBoolean(AppSettings.KEY_MUSIC, false) }
                 PlayMusic.getInstance().stopBGM()
             } else {
                 musicBtn.setImageResource(R.drawable.icon_music_on)
-                mMusicOpened = true; prefs.edit { putBoolean("music", true) }
+                mMusicOpened = true; prefs.edit { putBoolean(AppSettings.KEY_MUSIC, true) }
                 PlayMusic.getInstance().playBGM()
             }
         }
@@ -554,16 +565,16 @@ class PlayActivity : AppCompatActivity() {
         /*
          * 音效开关与背景音乐分开保存，允许用户只关闭按键和结果音效。
          */
-        val audioBtn = mPauseDialog.findViewById<ImageView>(R.id.pause_audio)
+        val audioBtn = mPauseDialogBinding.pauseAudio
         audioBtn.setImageResource(if (mAudioOpened) R.drawable.icon_sound_on else R.drawable.icon_sound_off)
         audioBtn.setOnClickListener {
-            val prefs = getSharedPreferences("music_set", MODE_PRIVATE)
+            val prefs = getSharedPreferences(AppSettings.PREFS_MUSIC, MODE_PRIVATE)
             if (mAudioOpened) {
                 audioBtn.setImageResource(R.drawable.icon_sound_off)
-                mAudioOpened = false; prefs.edit { putBoolean("audio", false) }
+                mAudioOpened = false; prefs.edit { putBoolean(AppSettings.KEY_AUDIO, false) }
             } else {
                 audioBtn.setImageResource(R.drawable.icon_sound_on)
-                mAudioOpened = true; prefs.edit { putBoolean("audio", true) }
+                mAudioOpened = true; prefs.edit { putBoolean(AppSettings.KEY_AUDIO, true) }
                 PlayMusic.getInstance().playButtonTap()
             }
         }
@@ -571,10 +582,12 @@ class PlayActivity : AppCompatActivity() {
         /*
          * 失败弹窗只提供返回地图和重试，避免超时后继续修改棋盘。
          */
-        mLoseDialog = MyDialogManager.getInstance().initView(this, R.layout.dialog_lose)
+        mLoseDialogBinding = DialogLoseBinding.inflate(layoutInflater)
+        mLoseDialog = MyDialogManager.getInstance()
+            .initView(this, R.layout.dialog_lose, mLoseDialogBinding.root)
         mLoseDialog.setCanceledOnTouchOutside(false)
 
-        mLoseDialog.findViewById<View>(R.id.lose_close).setOnClickListener {
+        mLoseDialogBinding.loseClose.setOnClickListener {
             PlayMusic.getInstance().playButtonTap()
             clearHistoryAndRun {
                 startActivityWithTransition(
@@ -588,7 +601,7 @@ class PlayActivity : AppCompatActivity() {
             }
         }
 
-        mLoseDialog.findViewById<View>(R.id.lose_retry).setOnClickListener {
+        mLoseDialogBinding.loseRetry.setOnClickListener {
             PlayMusic.getInstance().playButtonTap()
             clearHistoryAndRun {
                 finish()
@@ -605,10 +618,12 @@ class PlayActivity : AppCompatActivity() {
         /*
          * 胜利弹窗负责进入下一关或返回地图，通关状态已在显示前写入数据库。
          */
-        mWinDialog = MyDialogManager.getInstance().initView(this, R.layout.dialog_win)
+        mWinDialogBinding = DialogWinBinding.inflate(layoutInflater)
+        mWinDialog = MyDialogManager.getInstance()
+            .initView(this, R.layout.dialog_win, mWinDialogBinding.root)
         mWinDialog.setCanceledOnTouchOutside(false)
 
-        mWinDialog.findViewById<View>(R.id.win_close).setOnClickListener {
+        mWinDialogBinding.winClose.setOnClickListener {
             PlayMusic.getInstance().playButtonTap()
             clearHistoryAndRun {
                 val level = parseLevel(mNum)
@@ -620,7 +635,7 @@ class PlayActivity : AppCompatActivity() {
             }
         }
 
-        mWinDialog.findViewById<View>(R.id.win_next).setOnClickListener {
+        mWinDialogBinding.winNext.setOnClickListener {
             PlayMusic.getInstance().playButtonTap()
             clearHistoryAndRun {
                 finish()
@@ -739,7 +754,7 @@ class PlayActivity : AppCompatActivity() {
     }
 
     private suspend fun saveAndQueryGameResultThroughProvider(levelNum: Int, completed: Boolean) {
-        if (mResultRecorded) return
+        if (!mViewModel.markGameResultRecordStarted(levelNum, completed)) return
         val remainingSeconds = mViewModel.getRemainingSeconds()
         val elapsedSeconds = (CountdownTimerContract.DEFAULT_TOTAL_SECONDS - remainingSeconds).coerceAtLeast(0)
         /*
@@ -778,8 +793,8 @@ class PlayActivity : AppCompatActivity() {
                 false
             }
         }
-        if (saved) {
-            mResultRecorded = true
+        if (!saved) {
+            mViewModel.clearGameResultRecordMark(levelNum, completed)
         }
     }
 
