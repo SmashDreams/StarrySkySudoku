@@ -57,4 +57,9 @@
     <string name="lose">您输了!</string>
     <string name="replay">重试</string>
 
+    <string name="countdown_notification_channel_name">数独倒计时</string>
+    <string name="countdown_notification_channel_description">游戏中显示当前关卡剩余时间</string>
+    <string name="countdown_notification_remaining">剩余时间 %1$s</string>
+    <string name="notification_preflight_title">通知准备中</string>
+    <string name="notification_preflight_text">进入棋盘前确认通知权限，用于显示剩余时间</string>
 </resources>

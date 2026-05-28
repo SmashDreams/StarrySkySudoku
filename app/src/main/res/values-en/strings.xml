@@ -56,4 +56,9 @@
 
     <string name="lose">YOU LOSE!</string>
     <string name="replay">PLAY AGAIN</string>
+    <string name="countdown_notification_channel_name">Sudoku Timer</string>
+    <string name="countdown_notification_channel_description">Shows the current level countdown while playing.</string>
+    <string name="countdown_notification_remaining">Time left %1$s</string>
+    <string name="notification_preflight_title">Preparing notifications</string>
+    <string name="notification_preflight_text">Confirm notification access before the board opens so time left can be shown.</string>
 </resources>

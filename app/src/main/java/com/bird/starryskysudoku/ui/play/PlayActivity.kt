@@ -7,6 +7,7 @@ import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
+import android.os.Build
 import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
@@ -723,10 +724,14 @@ class PlayActivity : AppCompatActivity() {
          * 页面启动后台服务，但不直接倒计时；
          * 数据流为：后台服务发送广播，接收器更新视图模型，界面观察数据变化后刷新。
          */
-        startService(
-            Intent(this, CountdownTimerService::class.java)
-                .putExtra(CountdownTimerContract.EXTRA_INITIAL_SECONDS, mViewModel.getRemainingSeconds())
-        )
+        val serviceIntent = Intent(this, CountdownTimerService::class.java)
+            .putExtra(CountdownTimerContract.EXTRA_INITIAL_SECONDS, mViewModel.getRemainingSeconds())
+            .putExtra(CountdownTimerContract.EXTRA_LEVEL_NUMBER, parseLevel(mNum))
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            startForegroundService(serviceIntent)
+        } else {
+            startService(serviceIntent)
+        }
     }
 
     private fun stopCountdownService() {

@@ -1,7 +1,13 @@
 package com.bird.starryskysudoku.ui.map
 
+import android.Manifest
+import android.annotation.SuppressLint
 import android.animation.ObjectAnimator
+import android.app.NotificationChannel
+import android.app.NotificationManager
+import android.app.PendingIntent
 import android.content.Intent
+import android.os.Build
 import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
@@ -11,8 +17,12 @@ import android.widget.ImageView
 import android.widget.TextView
 import android.widget.Toast
 import androidx.activity.OnBackPressedCallback
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.app.AppCompatDelegate
+import androidx.core.app.NotificationCompat
+import androidx.core.app.NotificationManagerCompat
+import androidx.core.content.ContextCompat
 import androidx.core.content.edit
 import androidx.core.os.LocaleListCompat
 import androidx.lifecycle.ViewModelProvider
@@ -22,6 +32,8 @@ import com.bird.starryskysudoku.R
 import com.bird.starryskysudoku.account.LauncherSessionReader
 import com.bird.starryskysudoku.data.database.DatabaseInitializer
 import com.bird.starryskysudoku.media.PlayMusic
+import com.bird.starryskysudoku.notification.NotificationPermissionPolicy
+import com.bird.starryskysudoku.timer.CountdownTimerContract
 import com.bird.starryskysudoku.ui.common.flashThreeTimes
 import com.bird.starryskysudoku.ui.common.startActivityWithTransition
 import com.bird.starryskysudoku.ui.dialog.MyDialog
@@ -36,6 +48,10 @@ class MapActivity : AppCompatActivity() {
         const val EXTRA_FLASH_HOME = "flash_home"
         private const val PREFS_UI_STATE = "ui_state"
         private const val KEY_FLASH_HOME = "flash_home"
+        private const val PREFS_NOTIFICATION_STATE = "notification_state"
+        private const val KEY_VENDOR_WARMUP_ATTEMPTED = "vendor_warmup_attempted"
+        private const val VENDOR_WARMUP_NOTIFICATION_ID = 1002
+        private const val VENDOR_WARMUP_DELAY_MS = 700L
     }
 
     private lateinit var mSettings: ImageView
@@ -58,6 +74,16 @@ class MapActivity : AppCompatActivity() {
     private var mCurrentUsername = LauncherSessionReader.GUEST_USERNAME
     private var mMapLoaded = false
     private val mHandler = Handler(Looper.getMainLooper())
+    private val mNotificationPermissionLauncher =
+        registerForActivityResult(ActivityResultContracts.RequestPermission()) {
+            startPendingPlayPage()
+        }
+    private var mPendingPlayIntent: Intent? = null
+    private var mPendingPlayShouldFinishMap = false
+    private var mWaitingVendorNotificationWarmup = false
+    private var mCanCompleteVendorNotificationWarmup = false
+    private var mMapResumed = false
+    private var mMapHasWindowFocus = false
 
     private lateinit var mSettingsDialog: MyDialog
 
@@ -172,15 +198,11 @@ class MapActivity : AppCompatActivity() {
             findViewById<View>(R.id.passcheck_start).setOnClickListener {
                 PlayMusic.getInstance().playButtonTap()
                 mHandler.postDelayed({
-                    startActivityWithTransition(
-                        Intent(this@MapActivity, PlayActivity::class.java)
-                            .putExtra("num", checkNum)
-                            .putExtra(PlayActivity.EXTRA_USERNAME, mCurrentUsername),
-                        R.anim.playpage_show,
-                        R.anim.playpage_hide
-                    )
-                    finish()
                     MyDialogManager.getInstance().hide(this)
+                    openPlayPageAfterNotificationPermission(
+                        createPlayIntent(checkNum),
+                        finishMapAfterStart = true
+                    )
                 }, 165)
             }
         }
@@ -211,14 +233,11 @@ class MapActivity : AppCompatActivity() {
                 mHandler.postDelayed({
                     intent.removeExtra("next")
                     intent.removeExtra("lose")
-                    startActivityWithTransition(
-                        Intent(this@MapActivity, PlayActivity::class.java)
-                            .putExtra("num", checkNum)
-                            .putExtra(PlayActivity.EXTRA_USERNAME, mCurrentUsername),
-                        R.anim.playpage_show,
-                        R.anim.playpage_hide
-                    )
                     MyDialogManager.getInstance().hide(this)
+                    openPlayPageAfterNotificationPermission(
+                        createPlayIntent(checkNum),
+                        finishMapAfterStart = false
+                    )
                 }, 165)
             }
         }
@@ -244,14 +263,10 @@ class MapActivity : AppCompatActivity() {
 
             mAdapter.setOpenListener(object : PassListAdapter.OpenPlayPage {
                 override fun onOpen(num: String) {
-                    startActivityWithTransition(
-                        Intent(this@MapActivity, PlayActivity::class.java)
-                            .putExtra("num", num)
-                            .putExtra(PlayActivity.EXTRA_USERNAME, mCurrentUsername),
-                        R.anim.playpage_show,
-                        R.anim.playpage_hide
+                    openPlayPageAfterNotificationPermission(
+                        createPlayIntent(num),
+                        finishMapAfterStart = true
                     )
-                    finish()
                 }
             })
         }
@@ -358,18 +373,166 @@ class MapActivity : AppCompatActivity() {
         })
     }
 
+    private fun openPlayPageAfterNotificationPermission(playIntent: Intent, finishMapAfterStart: Boolean) {
+        val permissionStatus = getPostNotificationsStatus()
+        if (
+            NotificationPermissionPolicy.shouldWarmUpVendorNotificationsBeforePlay(
+                sdkInt = Build.VERSION.SDK_INT,
+                manufacturer = Build.MANUFACTURER,
+                hasWarmupAttempted = hasVendorNotificationWarmupAttempted()
+            )
+        ) {
+            warmUpVendorNotificationsBeforePlay(playIntent, finishMapAfterStart)
+            return
+        }
+
+        if (
+            NotificationPermissionPolicy.shouldStartPlayImmediately(
+                sdkInt = Build.VERSION.SDK_INT,
+                permissionStatus = permissionStatus
+            )
+        ) {
+            startPlayPage(playIntent, finishMapAfterStart)
+            return
+        }
+
+        mPendingPlayIntent = playIntent
+        mPendingPlayShouldFinishMap = finishMapAfterStart
+        mNotificationPermissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
+    }
+
+    private fun warmUpVendorNotificationsBeforePlay(playIntent: Intent, finishMapAfterStart: Boolean) {
+        mPendingPlayIntent = playIntent
+        mPendingPlayShouldFinishMap = finishMapAfterStart
+        mWaitingVendorNotificationWarmup = true
+        mCanCompleteVendorNotificationWarmup = false
+        showVendorNotificationPreflight()
+        mHandler.postDelayed({
+            mCanCompleteVendorNotificationWarmup = true
+            completeVendorNotificationWarmupIfReady()
+        }, VENDOR_WARMUP_DELAY_MS)
+    }
+
+    private fun completeVendorNotificationWarmupIfReady() {
+        if (!mWaitingVendorNotificationWarmup) return
+        if (!mCanCompleteVendorNotificationWarmup || !mMapResumed || !mMapHasWindowFocus) return
+
+        markVendorNotificationWarmupAttempted()
+        NotificationManagerCompat.from(this).cancel(VENDOR_WARMUP_NOTIFICATION_ID)
+        mWaitingVendorNotificationWarmup = false
+        mCanCompleteVendorNotificationWarmup = false
+        startPendingPlayPage()
+    }
+
+    @SuppressLint("MissingPermission")
+    private fun showVendorNotificationPreflight() {
+        createNotificationChannel()
+        val contentIntent = PendingIntent.getActivity(
+            this,
+            0,
+            Intent(this, MapActivity::class.java).apply {
+                flags = Intent.FLAG_ACTIVITY_SINGLE_TOP or Intent.FLAG_ACTIVITY_CLEAR_TOP
+            },
+            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+        )
+        val notification = NotificationCompat.Builder(this, CountdownTimerContract.NOTIFICATION_CHANNEL_ID)
+            .setSmallIcon(R.drawable.ic_timer_notification)
+            .setContentTitle(getString(R.string.notification_preflight_title))
+            .setContentText(getString(R.string.notification_preflight_text))
+            .setContentIntent(contentIntent)
+            .setAutoCancel(true)
+            .setOnlyAlertOnce(true)
+            .setPriority(NotificationCompat.PRIORITY_LOW)
+            .build()
+
+        try {
+            NotificationManagerCompat.from(this).notify(VENDOR_WARMUP_NOTIFICATION_ID, notification)
+        } catch (exception: SecurityException) {
+            /*
+             * 厂商系统可能直接拦截通知；这里不阻塞进入棋盘，只把权限触发尽量提前到地图页。
+             */
+        }
+    }
+
+    private fun createNotificationChannel() {
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.O) return
+        val channel = NotificationChannel(
+            CountdownTimerContract.NOTIFICATION_CHANNEL_ID,
+            getString(R.string.countdown_notification_channel_name),
+            NotificationManager.IMPORTANCE_LOW
+        ).apply {
+            setShowBadge(false)
+            description = getString(R.string.countdown_notification_channel_description)
+        }
+        getSystemService(NotificationManager::class.java).createNotificationChannel(channel)
+    }
+
+    private fun startPendingPlayPage() {
+        val playIntent = mPendingPlayIntent ?: return
+        val finishMapAfterStart = mPendingPlayShouldFinishMap
+        mPendingPlayIntent = null
+        mPendingPlayShouldFinishMap = false
+        startPlayPage(playIntent, finishMapAfterStart)
+    }
+
+    private fun startPlayPage(playIntent: Intent, finishMapAfterStart: Boolean) {
+        startActivityWithTransition(
+            playIntent,
+            R.anim.playpage_show,
+            R.anim.playpage_hide
+        )
+        if (finishMapAfterStart) finish()
+    }
+
+    private fun createPlayIntent(num: String): Intent {
+        return Intent(this@MapActivity, PlayActivity::class.java)
+            .putExtra("num", num)
+            .putExtra(PlayActivity.EXTRA_USERNAME, mCurrentUsername)
+    }
+
+    private fun getPostNotificationsStatus(): Int {
+        val permissionStatus = ContextCompat.checkSelfPermission(
+            this,
+            Manifest.permission.POST_NOTIFICATIONS
+        )
+        return permissionStatus
+    }
+
+    private fun hasVendorNotificationWarmupAttempted(): Boolean {
+        return getSharedPreferences(PREFS_NOTIFICATION_STATE, MODE_PRIVATE)
+            .getBoolean(KEY_VENDOR_WARMUP_ATTEMPTED, false)
+    }
+
+    private fun markVendorNotificationWarmupAttempted() {
+        getSharedPreferences(PREFS_NOTIFICATION_STATE, MODE_PRIVATE).edit {
+            putBoolean(KEY_VENDOR_WARMUP_ATTEMPTED, true)
+        }
+    }
+
     private fun getRollingPosition(num: String): Int {
         val position = parseLevel(num) ?: return 1
         val n = (position - 1) / 4
         return if (n in 0..8) 10 - n else 1
     }
 
-    override fun onPause() { super.onPause(); PlayMusic.getInstance().stopBGM() }
+    override fun onPause() {
+        mMapResumed = false
+        super.onPause()
+        PlayMusic.getInstance().stopBGM()
+    }
 
     override fun onResume() {
         super.onResume()
+        mMapResumed = true
         PlayMusic.getInstance().playBGM()
         refreshLoginState()
+        completeVendorNotificationWarmupIfReady()
+    }
+
+    override fun onWindowFocusChanged(hasFocus: Boolean) {
+        super.onWindowFocusChanged(hasFocus)
+        mMapHasWindowFocus = hasFocus
+        if (hasFocus) completeVendorNotificationWarmupIfReady()
     }
 
     override fun onDestroy() {
