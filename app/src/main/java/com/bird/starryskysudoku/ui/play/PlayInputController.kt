@@ -42,19 +42,19 @@ class PlayInputController(
                 PlayMusic.getInstance().playInputWrong()
                 return@setOnClickListener
             }
-            if (mViewModel.mCurrentBlock == 0 || cell.mValue != "0") {
+            if (mViewModel.getCurrentBlock() == 0 || cell.mValue != "0") {
                 PlayMusic.getInstance().playInputWrong()
                 return@setOnClickListener
             }
             PlayMusic.getInstance().playButtonTap()
-            if (!mViewModel.mTagMode) {
+            if (!mViewModel.isTagMode()) {
                 mTag.setImageResource(R.drawable.icon_notes_on)
-                mViewModel.mTagMode = true
+                mViewModel.setTagMode(true)
                 refreshNumberAlphaForTags()
             } else {
                 for (button in mNumbers) button?.alpha = 1f
                 mTag.setImageResource(R.drawable.icon_notes_off)
-                mViewModel.mTagMode = false
+                mViewModel.setTagMode(false)
             }
         }
     }
@@ -70,14 +70,14 @@ class PlayInputController(
             }
 
             mNumbers[index]?.setOnClickListener {
-                if (mViewModel.mHasWon.value == true || !mViewModel.mCanInsert) return@setOnClickListener
+                if (mViewModel.mHasWon.value == true || !mViewModel.canInsert()) return@setOnClickListener
                 val cell = currentCell() ?: return@setOnClickListener
-                if (cell.mType == PlayViewModel.PROBLEM || mViewModel.mCurrentBlock == 0) {
+                if (cell.mType == PlayViewModel.PROBLEM || mViewModel.getCurrentBlock() == 0) {
                     PlayMusic.getInstance().playInputWrong()
                     return@setOnClickListener
                 }
                 val number = (numberIndex + 1).toString()
-                if (!mViewModel.mTagMode) {
+                if (!mViewModel.isTagMode()) {
                     insertNumber(number)
                 } else {
                     insertOrRemoveTag(cell, number, numberIndex)
@@ -96,7 +96,7 @@ class PlayInputController(
         }
 
         mRevoke.setOnClickListener {
-            if (mViewModel.mHasWon.value == true || mViewModel.mCurrentBlock == 0) return@setOnClickListener
+            if (mViewModel.mHasWon.value == true || mViewModel.getCurrentBlock() == 0) return@setOnClickListener
             mScope.launch {
                 val history = mViewModel.undo()
                 if (history == null) {
@@ -111,7 +111,7 @@ class PlayInputController(
 
     private fun insertNumber(number: String) {
         mScope.launch {
-            mViewModel.insertNumber(mViewModel.mCurrentX, mViewModel.mCurrentY, number)
+            mViewModel.insertNumber(mViewModel.getCurrentRow(), mViewModel.getCurrentCol(), number)
             mRevoke.alpha = 1f
             mTag.alpha = 0.55f
             mBroadView.initData(mViewModel.mBoard.value!!)
@@ -138,8 +138,8 @@ class PlayInputController(
         mRevoke.alpha = 1f
         mScope.launch {
             val added = mViewModel.insertOrRemoveTag(
-                mViewModel.mCurrentX,
-                mViewModel.mCurrentY,
+                mViewModel.getCurrentRow(),
+                mViewModel.getCurrentCol(),
                 number,
                 mTagData
             )
@@ -154,8 +154,8 @@ class PlayInputController(
         mRevoke.alpha = 0.55f
         mTag.alpha = 1f
         mTag.setImageResource(R.drawable.icon_notes_off)
-        mViewModel.mTagMode = false
-        mViewModel.mCurrentBlock = 0
+        mViewModel.setTagMode(false)
+        mViewModel.setCurrentPosition(mViewModel.getCurrentRow(), mViewModel.getCurrentCol(), 0)
         val board = mViewModel.mBoard.value!!
         for (row in 0 until 9) {
             for (col in 0 until 9) {
@@ -167,12 +167,11 @@ class PlayInputController(
     }
 
     private fun restoreHistory(history: com.bird.starryskysudoku.data.entity.HistoryEntity) {
-        mViewModel.mCurrentX = history.mRow
-        mViewModel.mCurrentY = history.mCol
-        mViewModel.mCurrentBlock = mViewModel.mBoard.value
+        val block = mViewModel.mBoard.value
             ?.get(history.mRow)
             ?.get(history.mCol)
             ?.mBlock ?: 0
+        mViewModel.setCurrentPosition(history.mRow, history.mCol, block)
         PlayMusic.getInstance().playButtonTap()
 
         if (history.mType == PlayViewModel.TYPE_NUMBER) {
@@ -183,8 +182,8 @@ class PlayInputController(
     }
 
     private fun restoreNumberHistory(history: com.bird.starryskysudoku.data.entity.HistoryEntity) {
-        mViewModel.mTagMode = false
-        mViewModel.mLastValue = history.mValue.toString()
+        mViewModel.setTagMode(false)
+        mViewModel.setLastValue(history.mValue.toString())
         mTag.setImageResource(R.drawable.icon_notes_off)
         for (button in mNumbers) button?.alpha = 1f
 
@@ -200,7 +199,7 @@ class PlayInputController(
         val board = mViewModel.mBoard.value!!
         board[history.mRow][history.mCol].mStatus = PlayViewModel.BE_SELECTED
         mTag.alpha = 1f
-        mViewModel.mTagMode = true
+        mViewModel.setTagMode(true)
         mTag.setImageResource(R.drawable.icon_notes_on)
 
         val tagData = mTagData[history.mRow][history.mCol]!!
@@ -221,7 +220,7 @@ class PlayInputController(
     }
 
     private fun refreshNumberAlphaForTags() {
-        val tagData = mTagData[mViewModel.mCurrentX][mViewModel.mCurrentY]
+        val tagData = mTagData[mViewModel.getCurrentRow()][mViewModel.getCurrentCol()]
         for (index in 0 until 9) {
             mNumbers[index]?.alpha = if (tagData != null && tagData.haveTag((index + 1).toString())) {
                 0.55f
@@ -232,12 +231,12 @@ class PlayInputController(
     }
 
     private fun currentCell(): PlayViewModel.CellData? {
-        return mViewModel.mBoard.value?.get(mViewModel.mCurrentX)?.get(mViewModel.mCurrentY)
+        return mViewModel.mBoard.value?.get(mViewModel.getCurrentRow())?.get(mViewModel.getCurrentCol())
     }
 
     private fun canAnimateSelectedCell(): Boolean {
         val cell = currentCell()
-        return mViewModel.mCurrentBlock != 0 &&
+        return mViewModel.getCurrentBlock() != 0 &&
             cell?.mType != PlayViewModel.PROBLEM &&
             mViewModel.mHasWon.value != true
     }

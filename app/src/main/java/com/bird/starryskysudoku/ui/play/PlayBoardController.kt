@@ -69,7 +69,7 @@ class PlayBoardController(
             }
             else -> {
                 mTag.alpha = 1f
-                if (mViewModel.mTagMode) {
+                if (mViewModel.isTagMode()) {
                     refreshTagNumberAlpha(row, col)
                 } else {
                     setNumberAlpha(1f)

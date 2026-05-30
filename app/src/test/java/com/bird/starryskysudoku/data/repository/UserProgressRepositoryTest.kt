@@ -24,17 +24,19 @@ class UserProgressRepositoryTest {
     }
 
     @Test
-    fun ensureUserMapCreatesRowsFromBaseMapAndTrimsBlankUsername() = runBlocking {
-        seedBaseMap()
+    fun ensureUserMapCreatesFortyLevelsAndTrimsBlankUsername() = runBlocking {
         val repository = UserProgressRepository(mDb)
 
         val username = repository.ensureUserMap("  alice  ")
 
         assertEquals("alice", username)
         val rows = mDb.userMapDao().getAllForUser("alice")
-        assertEquals(listOf(1, 2, 3), rows.map { it.mPassNum })
-        assertEquals(listOf(PassStatus.TODO, PassStatus.LOCKED, PassStatus.LOCKED), rows.map { it.mStatus })
-        assertEquals(listOf(0, 0, 0), rows.map { it.mPlayTime })
+        assertEquals(40, rows.size)
+        assertEquals(1, rows.first().mPassNum)
+        assertEquals(PassStatus.TODO, rows.first().mStatus)
+        assertEquals(0, rows.first().mPlayTime)
+        assertEquals(PassStatus.LOCKED, rows[1].mStatus)
+        assertEquals(PassStatus.LOCKED, rows.last().mStatus)
     }
 
     @Test
@@ -70,8 +72,8 @@ class UserProgressRepositoryTest {
 
     private fun seedBaseMap() {
         val db = mDb.openHelper.writableDatabase
-        db.execSQL("INSERT INTO map(pass_num, status, play_time) VALUES(1, '待通关', '7')")
-        db.execSQL("INSERT INTO map(pass_num, status, play_time) VALUES(2, '未通关', '2')")
-        db.execSQL("INSERT INTO map(pass_num, status, play_time) VALUES(3, '未通关', '0')")
+        db.execSQL("INSERT INTO user_map(username, pass_num, status, play_time) VALUES('guest', 1, '待通关', 7)")
+        db.execSQL("INSERT INTO user_map(username, pass_num, status, play_time) VALUES('guest', 2, '未通关', 2)")
+        db.execSQL("INSERT INTO user_map(username, pass_num, status, play_time) VALUES('guest', 3, '未通关', 0)")
     }
 }

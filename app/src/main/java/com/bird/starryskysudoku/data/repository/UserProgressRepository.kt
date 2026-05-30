@@ -19,11 +19,11 @@ class UserProgressRepository(private val mDb: AppDatabase) {
         val safeUsername = username.trim().ifEmpty { LauncherSessionReader.GUEST_USERNAME }
         if (mDb.userMapDao().getAllForUser(safeUsername).isNotEmpty()) return safeUsername
 
-        val userRows = mDb.mapDao().getAllMaps().mapIndexed { index, map ->
+        val userRows = (1..MAX_LEVEL).map { passNum ->
             UserMapEntity(
                 mUsername = safeUsername,
-                mPassNum = map.mPassNum,
-                mStatus = if (index == 0) PassStatus.TODO else PassStatus.LOCKED,
+                mPassNum = passNum,
+                mStatus = if (passNum == 1) PassStatus.TODO else PassStatus.LOCKED,
                 mPlayTime = 0
             )
         }

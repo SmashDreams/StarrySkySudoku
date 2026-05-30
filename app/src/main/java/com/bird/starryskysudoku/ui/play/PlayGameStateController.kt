@@ -136,13 +136,13 @@ class PlayGameStateController(
     private fun showWrongInputState() {
         mBroadView.setWrong(true)
         PlayMusic.getInstance().playInputWrong()
-        mViewModel.mCanInsert = false
+        mViewModel.setCanInsert(false)
         mHandler.postDelayed({
-            mViewModel.revertWrongInput(mViewModel.mCurrentX, mViewModel.mCurrentY)
+            mViewModel.revertWrongInput(mViewModel.getCurrentRow(), mViewModel.getCurrentCol())
             mBroadView.initData(mViewModel.mBoard.value!!)
             mBroadView.invalidate()
             mBroadView.setWrong(false)
-            mViewModel.mCanInsert = true
+            mViewModel.setCanInsert(true)
         }, WRONG_INPUT_DELAY_MILLIS)
     }
 

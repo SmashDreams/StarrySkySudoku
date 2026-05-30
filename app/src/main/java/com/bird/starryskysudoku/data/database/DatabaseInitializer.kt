@@ -101,6 +101,12 @@ object DatabaseInitializer {
         }
     }
 
+    internal val sMigration5To6 = object : Migration(5, 6) {
+        override fun migrate(db: SupportSQLiteDatabase) {
+            db.execSQL("DROP TABLE IF EXISTS map")
+        }
+    }
+
     @Volatile
     private var sInstance: AppDatabase? = null
 
@@ -117,7 +123,7 @@ object DatabaseInitializer {
          */
         return Room.databaseBuilder(context.applicationContext, AppDatabase::class.java, DB_NAME)
             .createFromAsset(DB_NAME)
-            .addMigrations(sMigration1To2, sMigration2To3, sMigration3To4, sMigration4To5)
+            .addMigrations(sMigration1To2, sMigration2To3, sMigration3To4, sMigration4To5, sMigration5To6)
             .build()
     }
 }

@@ -43,12 +43,23 @@ class PlayViewModel(private val mDb: AppDatabase) : ViewModel() {
     private val mIsWrongSource = MutableLiveData(false)
     val mIsWrong: LiveData<Boolean> = mIsWrongSource
 
-    var mTagMode = false
-    var mCanInsert = true
-    var mLastValue = "0"
-    var mCurrentX = 0
-    var mCurrentY = 0
-    var mCurrentBlock = 0
+    private var mTagMode = false
+    private var mCanInsert = true
+    private var mLastValue = "0"
+    private var mCurrentPosition = CellPosition(0, 0, 0)
+
+    fun isTagMode(): Boolean = mTagMode
+    fun setTagMode(enabled: Boolean) { mTagMode = enabled }
+    fun canInsert(): Boolean = mCanInsert
+    fun setCanInsert(enabled: Boolean) { mCanInsert = enabled }
+    fun getLastValue(): String = mLastValue
+    fun setLastValue(value: String) { mLastValue = value }
+    fun getCurrentRow(): Int = mCurrentPosition.mRow
+    fun getCurrentCol(): Int = mCurrentPosition.mCol
+    fun getCurrentBlock(): Int = mCurrentPosition.mBlock
+    fun setCurrentPosition(row: Int, col: Int, block: Int) {
+        mCurrentPosition = CellPosition(row, col, block)
+    }
     private var mCurrentPassNum = 0
     private var mGameSession = UUID.randomUUID().toString()
     private val mUserProgressRepository = UserProgressRepository(mDb)
@@ -88,13 +99,9 @@ class PlayViewModel(private val mDb: AppDatabase) : ViewModel() {
         return mRemainingSecondsSource.value ?: CountdownTimerContract.DEFAULT_TOTAL_SECONDS
     }
 
-    fun setCurrentPosition(x: Int, y: Int, block: Int) {
-        mCurrentX = x; mCurrentY = y; mCurrentBlock = block
-    }
-
-    fun selectCell(x: Int, y: Int) {
+    fun selectCell(row: Int, col: Int) {
         val b = mBoardSource.value ?: return
-        mLastValue = PlayBoardRules.selectCell(b, x, y)
+        mLastValue = PlayBoardRules.selectCell(b, row, col)
         mBoardSource.value = b
     }
 
