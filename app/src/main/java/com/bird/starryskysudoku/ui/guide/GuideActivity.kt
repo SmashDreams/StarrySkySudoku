@@ -1,6 +1,5 @@
 package com.bird.starryskysudoku.ui.guide
 
-import android.content.Intent
 import android.graphics.RectF
 import android.os.Bundle
 import android.view.View
@@ -15,7 +14,7 @@ import com.bird.starryskysudoku.data.database.DatabaseInitializer
 import com.bird.starryskysudoku.databinding.ActivityGuidepageBinding
 import com.bird.starryskysudoku.media.PlayMusic
 import com.bird.starryskysudoku.ui.common.startActivityWithTransition
-import com.bird.starryskysudoku.ui.map.MapActivity
+import com.bird.starryskysudoku.ui.map.MapRoute
 import com.bird.starryskysudoku.ui.play.BroadView
 import com.bird.starryskysudoku.ui.play.SudokuBoardGeometry
 import kotlinx.coroutines.launch
@@ -255,8 +254,7 @@ class GuideActivity : AppCompatActivity() {
             putBoolean("first", false)
         }
         startActivityWithTransition(
-            Intent(this, MapActivity::class.java)
-                .putExtra(MapActivity.EXTRA_FLASH_HOME, false),
+            MapRoute.create(this, flashHome = false),
             R.anim.playpage_show,
             R.anim.playpage_hide
         )

@@ -12,7 +12,7 @@ import com.bird.starryskysudoku.R
 import com.bird.starryskysudoku.ui.common.flashThreeTimes
 import com.bird.starryskysudoku.ui.common.startActivityWithTransition
 import com.bird.starryskysudoku.ui.guide.GuideActivity
-import com.bird.starryskysudoku.ui.map.MapActivity
+import com.bird.starryskysudoku.ui.map.MapRoute
 
 class AppEntryActivity : AppCompatActivity() {
 
@@ -42,7 +42,7 @@ class AppEntryActivity : AppCompatActivity() {
         val nextActivity = if (isFirstLaunch) {
             Intent(this, GuideActivity::class.java)
         } else {
-            Intent(this, MapActivity::class.java).putExtra(MapActivity.EXTRA_FLASH_HOME, false)
+            MapRoute.create(this, flashHome = false)
         }
         splashImage.flashThreeTimes {
             startActivityWithTransition(nextActivity, R.anim.playpage_show, R.anim.playpage_hide)

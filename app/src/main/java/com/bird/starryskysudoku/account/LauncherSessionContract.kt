@@ -3,8 +3,8 @@ package com.bird.starryskysudoku.account
 import android.net.Uri
 
 object LauncherSessionContract {
-    const val AUTHORITY = "com.bird.StarrySkyTeaHouse.provider"
-    const val READ_PERMISSION = "com.bird.StarrySkyTeaHouse.permission.READ_SESSION"
+    const val AUTHORITY = "com.bird.starryskyteahouse.provider"
+    const val READ_PERMISSION = "com.bird.starryskyteahouse.permission.READ_SESSION"
     const val CONTENT_URI_BASE = "content://$AUTHORITY"
 
     object Session {

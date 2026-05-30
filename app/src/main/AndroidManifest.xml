@@ -13,13 +13,13 @@
 
     <uses-permission android:name="com.bird.starryskysudoku.permission.READ_RESULTS" />
     <uses-permission android:name="com.bird.starryskysudoku.permission.WRITE_RESULTS" />
-    <uses-permission android:name="com.bird.StarrySkyTeaHouse.permission.READ_SESSION" />
+    <uses-permission android:name="com.bird.starryskyteahouse.permission.READ_SESSION" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_SPECIAL_USE" />
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
 
     <queries>
-        <provider android:authorities="com.bird.StarrySkyTeaHouse.provider" />
+        <provider android:authorities="com.bird.starryskyteahouse.provider" />
     </queries>
 
     <application

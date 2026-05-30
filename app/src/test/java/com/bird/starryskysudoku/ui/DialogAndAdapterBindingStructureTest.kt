@@ -28,7 +28,7 @@ class DialogAndAdapterBindingStructureTest {
 
     @Test
     fun playActivityUsesDialogBindingsForPauseWinAndLose() {
-        val source = File("src/main/java/com/bird/starryskysudoku/ui/play/PlayActivity.kt").readText()
+        val source = File("src/main/java/com/bird/starryskysudoku/ui/play/PlayDialogController.kt").readText()
 
         assertTrue(source.contains("DialogPauseBinding"))
         assertTrue(source.contains("DialogWinBinding"))

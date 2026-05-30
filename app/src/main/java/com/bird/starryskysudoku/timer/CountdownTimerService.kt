@@ -15,7 +15,7 @@ import androidx.core.app.NotificationCompat
 import androidx.core.content.ContextCompat
 import androidx.core.app.NotificationManagerCompat
 import com.bird.starryskysudoku.R
-import com.bird.starryskysudoku.ui.play.PlayActivity
+import com.bird.starryskysudoku.ui.play.PlayRoute
 
 class CountdownTimerService : Service() {
 
@@ -116,8 +116,7 @@ class CountdownTimerService : Service() {
         val contentIntent = PendingIntent.getActivity(
             this,
             0,
-            Intent(this, PlayActivity::class.java).apply {
-                putExtra("mNum", mLevelNumber.toString())
+            PlayRoute.create(this, mLevelNumber, username = "").apply {
                 flags = Intent.FLAG_ACTIVITY_SINGLE_TOP or Intent.FLAG_ACTIVITY_CLEAR_TOP
             },
             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE

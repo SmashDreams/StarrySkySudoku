@@ -67,19 +67,7 @@ class PlayViewModel(private val mDb: AppDatabase) : ViewModel() {
             mTimerFinishedSource.value = false
             mDb.historyDao().deleteForPass(levelNum)
             val values = mDb.problemDao().getValuesForLevel(levelNum)
-            if (values.size != 81 || values.any { it !in 0..9 }) return@launch
-            val board = Array(9) { row ->
-                Array(9) { col ->
-                    val idx = row * 9 + col
-                    val value = values.getOrElse(idx) { 0 }
-                    CellData(
-                        mRow = row, mCol = col,
-                        mValue = value.toString(),
-                        mBlock = (row / 3) * 3 + (col / 3) + 1,
-                        mType = if (value == 0) EMPTY else PROBLEM
-                    )
-                }
-            }
+            val board = PlayBoardRules.createBoard(values) ?: return@launch
             mBoardSource.value = board
         }
     }
@@ -106,82 +94,40 @@ class PlayViewModel(private val mDb: AppDatabase) : ViewModel() {
 
     fun selectCell(x: Int, y: Int) {
         val b = mBoardSource.value ?: return
-        val number = b[x][y].mValue
-        mLastValue = number
-        b[x][y].mStatus = BE_SELECTED
-        if (number == "0") tapEmpty(x, y, b[x][y].mBlock)
-        else tapNoneEmpty(x, y, number)
-        mBoardSource.value = b
-    }
-
-    private fun tapNoneEmpty(currentX: Int, currentY: Int, number: String) {
-        val b = mBoardSource.value ?: return
-        for (i in 0 until 9)
-            for (j in 0 until 9)
-                if (i != currentX || j != currentY)
-                    b[i][j].mStatus = if (b[i][j].mValue == number) SELECT_ON else SELECT_NONE
-        mBoardSource.value = b
-    }
-
-    private fun tapEmpty(currentX: Int, currentY: Int, block: Int) {
-        val b = mBoardSource.value ?: return
-        for (i in 0 until 9)
-            for (j in 0 until 9)
-                if (i != currentX || j != currentY)
-                    b[i][j].mStatus = if (b[i][j].mRow == currentX || b[i][j].mCol == currentY || b[i][j].mBlock == block) SELECT_ON else SELECT_NONE
+        mLastValue = PlayBoardRules.selectCell(b, x, y)
         mBoardSource.value = b
     }
 
     suspend fun insertNumber(x: Int, y: Int, number: String): Boolean {
         if (!isValidCell(x, y) || !isValidNumber(number) || mCurrentPassNum == 0) return false
         val b = mBoardSource.value ?: return false
-        val cell = b[x][y]
         val historyDao = mDb.historyDao()
 
-        /*
-         * 再次输入同一个数字表示清空当前格子，同时记录撤销历史。
-         */
-        if (cell.mValue == number) {
+        val previousValue = mLastValue
+        val result = PlayBoardRules.insertNumber(b, x, y, number, previousValue)
+        mBoardSource.value = b
+
+        if (result.mWasCleared) {
             historyDao.insert(newHistory(x, y, TYPE_NUMBER, mLastValue.toIntOrNull() ?: 0))
             historyDao.trimToLimit(mCurrentPassNum, mGameSession)
-            mLastValue = "0"; cell.mValue = "0"; cell.mStatus = BE_SELECTED
-            tapEmpty(x, y, cell.mBlock)
-            mBoardSource.value = b
+            mLastValue = result.mNewLastValue
             return false
         }
 
-        cell.mValue = number; cell.mStatus = SELECT_ON
-        var wrongCount = 0
-        for (i in 0 until 9) {
-            for (j in 0 until 9) {
-                if (i != x || j != y) {
-                    if (b[i][j].mValue == number && (b[i][j].mRow == x || b[i][j].mCol == y || b[i][j].mBlock == cell.mBlock)) {
-                        b[i][j].mStatus = WRONG; cell.mStatus = WRONG
-                    } else if (b[i][j].mValue == number) {
-                        b[i][j].mStatus = SELECT_ON
-                    } else b[i][j].mStatus = SELECT_NONE
-                }
-                if (b[i][j].mValue == "0" || b[i][j].mStatus == WRONG) wrongCount++
-            }
-        }
-        mBoardSource.value = b
+        if (result.mIsWrong) { mIsWrongSource.value = true; return false }
 
-        if (cell.mStatus == WRONG) { mIsWrongSource.value = true; return false }
-
-        historyDao.insert(newHistory(x, y, TYPE_NUMBER, mLastValue.toIntOrNull() ?: 0))
+        historyDao.insert(newHistory(x, y, TYPE_NUMBER, previousValue.toIntOrNull() ?: 0))
         historyDao.trimToLimit(mCurrentPassNum, mGameSession)
-        mLastValue = cell.mValue
+        mLastValue = result.mNewLastValue
 
-        if (wrongCount == 0) mHasWonSource.value = true
+        if (result.mIsComplete) mHasWonSource.value = true
         return true
     }
 
     fun revertWrongInput(x: Int, y: Int) {
         if (!isValidCell(x, y)) return
         val b = mBoardSource.value ?: return
-        b[x][y].mValue = mLastValue; b[x][y].mStatus = BE_SELECTED
-        if (mLastValue == "0") tapEmpty(x, y, b[x][y].mBlock)
-        else tapNoneEmpty(x, y, mLastValue)
+        PlayBoardRules.revertWrongInput(b, x, y, mLastValue)
         mIsWrongSource.value = false
         mBoardSource.value = b
     }

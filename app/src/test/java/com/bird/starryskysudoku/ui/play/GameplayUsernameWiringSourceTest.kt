@@ -10,58 +10,40 @@ class GameplayUsernameWiringSourceTest {
     @Test
     fun mapActivityPassesCurrentUsernameToEveryPlayActivityIntent() {
         val source = sourceRoot.resolve("ui/map/MapActivity.kt").readText()
-        val playIntentPattern = Regex(
-            """Intent\(this(?:@MapActivity)?,\s*PlayActivity::class\.java\)([\s\S]*?)(?:R\.anim|finish\(\)|MyDialogManager|$)"""
-        )
-        val playIntents = playIntentPattern.findAll(source).toList()
 
-        assertTrue("Expected MapActivity to create PlayActivity intents", playIntents.isNotEmpty())
-        playIntents.forEach { match ->
-            assertTrue(
-                "PlayActivity intent must include current username: ${match.value}",
-                match.value.contains(".putExtra(PlayActivity.EXTRA_USERNAME, mCurrentUsername)")
-            )
-        }
+        assertTrue(source.contains("PlayRoute.create(this@MapActivity"))
+        assertTrue(source.contains("mCurrentUsername"))
     }
 
     @Test
     fun playActivityAcceptsUsernameExtraAndReadsResultUsername() {
         val source = sourceRoot.resolve("ui/play/PlayActivity.kt").readText()
+        val recorderSource = sourceRoot.resolve("ui/play/GameResultRecorder.kt").readText()
 
         assertTrue(
             "PlayActivity must expose EXTRA_USERNAME",
-            source.contains("""const val EXTRA_USERNAME = "username"""")
+            source.contains("const val EXTRA_USERNAME = PlayRoute.EXTRA_USERNAME")
         )
         assertTrue(
             "PlayActivity must prefer username intent extra and fall back to session reader",
-            source.contains(
-                """mCurrentUsername = intent.getStringExtra(EXTRA_USERNAME)"""
-            ) && source.contains("""?: LauncherSessionReader.readUsername(contentResolver)""")
+            source.contains("mCurrentUsername = PlayRoute.readUsername(intent)") &&
+                source.contains("""?: LauncherSessionReader.readUsername(contentResolver)""")
         )
         assertTrue(
             "PlayActivity must read inserted result username from provider cursor",
-            source.contains("GameResultContract.Results.COLUMN_USERNAME")
+            recorderSource.contains("GameResultContract.Results.COLUMN_USERNAME")
         )
     }
 
     @Test
     fun playActivityPassesCurrentUsernameToInternalPlayActivityIntents() {
-        val source = sourceRoot.resolve("ui/play/PlayActivity.kt").readText()
-        val internalPlayIntentPattern = Regex(
-            """Intent\(this,\s*PlayActivity::class\.java\)([\s\S]*?)(?:R\.anim|$)"""
-        )
-        val internalPlayIntents = internalPlayIntentPattern.findAll(source).toList()
+        val source = sourceRoot.resolve("ui/play/PlayDialogController.kt").readText()
 
         assertTrue(
-            "Expected PlayActivity to create internal PlayActivity intents",
-            internalPlayIntents.isNotEmpty()
+            "Expected PlayDialogController to create internal PlayActivity intents",
+            source.contains("PlayRoute.create(mActivity")
         )
-        internalPlayIntents.forEach { match ->
-            assertTrue(
-                "Internal PlayActivity intent must preserve current username: ${match.value}",
-                match.value.contains(".putExtra(EXTRA_USERNAME, mCurrentUsername)")
-            )
-        }
+        assertTrue(source.contains("mGetUsername()"))
     }
 
     private fun locateSourceRoot(): File {

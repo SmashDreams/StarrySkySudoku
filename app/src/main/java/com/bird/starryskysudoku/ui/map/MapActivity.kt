@@ -45,13 +45,13 @@ import com.bird.starryskysudoku.ui.common.startActivityWithTransition
 import com.bird.starryskysudoku.ui.dialog.MyDialog
 import com.bird.starryskysudoku.ui.dialog.MyDialogManager
 import com.bird.starryskysudoku.ui.howtoplay.HowToPlayActivity
-import com.bird.starryskysudoku.ui.play.PlayActivity
+import com.bird.starryskysudoku.ui.play.PlayRoute
 
 class MapActivity : AppCompatActivity() {
 
     companion object {
         private const val MAX_LEVEL = 40
-        const val EXTRA_FLASH_HOME = "flash_home"
+        const val EXTRA_FLASH_HOME = MapRoute.EXTRA_FLASH_HOME
         private const val PREFS_UI_STATE = "ui_state"
         private const val KEY_FLASH_HOME = "flash_home"
         private const val PREFS_NOTIFICATION_STATE = "notification_state"
@@ -100,12 +100,7 @@ class MapActivity : AppCompatActivity() {
         setContentView(mBinding.root)
 
         val db = DatabaseInitializer.getDatabase(this)
-        mViewModel = ViewModelProvider(this, object : ViewModelProvider.Factory {
-            @Suppress("UNCHECKED_CAST")
-            override fun <T : androidx.lifecycle.ViewModel> create(modelClass: Class<T>): T {
-                return MapViewModel(db) as T
-            }
-        })[MapViewModel::class.java]
+        mViewModel = ViewModelProvider(this, MapViewModelFactory(db))[MapViewModel::class.java]
 
         val musicPrefs = getSharedPreferences(AppSettings.PREFS_MUSIC, MODE_PRIVATE)
         mMusicOpened = musicPrefs.getBoolean(AppSettings.KEY_MUSIC, true)
@@ -156,12 +151,13 @@ class MapActivity : AppCompatActivity() {
     private fun consumeNavigationExtras() {
         mNextNum = null
         mLoseNum = null
-        intent.getStringExtra("roll")?.let { mRecyclerView.scrollToPosition(getRollingPosition(it)) }
-        mNextNum = intent.getStringExtra("next")?.takeIf { parseLevel(it) != null }
-        mLoseNum = intent.getStringExtra("lose")?.takeIf { parseLevel(it) != null }
-        intent.removeExtra("roll")
-        intent.removeExtra("next")
-        intent.removeExtra("lose")
+        intent.getStringExtra(MapRoute.EXTRA_ROLL_LEVEL)
+            ?.let { mRecyclerView.scrollToPosition(getRollingPosition(it)) }
+        mNextNum = intent.getStringExtra(MapRoute.EXTRA_NEXT_LEVEL)?.takeIf { parseLevel(it) != null }
+        mLoseNum = intent.getStringExtra(MapRoute.EXTRA_LOSE_LEVEL)?.takeIf { parseLevel(it) != null }
+        intent.removeExtra(MapRoute.EXTRA_ROLL_LEVEL)
+        intent.removeExtra(MapRoute.EXTRA_NEXT_LEVEL)
+        intent.removeExtra(MapRoute.EXTRA_LOSE_LEVEL)
 
         mNextNum?.let { mDelayTime = 1050; handleCheckNum(it) }
         mLoseNum?.let {
@@ -246,8 +242,8 @@ class MapActivity : AppCompatActivity() {
                 passCheckBinding.passcheckStart.setOnClickListener {
                     PlayMusic.getInstance().playButtonTap()
                     mHandler.postDelayed({
-                        intent.removeExtra("next")
-                        intent.removeExtra("lose")
+                        intent.removeExtra(MapRoute.EXTRA_NEXT_LEVEL)
+                        intent.removeExtra(MapRoute.EXTRA_LOSE_LEVEL)
                         MyDialogManager.getInstance().hide(this)
                         openPlayPageAfterNotificationPermission(
                             createPlayIntent(checkNum),
@@ -503,9 +499,7 @@ class MapActivity : AppCompatActivity() {
     }
 
     private fun createPlayIntent(num: String): Intent {
-        return Intent(this@MapActivity, PlayActivity::class.java)
-            .putExtra("num", num)
-            .putExtra(PlayActivity.EXTRA_USERNAME, mCurrentUsername)
+        return PlayRoute.create(this@MapActivity, parseLevel(num) ?: 1, mCurrentUsername)
     }
 
     private fun getPostNotificationsStatus(): Int {
@@ -564,12 +558,10 @@ class MapActivity : AppCompatActivity() {
     }
 
     private fun consumeHomeFlashRequest(): Boolean {
-        val fromIntent = intent.getBooleanExtra(EXTRA_FLASH_HOME, false)
-        intent.removeExtra(EXTRA_FLASH_HOME)
         val prefs = getSharedPreferences(PREFS_UI_STATE, MODE_PRIVATE)
         val fromPrefs = prefs.getBoolean(KEY_FLASH_HOME, false)
         if (fromPrefs) prefs.edit { putBoolean(KEY_FLASH_HOME, false) }
-        return fromIntent || fromPrefs
+        return MapRoute.consumeHomeFlashRequest(intent, fromPrefs)
     }
 
     private fun flashHome() {
