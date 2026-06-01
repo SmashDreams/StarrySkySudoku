@@ -48,6 +48,8 @@
 
 ## 跨应用契约
 
+2.0 起，跨应用常量集中在 `shared-contracts/src/main/java/com/bird/starrysky/contracts/` 下维护。星空茶苑通过相邻目录引用这份源码，避免两端分别复制 Provider 字段、URI 和权限字符串。
+
 星空数独会读取星空茶苑提供的登录态：
 
 - Authority：`com.bird.starryskyteahouse.provider`
@@ -62,6 +64,18 @@
 - 权限：`com.bird.starryskysudoku.permission.READ_RESULTS`
 - 常用筛选：`username=?`
 - 默认排序：`created_at DESC`
+
+## 与星空茶苑一起开发
+
+如果需要同时构建星空茶苑，请保持两个仓库为同级目录：
+
+```text
+projects/
+  StarrySkySudoku/
+  StarrySkyTeaHouse/
+```
+
+星空茶苑会引用 `../StarrySkySudoku/shared-contracts/` 中的共享契约，并可通过 `./gradlew syncBundledSudokuApk` 重新内置当前星空数独 Debug APK。
 
 ## 构建
 项目使用 Gradle Wrapper 构建：
@@ -83,7 +97,7 @@
 ```
 
 ## 版本记录
-- 2.0：拆分地图页关卡弹窗、设置弹窗和通知权限导航职责；新增 `shared-contracts` 共享跨应用契约；同步茶苑内置 APK 与 Provider 契约维护方式。
+- 2.0：拆分地图页关卡弹窗、设置弹窗和通知权限导航职责；新增 `shared-contracts` 共享跨应用契约；同步茶苑内置 APK 构建说明与 Provider 契约维护方式。
 - 1.5 维护更新：拆分棋盘页路由、输入、棋盘、倒计时、弹窗、导航和战绩记录职责；抽出 `PlayBoardRules` 并补充规则测试；同步茶苑小写包名后的登录 Provider 契约。
 - 1.5：新增倒计时前台通知，通知内容包含图标、关卡名和剩余时间；进入棋盘前处理通知权限，避免权限弹窗打断棋盘并触发暂停，同时兼容华为 Android 12 厂商通知授权。
 - 1.4：补全 Android 四大组件业务闭环；新增 Service 倒计时广播、Activity 动态 Receiver、Room + ContentProvider 战绩共享，以及对应契约单元测试。
