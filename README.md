@@ -27,6 +27,7 @@
 - SoundPool (Builder API)
 - AndroidX AppCompat / Activity KTX
 - Gradle Version Catalog
+- 共享源码契约（`shared-contracts` + Gradle `sourceSets`）
 
 ## 项目结构
 
@@ -61,7 +62,8 @@
 
 - Authority：`com.bird.starryskysudoku.provider`
 - URI：`content://com.bird.starryskysudoku.provider/results`
-- 权限：`com.bird.starryskysudoku.permission.READ_RESULTS`
+- 读取权限：`com.bird.starryskysudoku.permission.READ_RESULTS`
+- 写入权限：`com.bird.starryskysudoku.permission.WRITE_RESULTS`
 - 常用筛选：`username=?`
 - 默认排序：`created_at DESC`
 
@@ -75,7 +77,7 @@ projects/
   StarrySkyTeaHouse/
 ```
 
-星空茶苑会引用 `../StarrySkySudoku/shared-contracts/` 中的共享契约，并可通过 `./gradlew syncBundledSudokuApk` 重新内置当前星空数独 Debug APK。
+星空茶苑会引用 `../StarrySkySudoku/shared-contracts/` 中的共享契约，并可在 `StarrySkyTeaHouse` 目录下执行 `./gradlew syncBundledSudokuApk`，重新内置当前星空数独 Debug APK。
 
 ## 构建
 项目使用 Gradle Wrapper 构建：
