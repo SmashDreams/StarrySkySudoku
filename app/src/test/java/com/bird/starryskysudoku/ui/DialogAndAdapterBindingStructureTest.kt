@@ -16,14 +16,15 @@ class DialogAndAdapterBindingStructureTest {
     }
 
     @Test
-    fun mapActivityUsesDialogBindingsForSettingsAndPassCheck() {
-        val source = File("src/main/java/com/bird/starryskysudoku/ui/map/MapActivity.kt").readText()
+    fun mapControllersUseDialogBindingsForSettingsAndPassCheck() {
+        val passDialogController = File("src/main/java/com/bird/starryskysudoku/ui/map/MapPassDialogController.kt").readText()
+        val settingsController = File("src/main/java/com/bird/starryskysudoku/ui/map/MapSettingsController.kt").readText()
 
-        assertTrue(source.contains("DialogPasscheckBinding"))
-        assertTrue(source.contains("DialogSettingsBinding"))
-        assertFalse(source.contains("mSettingsDialog.findViewById"))
-        assertFalse(source.contains("findViewById<TextView>(R.id.passcheck"))
-        assertFalse(source.contains("findViewById<ImageView>(R.id.passcheck"))
+        assertTrue(passDialogController.contains("DialogPasscheckBinding"))
+        assertTrue(settingsController.contains("DialogSettingsBinding"))
+        assertFalse(settingsController.contains("mSettingsDialog.findViewById"))
+        assertFalse(passDialogController.contains("findViewById<TextView>(R.id.passcheck"))
+        assertFalse(passDialogController.contains("findViewById<ImageView>(R.id.passcheck"))
     }
 
     @Test

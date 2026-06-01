@@ -1,17 +1,18 @@
 package com.bird.starryskysudoku.account
 
 import android.net.Uri
+import com.bird.starrysky.contracts.SharedSessionContract
 
 object LauncherSessionContract {
-    const val AUTHORITY = "com.bird.starryskyteahouse.provider"
-    const val READ_PERMISSION = "com.bird.starryskyteahouse.permission.READ_SESSION"
-    const val CONTENT_URI_BASE = "content://$AUTHORITY"
+    const val AUTHORITY = SharedSessionContract.AUTHORITY
+    const val READ_PERMISSION = SharedSessionContract.READ_PERMISSION
+    const val CONTENT_URI_BASE = SharedSessionContract.CONTENT_URI_BASE
 
     object Session {
-        const val PATH = "session"
-        const val CONTENT_URI_STRING = "$CONTENT_URI_BASE/$PATH"
-        val CONTENT_URI: Uri by lazy { Uri.parse(CONTENT_URI_STRING) }
-        const val COLUMN_USERNAME = "username"
-        const val COLUMN_LOGGED_IN = "logged_in"
+        const val PATH = SharedSessionContract.Session.PATH
+        const val CONTENT_URI_STRING = SharedSessionContract.Session.CONTENT_URI_STRING
+        val CONTENT_URI: Uri by lazy { SharedSessionContract.Session.CONTENT_URI }
+        const val COLUMN_USERNAME = SharedSessionContract.Session.COLUMN_USERNAME
+        const val COLUMN_LOGGED_IN = SharedSessionContract.Session.COLUMN_LOGGED_IN
     }
 }

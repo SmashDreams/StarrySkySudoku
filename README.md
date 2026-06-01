@@ -3,16 +3,16 @@
 一款星空主题的数独游戏 Android 应用，包含 40 个关卡（从易到难）。
 
 ## 当前版本
-- 版本：1.5
-- 更新内容：新增游戏倒计时前台通知，通知栏展示关卡名和剩余时间；进入棋盘前完成通知权限处理，并兼容华为 Android 12 的厂商通知授权体验。本次维护同步完成玩法页面结构拆分、跨应用登录/战绩契约整理，以及可复用棋盘规则测试。
+- 版本：2.0
+- 更新内容：完成地图页结构拆分，将关卡弹窗、设置弹窗和通知权限导航拆成独立控制器；新增跨应用共享契约源码，统一维护茶苑登录态和数独战绩 Provider 的 URI、字段名与权限；同步更新星空茶苑联动说明。
 
 ## 功能
 - 标准数独玩法：9×9 棋盘，行列宫内无重复
-- 标记模式：空格内可标记候选数字（1-9均可）
+- 标记模式：空格内可标记候选数字（1-9 均可）
 - 撤销功能：支持数字和标记撤销（上限 20 条）
 - 倒计时：每关 10 分钟，由后台 Service 每秒广播剩余时间
 - 前台通知：游戏中通过前台 Service 展示关卡名和剩余时间
-- 通知权限前置：进入棋盘前处理 Android 13+ 通知权限，并预热华为 Android 12 厂商通知授权
+- 通知权限前置：进入棋盘前处理 Android 13+ 通知权限，并预热华为 Android 12 的厂商通知授权
 - 关卡地图：星空主题滚动地图，已通关关卡点亮星星
 - 战绩共享：通过 ContentProvider 对外提供 Room 存储的通关/失败记录
 - 茶苑登录联动：读取星空茶苑登录态 Provider，按当前用户保存和查询战绩
@@ -30,6 +30,10 @@
 
 ## 项目结构
 
+- `ui/map/MapActivity.kt`：地图页入口，负责组合控制器、列表展示、登录态刷新和生命周期分发
+- `ui/map/MapPassDialogController.kt`：关卡确认/重试弹窗、胜负返回地图后的弹窗消费和关卡跳转入口
+- `ui/map/MapSettingsController.kt`：设置弹窗、音乐音效开关、玩法页入口和语言切换
+- `ui/map/MapNotificationNavigator.kt`：进入棋盘前的通知权限申请、厂商通知预热和页面跳转
 - `ui/play/PlayActivity.kt`：棋盘页入口，负责组合控制器和生命周期分发
 - `ui/play/PlayRoute.kt`、`ui/map/MapRoute.kt`：集中管理页面跳转 Intent 与 Extra Key
 - `ui/play/PlayBoardRules.kt`：纯棋盘规则，包括题面创建、选中高亮、填数冲突、完成判断和错误回滚
@@ -40,7 +44,7 @@
 - `ui/play/PlayNavigationController.kt`：暂停按钮、返回键和页面恢复/暂停协调
 - `ui/play/CountdownCoordinator.kt`：倒计时前台服务启动、停止和广播接收
 - `ui/play/GameResultRecorder.kt`：通过 Provider 保存并校验游戏战绩
-- `ui/play/PlayViewModelFactory.kt`、`ui/map/MapViewModelFactory.kt`：统一 ViewModel 创建逻辑
+- `shared-contracts/`：与星空茶苑共用的跨应用契约源码，避免 Provider 字段和 URI 两边漂移
 
 ## 跨应用契约
 
@@ -49,12 +53,15 @@
 - Authority：`com.bird.starryskyteahouse.provider`
 - URI：`content://com.bird.starryskyteahouse.provider/session`
 - 权限：`com.bird.starryskyteahouse.permission.READ_SESSION`
+- 字段：`username`、`logged_in`
 
 星空数独对外提供战绩数据：
 
 - Authority：`com.bird.starryskysudoku.provider`
 - URI：`content://com.bird.starryskysudoku.provider/results`
 - 权限：`com.bird.starryskysudoku.permission.READ_RESULTS`
+- 常用筛选：`username=?`
+- 默认排序：`created_at DESC`
 
 ## 构建
 项目使用 Gradle Wrapper 构建：
@@ -76,6 +83,7 @@
 ```
 
 ## 版本记录
+- 2.0：拆分地图页关卡弹窗、设置弹窗和通知权限导航职责；新增 `shared-contracts` 共享跨应用契约；同步茶苑内置 APK 与 Provider 契约维护方式。
 - 1.5 维护更新：拆分棋盘页路由、输入、棋盘、倒计时、弹窗、导航和战绩记录职责；抽出 `PlayBoardRules` 并补充规则测试；同步茶苑小写包名后的登录 Provider 契约。
 - 1.5：新增倒计时前台通知，通知内容包含图标、关卡名和剩余时间；进入棋盘前处理通知权限，避免权限弹窗打断棋盘并触发暂停，同时兼容华为 Android 12 厂商通知授权。
 - 1.4：补全 Android 四大组件业务闭环；新增 Service 倒计时广播、Activity 动态 Receiver、Room + ContentProvider 战绩共享，以及对应契约单元测试。

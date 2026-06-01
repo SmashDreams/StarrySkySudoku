@@ -3,9 +3,10 @@ package com.bird.starryskysudoku.account
 import android.content.ContentResolver
 import android.database.Cursor
 import android.util.Log
+import com.bird.starrysky.contracts.SharedSessionContract
 
 object LauncherSessionReader {
-    const val GUEST_USERNAME = "guest"
+    const val GUEST_USERNAME = SharedSessionContract.GUEST_USERNAME
     private const val TAG = "LauncherSessionReader"
 
     fun readUsername(contentResolver: ContentResolver): String {

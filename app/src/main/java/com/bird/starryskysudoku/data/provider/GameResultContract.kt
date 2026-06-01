@@ -2,36 +2,37 @@ package com.bird.starryskysudoku.data.provider
 
 import android.content.ContentValues
 import android.net.Uri
-import com.bird.starryskysudoku.account.LauncherSessionReader
+import com.bird.starrysky.contracts.SharedGameResultsContract
+import com.bird.starrysky.contracts.SharedSessionContract
 
 object GameResultContract {
-    const val AUTHORITY = "com.bird.starryskysudoku.provider"
-    const val READ_PERMISSION = "com.bird.starryskysudoku.permission.READ_RESULTS"
-    const val WRITE_PERMISSION = "com.bird.starryskysudoku.permission.WRITE_RESULTS"
-    const val CONTENT_URI_BASE = "content://$AUTHORITY"
+    const val AUTHORITY = SharedGameResultsContract.AUTHORITY
+    const val READ_PERMISSION = SharedGameResultsContract.READ_PERMISSION
+    const val WRITE_PERMISSION = SharedGameResultsContract.WRITE_PERMISSION
+    const val CONTENT_URI_BASE = SharedGameResultsContract.CONTENT_URI_BASE
 
     object Results {
-        const val MIN_LEVEL = 1
-        const val MAX_LEVEL = 40
-        const val MAX_GAME_SECONDS = 600
+        const val MIN_LEVEL = SharedGameResultsContract.Results.MIN_LEVEL
+        const val MAX_LEVEL = SharedGameResultsContract.Results.MAX_LEVEL
+        const val MAX_GAME_SECONDS = SharedGameResultsContract.Results.MAX_GAME_SECONDS
 
-        const val PATH = "results"
-        const val CONTENT_URI_STRING = "$CONTENT_URI_BASE/$PATH"
-        val CONTENT_URI: Uri by lazy { Uri.parse(CONTENT_URI_STRING) }
+        const val PATH = SharedGameResultsContract.Results.PATH
+        const val CONTENT_URI_STRING = SharedGameResultsContract.Results.CONTENT_URI_STRING
+        val CONTENT_URI: Uri by lazy { SharedGameResultsContract.Results.CONTENT_URI }
 
-        const val CONTENT_TYPE = "vnd.android.cursor.dir/vnd.com.bird.starryskysudoku.result"
-        const val CONTENT_ITEM_TYPE = "vnd.android.cursor.item/vnd.com.bird.starryskysudoku.result"
+        const val CONTENT_TYPE = SharedGameResultsContract.Results.CONTENT_TYPE
+        const val CONTENT_ITEM_TYPE = SharedGameResultsContract.Results.CONTENT_ITEM_TYPE
 
-        const val COLUMN_ID = "_id"
-        const val COLUMN_LEVEL = "level"
-        const val COLUMN_ELAPSED_SECONDS = "elapsed_seconds"
-        const val COLUMN_REMAINING_SECONDS = "remaining_seconds"
-        const val COLUMN_COMPLETED = "completed"
-        const val COLUMN_CREATED_AT = "created_at"
-        const val COLUMN_USERNAME = "username"
-        const val SORT_NEWEST_FIRST = "$COLUMN_CREATED_AT DESC"
+        const val COLUMN_ID = SharedGameResultsContract.Results.COLUMN_ID
+        const val COLUMN_LEVEL = SharedGameResultsContract.Results.COLUMN_LEVEL
+        const val COLUMN_ELAPSED_SECONDS = SharedGameResultsContract.Results.COLUMN_ELAPSED_SECONDS
+        const val COLUMN_REMAINING_SECONDS = SharedGameResultsContract.Results.COLUMN_REMAINING_SECONDS
+        const val COLUMN_COMPLETED = SharedGameResultsContract.Results.COLUMN_COMPLETED
+        const val COLUMN_CREATED_AT = SharedGameResultsContract.Results.COLUMN_CREATED_AT
+        const val COLUMN_USERNAME = SharedGameResultsContract.Results.COLUMN_USERNAME
+        const val SORT_NEWEST_FIRST = SharedGameResultsContract.Results.SORT_NEWEST_FIRST
 
-        fun selectionForUsername(): String = "$COLUMN_USERNAME=?"
+        fun selectionForUsername(): String = SharedGameResultsContract.Results.selectionForUsername()
 
         fun toContentValues(
             level: Int,
@@ -39,20 +40,16 @@ object GameResultContract {
             remainingSeconds: Int,
             completed: Boolean,
             createdAt: Long = System.currentTimeMillis(),
-            username: String = LauncherSessionReader.GUEST_USERNAME
+            username: String = SharedSessionContract.GUEST_USERNAME
         ): ContentValues {
-            /*
-             * 这里仅负责按公开字段组装写入数据，方便本应用和外部调用方复用。
-             * 真正的安全校验放在实体转换阶段，不能信任调用方传入的数据。
-             */
-            return ContentValues().apply {
-                put(COLUMN_LEVEL, level)
-                put(COLUMN_ELAPSED_SECONDS, elapsedSeconds)
-                put(COLUMN_REMAINING_SECONDS, remainingSeconds)
-                put(COLUMN_COMPLETED, if (completed) 1 else 0)
-                put(COLUMN_CREATED_AT, createdAt)
-                put(COLUMN_USERNAME, username)
-            }
+            return SharedGameResultsContract.Results.toContentValues(
+                level = level,
+                elapsedSeconds = elapsedSeconds,
+                remainingSeconds = remainingSeconds,
+                completed = completed,
+                createdAt = createdAt,
+                username = username
+            )
         }
     }
 }
