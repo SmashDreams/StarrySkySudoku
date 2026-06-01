@@ -22,7 +22,8 @@ class PlayDialogController(
     private val mGetUsername: () -> String,
     private val mRunAfterClearingHistory: (() -> Unit) -> Unit,
     private val mSetPaused: (Boolean) -> Unit,
-    private val mStartCountdownService: () -> Unit
+    private val mStartCountdownService: () -> Unit,
+    private val mPrepareForReplacementPlayActivity: () -> Unit
 ) {
     private var mMusicOpened = true
     private var mAudioOpened = true
@@ -88,12 +89,7 @@ class PlayDialogController(
             PlayMusic.getInstance().playButtonTap()
             MyDialogManager.getInstance().hide(mPauseDialog)
             mRunAfterClearingHistory {
-                mActivity.finish()
-                mActivity.startActivityWithTransition(
-                    PlayRoute.create(mActivity, mGetLevel(), mGetUsername()),
-                    R.anim.playpage_show,
-                    R.anim.playpage_hide
-                )
+                startReplacementPlayActivity(mGetLevel())
             }
         }
 
@@ -170,12 +166,7 @@ class PlayDialogController(
         loseDialogBinding.loseRetry.setOnClickListener {
             PlayMusic.getInstance().playButtonTap()
             mRunAfterClearingHistory {
-                mActivity.finish()
-                mActivity.startActivityWithTransition(
-                    PlayRoute.create(mActivity, mGetLevel(), mGetUsername()),
-                    R.anim.playpage_show,
-                    R.anim.playpage_hide
-                )
+                startReplacementPlayActivity(mGetLevel())
             }
         }
     }
@@ -203,7 +194,6 @@ class PlayDialogController(
         mWinDialogBinding.winNext.setOnClickListener {
             PlayMusic.getInstance().playButtonTap()
             mRunAfterClearingHistory {
-                mActivity.finish()
                 val level = mGetLevel()
                 if (level == mMaxLevel) {
                     mActivity.startActivityWithTransition(
@@ -211,14 +201,25 @@ class PlayDialogController(
                         R.anim.playpage_show,
                         R.anim.playpage_hide
                     )
+                    mActivity.finish()
                 } else {
-                    mActivity.startActivityWithTransition(
-                        PlayRoute.create(mActivity, level + 1, mGetUsername()),
-                        R.anim.playpage_show,
-                        R.anim.playpage_hide
-                    )
+                    startReplacementPlayActivity(level + 1)
                 }
             }
         }
+    }
+
+    private fun startReplacementPlayActivity(level: Int) {
+        /*
+         * 重新进入棋盘页时，旧 Activity 的 onDestroy 不再停止倒计时服务，
+         * 避免新棋盘刚启动的服务被旧页面生命周期误杀。
+         */
+        mPrepareForReplacementPlayActivity()
+        mActivity.startActivityWithTransition(
+            PlayRoute.create(mActivity, level, mGetUsername()),
+            R.anim.playpage_show,
+            R.anim.playpage_hide
+        )
+        mActivity.finish()
     }
 }

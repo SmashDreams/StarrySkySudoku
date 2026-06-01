@@ -34,6 +34,33 @@ class PlayDialogControllerStructureTest {
         assertTrue(controller.contains("AppSettings.KEY_AUDIO"))
     }
 
+    @Test
+    fun controllerStartsReplacementPlayActivityBeforeFinishingCurrentOne() {
+        val controller = mSourceRoot.resolve("ui/play/PlayDialogController.kt").readText()
+            .replace(Regex("\\s+"), " ")
+
+        assertFalse(controller.contains("mActivity.finish() mActivity.startActivityWithTransition( PlayRoute.create"))
+        assertFalse(controller.contains("mActivity.finish() val level = mGetLevel() if (level == mMaxLevel)"))
+    }
+
+    @Test
+    fun replacementPlayNavigationDoesNotLetOldActivityStopNewCountdownServiceOnDestroy() {
+        val activity = mSourceRoot.resolve("ui/play/PlayActivity.kt").readText()
+        val controller = mSourceRoot.resolve("ui/play/PlayDialogController.kt").readText()
+
+        assertTrue(activity.contains("mShouldStopCountdownOnDestroy"))
+        assertTrue(activity.contains("if (mShouldStopCountdownOnDestroy)"))
+        assertTrue(controller.contains("mPrepareForReplacementPlayActivity"))
+        assertTrue(controller.contains("mPrepareForReplacementPlayActivity()"))
+    }
+
+    @Test
+    fun nextLevelNavigationAlsoKeepsNewCountdownServiceAlive() {
+        val controller = mSourceRoot.resolve("ui/play/PlayDialogController.kt").readText()
+
+        assertTrue(controller.contains("startReplacementPlayActivity(level + 1)"))
+    }
+
     private fun locateSourceRoot(): File {
         var dir = File(requireNotNull(System.getProperty("user.dir"))).absoluteFile
         while (true) {

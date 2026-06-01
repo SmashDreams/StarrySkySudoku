@@ -49,6 +49,7 @@ class PlayActivity : AppCompatActivity() {
      * 页面状态只保存与界面交互强相关的数据；实际棋盘数据和倒计时状态由视图模型维护。
      */
     private var mIsPaused = false
+    private var mShouldStopCountdownOnDestroy = true
     private var mNum = "1"
     private var mCurrentUsername = LauncherSessionReader.GUEST_USERNAME
     private var mTagData = Array(9) { arrayOfNulls<TagData>(9) }
@@ -82,7 +83,10 @@ class PlayActivity : AppCompatActivity() {
             mGetUsername = { mCurrentUsername },
             mRunAfterClearingHistory = { action -> clearHistoryAndRun(action) },
             mSetPaused = { paused -> mIsPaused = paused },
-            mStartCountdownService = { mCountdownCoordinator.start() }
+            mStartCountdownService = { mCountdownCoordinator.start() },
+            mPrepareForReplacementPlayActivity = {
+                mShouldStopCountdownOnDestroy = false
+            }
         )
 
         /*
@@ -181,7 +185,9 @@ class PlayActivity : AppCompatActivity() {
     override fun onDestroy() {
         super.onDestroy()
         mGameStateController.clearCallbacks()
-        mCountdownCoordinator.stop()
+        if (mShouldStopCountdownOnDestroy) {
+            mCountdownCoordinator.stop()
+        }
         mDialogController.hideAll()
     }
 

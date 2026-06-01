@@ -53,9 +53,7 @@
         <activity
             android:name=".ui.howtoplay.HowToPlayActivity"
             android:launchMode="singleTask"/>
-        <activity
-            android:name=".ui.play.PlayActivity"
-            android:launchMode="singleTask"/>
+        <activity android:name=".ui.play.PlayActivity" />
         <activity
             android:name=".ui.map.MapActivity" />
         <activity
