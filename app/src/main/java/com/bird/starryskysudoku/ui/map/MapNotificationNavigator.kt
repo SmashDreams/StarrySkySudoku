@@ -15,7 +15,6 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
 import androidx.core.content.ContextCompat
-import androidx.core.content.edit
 import com.bird.starryskysudoku.R
 import com.bird.starryskysudoku.notification.NotificationPermissionPolicy
 import com.bird.starryskysudoku.timer.CountdownTimerContract
@@ -45,7 +44,7 @@ class MapNotificationNavigator(
             NotificationPermissionPolicy.shouldWarmUpVendorNotificationsBeforePlay(
                 sdkInt = Build.VERSION.SDK_INT,
                 manufacturer = Build.MANUFACTURER,
-                hasWarmupAttempted = hasVendorNotificationWarmupAttempted()
+                hasProcessWarmupCompleted = sVendorNotificationWarmupCompleted
             )
         ) {
             warmUpVendorNotificationsBeforePlay(playIntent, finishMapAfterStart)
@@ -113,8 +112,8 @@ class MapNotificationNavigator(
          */
         if (!mCanCompleteVendorNotificationWarmup || !mMapResumed || !mMapHasWindowFocus) return
 
-        markVendorNotificationWarmupAttempted()
         NotificationManagerCompat.from(mActivity).cancel(VENDOR_WARMUP_NOTIFICATION_ID)
+        sVendorNotificationWarmupCompleted = true
         mWaitingVendorNotificationWarmup = false
         mCanCompleteVendorNotificationWarmup = false
         startPendingPlayPage()
@@ -172,20 +171,8 @@ class MapNotificationNavigator(
         if (finishMapAfterStart) mActivity.finish()
     }
 
-    private fun hasVendorNotificationWarmupAttempted(): Boolean {
-        return mActivity.getSharedPreferences(PREFS_NOTIFICATION_STATE, Context.MODE_PRIVATE)
-            .getBoolean(KEY_VENDOR_WARMUP_ATTEMPTED, false)
-    }
-
-    private fun markVendorNotificationWarmupAttempted() {
-        mActivity.getSharedPreferences(PREFS_NOTIFICATION_STATE, Context.MODE_PRIVATE).edit {
-            putBoolean(KEY_VENDOR_WARMUP_ATTEMPTED, true)
-        }
-    }
-
     private companion object {
-        private const val PREFS_NOTIFICATION_STATE = "notification_state"
-        private const val KEY_VENDOR_WARMUP_ATTEMPTED = "vendor_warmup_attempted"
+        private var sVendorNotificationWarmupCompleted = false
         private const val VENDOR_WARMUP_NOTIFICATION_ID = 1002
         private const val VENDOR_WARMUP_DELAY_MS = 700L
     }

@@ -120,6 +120,7 @@ class PlayInputController(
             mTag.alpha = 0.55f
             mViewModel.mBoard.value?.let { mBroadView.initData(it) }
             mBroadView.invalidate()
+            mTag.isEnabled = false
 
             if (mViewModel.mHasWon.value == true) {
                 val level = mGetLevel()
@@ -157,9 +158,15 @@ class PlayInputController(
 
     private fun clearSelectionAfterEmptyUndo() {
         PlayMusic.getInstance().playInputWrong()
+        mRevoke.isEnabled = false
         mRevoke.alpha = 0.55f
-        mTag.alpha = 1f
+        mTag.isEnabled = false
+        mTag.alpha = 0.55f
         mTag.setImageResource(R.drawable.icon_notes_off)
+        for (number in mNumbers) {
+            number?.isEnabled = false
+            number?.alpha = 0.55f
+        }
         // 没有历史可撤销时，回到无选中基线状态并提示用户。
         mViewModel.clearSelectionAfterEmptyUndo()?.let { board ->
             mBroadView.initData(board)

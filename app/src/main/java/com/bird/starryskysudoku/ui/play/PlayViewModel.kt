@@ -197,6 +197,10 @@ class PlayViewModel(private val mPlayRepository: PlayRepository) : ViewModel() {
         updatePassStatus(LauncherSessionReader.GUEST_USERNAME, passNum, nextPassNum)
     }
 
+    fun markWonForDebug() {
+        mHasWonSource.value = true
+    }
+
     fun clearWinState() { mHasWonSource.value = false }
 
     fun markGameResultRecordStarted(levelNum: Int, completed: Boolean): Boolean {

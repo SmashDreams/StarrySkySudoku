@@ -44,6 +44,7 @@ class PlayActivity : AppCompatActivity() {
     private lateinit var mRevoke: ImageView
     private lateinit var mTag: ImageView
     private lateinit var mPauseButton: ImageView
+    private lateinit var mDebugCompleteButton: TextView
 
     /*
      * 页面状态只保存与界面交互强相关的数据；实际棋盘数据和倒计时状态由视图模型维护。
@@ -105,12 +106,14 @@ class PlayActivity : AppCompatActivity() {
         mNumbers[8] = mBinding.play9
         mRevoke = mBinding.playRevoke; mTag = mBinding.playTag
         mPauseButton = mBinding.playPause
+        mDebugCompleteButton = mBinding.playDebugComplete
         mBoardController = PlayBoardController(
             mLifecycleOwner = this,
             mViewModel = mViewModel,
             mBroadView = mBroadView,
             mNumbers = mNumbers,
             mTag = mTag,
+            mRevoke = mRevoke,
             mTagData = mTagData,
             mGetLevel = { parseLevel(mNum) }
         )
@@ -160,6 +163,10 @@ class PlayActivity : AppCompatActivity() {
         mGameStateController.init()
         mInputController.init()
         mNavigationController.init()
+        initDebugCompleteButton()
+        mBinding.root.post {
+            if (!mIsPaused) mCountdownCoordinator.start()
+        }
     }
 
     override fun onStart() {
@@ -214,6 +221,18 @@ class PlayActivity : AppCompatActivity() {
         lifecycleScope.launch {
             mViewModel.clearHistory()
             action()
+        }
+    }
+
+    private fun initDebugCompleteButton() {
+        mDebugCompleteButton.setOnClickListener {
+            if (mViewModel.mHasWon.value == true) return@setOnClickListener
+            lifecycleScope.launch {
+                val level = parseLevel(mNum)
+                mViewModel.updatePassStatus(mCurrentUsername, level, level + 1)
+                saveAndQueryGameResultThroughProvider(level, completed = true)
+                mViewModel.markWonForDebug()
+            }
         }
     }
 }

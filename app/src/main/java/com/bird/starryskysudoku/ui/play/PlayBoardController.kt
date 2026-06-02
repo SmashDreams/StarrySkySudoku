@@ -11,11 +11,13 @@ class PlayBoardController(
     private val mBroadView: BroadView,
     private val mNumbers: Array<TextView?>,
     private val mTag: ImageView,
+    private val mRevoke: ImageView,
     private val mTagData: Array<Array<TagData?>>,
     private val mGetLevel: () -> Int
 ) {
     fun init() {
         // 先初始化棋盘数据，再建立观察和触摸回调，避免首次渲染拿到空引用。
+        disableCellActions()
         mViewModel.initBoard(mGetLevel())
         observeBoard()
         initTouchListener()
@@ -63,38 +65,49 @@ class PlayBoardController(
     ) {
         when {
             cell.mType == PlayViewModel.PROBLEM -> {
-                setNumberAlpha(0.55f)
-                mTag.alpha = 0.55f
+                setNumberEnabled(false)
+                setActionEnabled(mTag, false)
             }
             cell.mValue != "0" -> {
-                setNumberAlpha(1f)
-                mTag.alpha = 0.55f
+                setNumberEnabled(true)
+                setActionEnabled(mTag, false)
             }
             else -> {
-                mTag.alpha = 1f
+                setActionEnabled(mTag, true)
                 if (mViewModel.isTagMode()) {
                     refreshTagNumberAlpha(row, col)
                 } else {
-                    setNumberAlpha(1f)
+                    setNumberEnabled(true)
                 }
             }
         }
+        setActionEnabled(mRevoke, true)
     }
 
     private fun refreshTagNumberAlpha(row: Int, col: Int) {
         val tagData = mTagData[row][col]
         for (index in 0 until 9) {
-            mNumbers[index]?.alpha = if (tagData != null && tagData.haveTag((index + 1).toString())) {
-                0.55f
-            } else {
-                1f
-            }
+            val tagged = tagData != null && tagData.haveTag((index + 1).toString())
+            mNumbers[index]?.isEnabled = true
+            mNumbers[index]?.alpha = if (tagged) 0.55f else 1f
         }
     }
 
-    private fun setNumberAlpha(alpha: Float) {
+    private fun disableCellActions() {
+        setNumberEnabled(false)
+        setActionEnabled(mTag, false)
+        setActionEnabled(mRevoke, false)
+    }
+
+    private fun setNumberEnabled(enabled: Boolean) {
         for (number in mNumbers) {
-            number?.alpha = alpha
+            number?.isEnabled = enabled
+            number?.alpha = if (enabled) 1f else 0.55f
         }
+    }
+
+    private fun setActionEnabled(view: ImageView, enabled: Boolean) {
+        view.isEnabled = enabled
+        view.alpha = if (enabled) 1f else 0.55f
     }
 }

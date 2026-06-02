@@ -52,6 +52,20 @@
         app:layout_constraintVertical_bias="0.090"
         app:srcCompat="@drawable/icon_pause"/>
 
+    <TextView
+        android:id="@+id/play_debug_complete"
+        android:layout_width="58dp"
+        android:layout_height="32dp"
+        android:layout_marginTop="8dp"
+        android:background="@drawable/number_pad_key_background"
+        android:gravity="center"
+        android:text="@string/debug_complete_level"
+        android:textColor="#020A13"
+        android:textSize="13sp"
+        android:textStyle="bold"
+        app:layout_constraintEnd_toEndOf="@id/play_pause"
+        app:layout_constraintTop_toBottomOf="@id/play_pause" />
+
     <com.bird.starryskysudoku.ui.play.BroadView
         android:id="@+id/play_broad"
         android:layout_width="370dp"

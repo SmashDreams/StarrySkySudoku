@@ -262,7 +262,7 @@ class GuideActivity : AppCompatActivity() {
             putBoolean("first", false)
         }
         startActivityWithTransition(
-            MapRoute.create(this, flashHome = false),
+            MapRoute.create(this),
             R.anim.playpage_show,
             R.anim.playpage_hide
         )

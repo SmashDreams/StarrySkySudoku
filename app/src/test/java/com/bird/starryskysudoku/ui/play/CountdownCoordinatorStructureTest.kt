@@ -31,7 +31,8 @@ class CountdownCoordinatorStructureTest {
         assertTrue(coordinator.contains("CountdownTimerContract.ACTION_COUNTDOWN_TICK"))
         assertTrue(coordinator.contains("CountdownTimerService::class.java"))
         assertTrue(coordinator.contains("ContextCompat.registerReceiver"))
-        assertTrue(coordinator.contains("startForegroundService"))
+        assertTrue(coordinator.contains("startService(serviceIntent)"))
+        assertFalse(coordinator.contains("startForegroundService"))
     }
 
     private fun locateSourceRoot(): File {

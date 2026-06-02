@@ -18,6 +18,7 @@ class PlayNavigationControllerStructureTest {
         assertTrue(activity.contains("mNavigationController.init()"))
         assertTrue(activity.contains("mNavigationController.onPause()"))
         assertTrue(activity.contains("mNavigationController.onResume()"))
+        assertTrue(activity.contains("mCountdownCoordinator.start()"))
         assertFalse(activity.contains("private fun initPauseButton"))
         assertFalse(activity.contains("private fun initBackHandler"))
         assertFalse(activity.contains("OnBackPressedCallback"))
@@ -31,8 +32,9 @@ class PlayNavigationControllerStructureTest {
         assertTrue(controller.contains("setOnClickListener"))
         assertTrue(controller.contains("showPauseDialog"))
         assertTrue(controller.contains("isPauseDialogShowing"))
-        assertTrue(controller.contains("mCountdownCoordinator.start()"))
         assertTrue(controller.contains("mCountdownCoordinator.stop()"))
+        assertFalse(controller.substringAfter("fun onPause()").substringBefore("fun onResume()").contains("mCountdownCoordinator.stop()"))
+        assertFalse(controller.substringAfter("fun onResume()").substringBefore("private fun initPauseButton").contains("mCountdownCoordinator.start()"))
     }
 
     private fun locateSourceRoot(): File {

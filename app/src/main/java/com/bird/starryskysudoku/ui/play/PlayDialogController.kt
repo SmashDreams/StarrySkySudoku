@@ -2,6 +2,8 @@ package com.bird.starryskysudoku.ui.play
 
 import android.animation.ObjectAnimator
 import android.content.Context
+import android.content.Intent
+import android.view.View
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.edit
 import com.bird.starryskysudoku.AppSettings
@@ -56,11 +58,20 @@ class PlayDialogController(
 
     fun showWinDialogWithStarAnimation() {
         showWinDialog()
-        PlayMusic.getInstance().playGetStar()
         val winStar = mWinDialogBinding.winStarOn
-        ObjectAnimator.ofFloat(winStar, "alpha", 0f, 1f).setDuration(500).start()
-        ObjectAnimator.ofFloat(winStar, "scaleX", 0.5f, 1.1f, 1f).setDuration(500).start()
-        ObjectAnimator.ofFloat(winStar, "scaleY", 0.5f, 1.1f, 1f).setDuration(500).start()
+        winStar.visibility = View.INVISIBLE
+        winStar.alpha = 0f
+        winStar.scaleX = 0.8f
+        winStar.scaleY = 0.8f
+        winStar.postDelayed({
+            PlayMusic.getInstance().playGetStar()
+        }, 500L)
+        winStar.postDelayed({
+            winStar.visibility = View.VISIBLE
+            ObjectAnimator.ofFloat(winStar, View.ALPHA, 0f, 1f).setDuration(200L).start()
+            ObjectAnimator.ofFloat(winStar, View.SCALE_X, 0.8f, 1.2f, 1f).setDuration(400L).start()
+            ObjectAnimator.ofFloat(winStar, View.SCALE_Y, 0.8f, 1.2f, 1f).setDuration(400L).start()
+        }, 800L)
     }
 
     fun isPauseDialogShowing(): Boolean {
@@ -99,7 +110,7 @@ class PlayDialogController(
             MyDialogManager.getInstance().hide(mPauseDialog)
             mRunAfterClearingHistory {
                 mActivity.startActivityWithTransition(
-                    MapRoute.createForLevel(mActivity, mGetLevel(), flashHome = true),
+                    createMapReturnIntent(MapRoute.createForLevel(mActivity, mGetLevel())),
                     R.anim.playpage_show,
                     R.anim.playpage_hide
                 )
@@ -156,7 +167,7 @@ class PlayDialogController(
             PlayMusic.getInstance().playButtonTap()
             mRunAfterClearingHistory {
                 mActivity.startActivityWithTransition(
-                    MapRoute.createAfterLose(mActivity, mGetLevel(), flashHome = true),
+                    createMapReturnIntent(MapRoute.create(mActivity)),
                     R.anim.playpage_show,
                     R.anim.playpage_hide
                 )
@@ -167,7 +178,12 @@ class PlayDialogController(
         loseDialogBinding.loseRetry.setOnClickListener {
             PlayMusic.getInstance().playButtonTap()
             mRunAfterClearingHistory {
-                startReplacementPlayActivity(mGetLevel())
+                mActivity.startActivityWithTransition(
+                    createMapReturnIntent(MapRoute.createAfterLose(mActivity, mGetLevel())),
+                    R.anim.playpage_show,
+                    R.anim.playpage_hide
+                )
+                mActivity.finish()
             }
         }
     }
@@ -176,16 +192,19 @@ class PlayDialogController(
         mWinDialogBinding = DialogWinBinding.inflate(mActivity.layoutInflater)
         mWinDialog = MyDialogManager.getInstance()
             .initView(mActivity, R.layout.dialog_win, mWinDialogBinding.root)
+        mWinDialog.setInteractionLockDuration(WIN_DIALOG_INTERACTION_LOCK_MILLIS)
         mWinDialog.setCanceledOnTouchOutside(false)
 
         mWinDialogBinding.winClose.setOnClickListener {
             PlayMusic.getInstance().playButtonTap()
             mRunAfterClearingHistory {
                 val level = mGetLevel()
-                val intent = MapRoute.createAfterWin(
-                    mActivity,
-                    nextLevel = if (level < mMaxLevel) level + 1 else null,
-                    flashHome = true
+                val intent = createMapReturnIntent(
+                    MapRoute.createAfterWin(
+                        mActivity,
+                        completedLevel = level,
+                        nextLevel = null
+                    )
                 )
                 mActivity.startActivityWithTransition(intent, R.anim.playpage_show, R.anim.playpage_hide)
                 mActivity.finish()
@@ -196,16 +215,15 @@ class PlayDialogController(
             PlayMusic.getInstance().playButtonTap()
             mRunAfterClearingHistory {
                 val level = mGetLevel()
-                if (level == mMaxLevel) {
-                    mActivity.startActivityWithTransition(
-                        MapRoute.create(mActivity, flashHome = true),
-                        R.anim.playpage_show,
-                        R.anim.playpage_hide
+                val intent = createMapReturnIntent(
+                    MapRoute.createAfterWin(
+                        mActivity,
+                        completedLevel = level,
+                        nextLevel = if (level < mMaxLevel) level + 1 else null
                     )
-                    mActivity.finish()
-                } else {
-                    startReplacementPlayActivity(level + 1)
-                }
+                )
+                mActivity.startActivityWithTransition(intent, R.anim.playpage_show, R.anim.playpage_hide)
+                mActivity.finish()
             }
         }
     }
@@ -222,5 +240,13 @@ class PlayDialogController(
             R.anim.playpage_hide
         )
         mActivity.finish()
+    }
+
+    private fun createMapReturnIntent(intent: Intent): Intent {
+        return MapRoute.copyReturnAnchor(intent, mActivity.intent)
+    }
+
+    private companion object {
+        private const val WIN_DIALOG_INTERACTION_LOCK_MILLIS = 1200L
     }
 }

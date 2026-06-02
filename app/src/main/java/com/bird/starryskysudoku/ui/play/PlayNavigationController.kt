@@ -20,25 +20,20 @@ class PlayNavigationController(
     }
 
     fun onPause() {
-        // 页面不可见时立即暂停倒计时和告警音，避免后台继续推进局内状态。
-        mSetPaused(true)
         PlayMusic.getInstance().stopTimesUp()
-        mCountdownCoordinator.stop()
         if (mViewModel.mHasWon.value == true) {
             PlayMusic.getInstance().stopWinning()
         }
     }
 
     fun onResume() {
-        // 恢复时优先补齐终局弹窗，其次恢复暂停态，最后才继续倒计时。
+        // 恢复时只补齐终局或已暂停弹窗，不在生命周期回调中启停倒计时服务。
         if (mViewModel.mHasWon.value == true) {
             mDialogController.showWinDialog()
         } else if (mViewModel.mTimerFinished.value == true) {
             mDialogController.showLoseDialog()
         } else if (mIsPaused() && !mDialogController.isPauseDialogShowing()) {
             mDialogController.showPauseDialog()
-        } else if (!mIsPaused()) {
-            mCountdownCoordinator.start()
         }
     }
 

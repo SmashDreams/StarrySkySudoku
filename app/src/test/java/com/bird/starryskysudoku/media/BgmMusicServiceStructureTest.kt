@@ -24,9 +24,10 @@ class BgmMusicServiceStructureTest {
         assertTrue(service.isFile)
         assertTrue(source.contains("class BgmMusicService : Service()"))
         assertTrue(source.contains("MediaPlayer"))
-        assertTrue(source.contains("ACTION_PLAY"))
-        assertTrue(source.contains("ACTION_PAUSE"))
-        assertTrue(source.contains("ACTION_STOP"))
+        assertTrue(source.contains("LocalBinder"))
+        assertTrue(source.contains("fun playIfEnabled()"))
+        assertTrue(source.contains("fun pause()"))
+        assertTrue(source.contains("fun stopPlayback()"))
     }
 
     @Test
@@ -62,13 +63,14 @@ class BgmMusicServiceStructureTest {
     }
 
     @Test
-    fun foregroundControllerRestartsBgmWhenActivityResumes() {
-        val source = mSourceRoot.resolve("media/AppForegroundBgmController.kt").readText()
-        val normalized = source.replace(Regex("\\s+"), " ")
+    fun foregroundControllerBindsServiceInsteadOfStartingItFromLifecycleCallbacks() {
+        val foregroundController = mSourceRoot.resolve("media/AppForegroundBgmController.kt").readText()
+        val musicController = mSourceRoot.resolve("media/BgmMusicController.kt").readText()
 
-        assertTrue(normalized.contains("override fun onActivityResumed(activity: Activity)"))
-        assertTrue(normalized.contains("onActivityResumed(activity: Activity) {"))
-        assertTrue(normalized.contains("BgmMusicController.playIfEnabled(mApplication)"))
+        assertTrue(foregroundController.contains("bind("))
+        assertTrue(foregroundController.contains("unbind("))
+        assertFalse(foregroundController.contains("playIfEnabled(mApplication)"))
+        assertFalse(musicController.contains("startService"))
     }
 
     private fun locateAppRoot(): File {

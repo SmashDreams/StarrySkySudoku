@@ -33,7 +33,7 @@ class RouteUsageStructureTest {
         val mapActivity = mSourceRoot.resolve("ui/map/MapActivity.kt").readText()
 
         assertTrue(playActivity.contains("const val EXTRA_USERNAME = PlayRoute.EXTRA_USERNAME"))
-        assertTrue(mapActivity.contains("const val EXTRA_FLASH_HOME = MapRoute.EXTRA_FLASH_HOME"))
+        assertFalse(mapActivity.contains("EXTRA_FLASH_HOME"))
     }
 
     private fun locateSourceRoot(): File {

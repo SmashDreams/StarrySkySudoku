@@ -111,12 +111,11 @@ class PlayGameStateController(
             // 从底部到顶部逐行闪动，和原项目视觉节奏保持一致。
             winningAnims[line] = AnimatorSet().apply {
                 playTogether(
-                    ObjectAnimator.ofInt(mBroadView, "TextSize", 80, 100, 80),
-                    ObjectAnimator.ofInt(mBroadView, "TextAlpha", 255, 0, 255),
+                    ObjectAnimator.ofInt(mBroadView, "TextSize", 80, 96, 80),
                     ObjectAnimator.ofInt(mBroadView, "Line", line, line)
                 )
                 interpolator = LinearInterpolator()
-                duration = 500
+                duration = 400
                 startDelay = ((8 - line) * 200).toLong()
                 start()
             }

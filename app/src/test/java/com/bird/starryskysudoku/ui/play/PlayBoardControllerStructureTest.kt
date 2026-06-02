@@ -30,6 +30,18 @@ class PlayBoardControllerStructureTest {
         assertTrue(controller.contains("refreshCellActionAlpha"))
     }
 
+    @Test
+    fun boardControllerDisablesBottomActionsUntilAUsableCellIsSelected() {
+        val activity = mSourceRoot.resolve("ui/play/PlayActivity.kt").readText()
+        val controller = mSourceRoot.resolve("ui/play/PlayBoardController.kt").readText()
+
+        assertTrue(activity.contains("mRevoke = mBinding.playRevoke"))
+        assertTrue(activity.contains("mRevoke = mRevoke"))
+        assertTrue(controller.contains("disableCellActions()"))
+        assertTrue(controller.contains("number?.isEnabled = enabled"))
+        assertTrue(controller.contains("view.isEnabled = enabled"))
+    }
+
     private fun locateSourceRoot(): File {
         var dir = File(requireNotNull(System.getProperty("user.dir"))).absoluteFile
         while (true) {

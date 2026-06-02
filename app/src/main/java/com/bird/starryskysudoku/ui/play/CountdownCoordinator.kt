@@ -4,7 +4,7 @@ import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
-import android.os.Build
+import android.util.Log
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
 import com.bird.starryskysudoku.timer.CountdownTimerContract
@@ -54,14 +54,18 @@ class CountdownCoordinator(
         val serviceIntent = Intent(mActivity, CountdownTimerService::class.java)
             .putExtra(CountdownTimerContract.EXTRA_INITIAL_SECONDS, mGetRemainingSeconds())
             .putExtra(CountdownTimerContract.EXTRA_LEVEL_NUMBER, mGetLevel())
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            mActivity.startForegroundService(serviceIntent)
-        } else {
+        try {
             mActivity.startService(serviceIntent)
+        } catch (exception: RuntimeException) {
+            Log.w(TAG, "Unable to start countdown service while app state is changing", exception)
         }
     }
 
     fun stop() {
         mActivity.stopService(Intent(mActivity, CountdownTimerService::class.java))
+    }
+
+    private companion object {
+        private const val TAG = "CountdownCoordinator"
     }
 }

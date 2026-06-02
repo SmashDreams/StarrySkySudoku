@@ -65,37 +65,37 @@ class NotificationPermissionPolicyTest {
     }
 
     @Test
-    fun warmsUpHuaweiNotificationsBeforeFirstPlayOnAndroid12() {
+    fun warmsUpHuaweiNotificationsOncePerProcessBeforePlayOnAndroid12() {
         assertTrue(
             NotificationPermissionPolicy.shouldWarmUpVendorNotificationsBeforePlay(
                 sdkInt = Build.VERSION_CODES.S,
                 manufacturer = "HUAWEI",
-                hasWarmupAttempted = false
+                hasProcessWarmupCompleted = false
+            )
+        )
+        assertFalse(
+            NotificationPermissionPolicy.shouldWarmUpVendorNotificationsBeforePlay(
+                sdkInt = Build.VERSION_CODES.S,
+                manufacturer = "HUAWEI",
+                hasProcessWarmupCompleted = true
             )
         )
     }
 
     @Test
-    fun doesNotWarmUpVendorNotificationsAfterAttemptOrOnAndroid13() {
-        assertFalse(
-            NotificationPermissionPolicy.shouldWarmUpVendorNotificationsBeforePlay(
-                sdkInt = Build.VERSION_CODES.S,
-                manufacturer = "HUAWEI",
-                hasWarmupAttempted = true
-            )
-        )
+    fun doesNotWarmUpVendorNotificationsOnAndroid13OrOtherVendors() {
         assertFalse(
             NotificationPermissionPolicy.shouldWarmUpVendorNotificationsBeforePlay(
                 sdkInt = Build.VERSION_CODES.TIRAMISU,
                 manufacturer = "HUAWEI",
-                hasWarmupAttempted = false
+                hasProcessWarmupCompleted = false
             )
         )
         assertFalse(
             NotificationPermissionPolicy.shouldWarmUpVendorNotificationsBeforePlay(
                 sdkInt = Build.VERSION_CODES.S,
                 manufacturer = "Google",
-                hasWarmupAttempted = false
+                hasProcessWarmupCompleted = false
             )
         )
     }

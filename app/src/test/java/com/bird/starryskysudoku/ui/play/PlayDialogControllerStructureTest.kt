@@ -55,10 +55,29 @@ class PlayDialogControllerStructureTest {
     }
 
     @Test
-    fun nextLevelNavigationAlsoKeepsNewCountdownServiceAlive() {
+    fun nextLevelNavigationReturnsToMapBeforeShowingNextLevelEntry() {
         val controller = mSourceRoot.resolve("ui/play/PlayDialogController.kt").readText()
 
-        assertTrue(controller.contains("startReplacementPlayActivity(level + 1)"))
+        assertTrue(controller.contains("MapRoute.createAfterWin"))
+        assertTrue(controller.contains("completedLevel = level"))
+        assertTrue(controller.contains("nextLevel = if (level < mMaxLevel) level + 1 else null"))
+        assertTrue(controller.contains("createMapReturnIntent"))
+        assertTrue(controller.contains("MapRoute.copyReturnAnchor"))
+        assertFalse(controller.contains("startReplacementPlayActivity(level + 1)"))
+    }
+
+    @Test
+    fun loseDialogReturnsToMapAndOnlyRetryRequestsLevelEntryDialog() {
+        val controller = mSourceRoot.resolve("ui/play/PlayDialogController.kt").readText()
+        val loseCloseBody = controller.substringAfter("loseDialogBinding.loseClose.setOnClickListener")
+            .substringBefore("loseDialogBinding.loseRetry.setOnClickListener")
+        val loseRetryBody = controller.substringAfter("loseDialogBinding.loseRetry.setOnClickListener")
+            .substringBefore("private fun initWinDialog")
+
+        assertTrue(loseCloseBody.contains("MapRoute.create(mActivity)"))
+        assertFalse(loseCloseBody.contains("MapRoute.createAfterLose"))
+        assertTrue(loseRetryBody.contains("MapRoute.createAfterLose(mActivity, mGetLevel())"))
+        assertFalse(loseRetryBody.contains("startReplacementPlayActivity"))
     }
 
     private fun locateSourceRoot(): File {

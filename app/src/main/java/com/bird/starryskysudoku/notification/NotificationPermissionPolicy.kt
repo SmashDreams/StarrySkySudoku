@@ -19,11 +19,11 @@ object NotificationPermissionPolicy {
     fun shouldWarmUpVendorNotificationsBeforePlay(
         sdkInt: Int,
         manufacturer: String,
-        hasWarmupAttempted: Boolean
+        hasProcessWarmupCompleted: Boolean
     ): Boolean {
-        // 某些华为机型在旧系统上需要先走一轮通知预热，避免授权页打断跳转。
+        // 不持久化预热结果；同一进程内只预热一次，避免每次进入棋盘都产生明显延迟。
         return sdkInt < Build.VERSION_CODES.TIRAMISU &&
             manufacturer.equals(HUAWEI_MANUFACTURER, ignoreCase = true) &&
-            !hasWarmupAttempted
+            !hasProcessWarmupCompleted
     }
 }

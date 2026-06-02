@@ -83,14 +83,8 @@ class MapSettingsController(
             PlayMusic.getInstance().playButtonTap()
             val newLang = if (mLanguage == "zh") "en" else "zh"
             mLanguage = newLang
-            /*
-             * 切换语言会触发页面重建，用持久标记让重建后的首页闪烁提示用户仍在地图页。
-             */
             mActivity.getSharedPreferences(AppSettings.PREFS_LANGUAGE, Context.MODE_PRIVATE).edit {
                 putString(AppSettings.KEY_LANGUAGE, newLang)
-            }
-            mActivity.getSharedPreferences(PREFS_UI_STATE, Context.MODE_PRIVATE).edit {
-                putBoolean(KEY_FLASH_HOME, true)
             }
             AppCompatDelegate.setApplicationLocales(LocaleListCompat.forLanguageTags(newLang))
             MyDialogManager.getInstance().hide(mSettingsDialog)
@@ -127,8 +121,4 @@ class MapSettingsController(
         }
     }
 
-    private companion object {
-        private const val PREFS_UI_STATE = "ui_state"
-        private const val KEY_FLASH_HOME = "flash_home"
-    }
 }

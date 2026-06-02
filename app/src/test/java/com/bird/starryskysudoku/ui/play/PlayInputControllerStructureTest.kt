@@ -43,6 +43,19 @@ class PlayInputControllerStructureTest {
         assertTrue(controller.contains("mViewModel.restoreHistory("))
     }
 
+    @Test
+    fun playActivityHasDebugCompleteButtonForManualTesting() {
+        val activity = mSourceRoot.resolve("ui/play/PlayActivity.kt").readText()
+        val viewModel = mSourceRoot.resolve("ui/play/PlayViewModel.kt").readText()
+        val layout = locateProjectRoot().resolve("app/src/main/res/layout/activity_play.xml").readText()
+
+        assertTrue(layout.contains("@+id/play_debug_complete"))
+        assertTrue(activity.contains("initDebugCompleteButton()"))
+        assertTrue(activity.contains("mViewModel.updatePassStatus(mCurrentUsername, level, level + 1)"))
+        assertTrue(activity.contains("mViewModel.markWonForDebug()"))
+        assertTrue(viewModel.contains("fun markWonForDebug()"))
+    }
+
     private fun locateSourceRoot(): File {
         var dir = File(requireNotNull(System.getProperty("user.dir"))).absoluteFile
         while (true) {
@@ -53,5 +66,15 @@ class PlayInputControllerStructureTest {
             dir = dir.parentFile ?: break
         }
         error("Unable to locate app source root")
+    }
+
+    private fun locateProjectRoot(): File {
+        var dir = File(requireNotNull(System.getProperty("user.dir"))).absoluteFile
+        while (true) {
+            if (dir.resolve("app/src/main/res/layout/activity_play.xml").isFile) return dir
+            if (dir.resolve("src/main/res/layout/activity_play.xml").isFile) return dir.parentFile ?: dir
+            dir = dir.parentFile ?: break
+        }
+        error("Unable to locate project root")
     }
 }

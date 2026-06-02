@@ -3,6 +3,7 @@ package com.bird.starryskysudoku.ui.map
 import android.animation.ObjectAnimator
 import android.animation.ValueAnimator
 import android.view.LayoutInflater
+import android.view.animation.DecelerateInterpolator
 import android.view.View
 import android.view.ViewGroup
 import android.widget.ImageView
@@ -26,6 +27,7 @@ class PassListAdapter(
     companion object {
         private const val VIEW_TYPE_HEADER = 0
         private const val VIEW_TYPE_PASS_ROW = 1
+        private const val LEVEL_VERTICAL_STEP_DP = 84
     }
 
     interface OpenPlayPage {
@@ -39,20 +41,20 @@ class PassListAdapter(
     class LinearViewHolder private constructor(
         itemView: View,
         val mStars: Array<ImageView>,
-        val mLines: Array<ImageView>,
+        val mPathOverlay: MapPathOverlayView?,
         val mLights: Array<ImageView>,
         val mNums: Array<TextView>
     ) : RecyclerView.ViewHolder(itemView) {
         companion object {
             fun fromHeader(binding: PassFirstItemBinding): LinearViewHolder {
-                return LinearViewHolder(binding.root, emptyArray(), emptyArray(), emptyArray(), emptyArray())
+                return LinearViewHolder(binding.root, emptyArray(), null, emptyArray(), emptyArray())
             }
 
             fun fromPassRow(binding: PassItemBinding): LinearViewHolder {
                 return LinearViewHolder(
                     binding.root,
                     arrayOf(binding.star1, binding.star2, binding.star3, binding.star4),
-                    arrayOf(binding.line0, binding.line1, binding.line2, binding.line3, binding.line4),
+                    binding.pathOverlay,
                     arrayOf(binding.light1, binding.light2, binding.light3, binding.light4),
                     arrayOf(binding.num1, binding.num2, binding.num3, binding.num4)
                 )
@@ -109,7 +111,11 @@ class PassListAdapter(
         holder.cancelPendingAnimations()
         val context = holder.itemView.context
         // 列表头部固定在最上方，数据行按视觉顺序需要从尾部倒着取。
-        val item = mPassList[mPassList.size - position]
+        val rowIndex = mPassList.size - position
+        val item = mPassList[rowIndex]
+        val previousRowBelow = mPassList.getOrNull(rowIndex - 1)
+        val hasNextRowAbove = rowIndex < mPassList.lastIndex
+        holder.mPathOverlay?.bind(holder.mStars, item, previousRowBelow, hasNextRowAbove)
 
         for (i in 0 until 4) {
             val entity = item[i] ?: continue
@@ -117,7 +123,6 @@ class PassListAdapter(
             holder.mNums[i].text = String.format(Locale.getDefault(), "%d", entity.mPassNum)
             holder.mStatus[i] = entity.mStatus
             holder.mStars[i].setOnClickListener(null)
-            holder.mLines[i].visibility = View.VISIBLE
 
             when (entity.mStatus) {
                 PassStatus.COMPLETED -> {
@@ -136,13 +141,6 @@ class PassListAdapter(
                         PlayMusic.getInstance().playDialogShow()
                         mOpenListener?.onOpen(entity)
                     }
-
-                    holder.mLines[i].setImageResource(R.drawable.map_path_left_unlocked)
-                    if (i == 2) holder.mLines[i].setImageResource(R.drawable.map_path_right_unlocked)
-                    if (i == 3) {
-                        holder.mLines[i].setImageResource(R.drawable.map_path_right_unlocked)
-                        holder.mLines[4].setImageResource(R.drawable.map_path_left_unlocked)
-                    }
                 }
                 PassStatus.TODO -> {
                     holder.mLights[i].visibility = View.VISIBLE
@@ -151,14 +149,11 @@ class PassListAdapter(
                         duration = 1500
                         repeatCount = ObjectAnimator.INFINITE
                         repeatMode = ValueAnimator.REVERSE
+                        interpolator = DecelerateInterpolator()
                         addUpdateListener { holder.mLights[idx].alpha = it.animatedValue as Float }
                         start()
                         holder.setLightAnimator(idx, this)
                     }
-                    holder.mLines[i].setImageResource(R.drawable.map_path_left_unlocked)
-                    if (i == 0) holder.mLines[0].setImageResource(R.drawable.map_path_left_unlocked)
-                    if (i == 2) holder.mLines[i].setImageResource(R.drawable.map_path_right_unlocked)
-                    if (i == 3) holder.mLines[i].setImageResource(R.drawable.map_path_right_unlocked)
 
                     holder.mStars[i].setOnClickListener {
                         PlayMusic.getInstance().playDialogShow()
@@ -168,13 +163,7 @@ class PassListAdapter(
                 else -> {
                     holder.mNums[i].setTextColor("#E7E8E9".toColorInt())
                     holder.mStars[i].setImageResource(R.drawable.map_star_locked)
-                    holder.mLines[i].setImageResource(R.drawable.map_path_left_locked)
-                    if (i == 2 || i == 3) holder.mLines[i].setImageResource(R.drawable.map_path_right_locked)
                 }
-            }
-
-            if (holder.mNums[i].text.toString() == "1") {
-                holder.mLines[0].visibility = View.GONE
             }
         }
     }
@@ -185,10 +174,12 @@ class PassListAdapter(
     }
 
     private fun animateStar(star: ImageView) {
-        star.scaleX = 0f; star.scaleY = 0f
-        ObjectAnimator.ofFloat(star, "scaleY", 0f, 1.2f, 1f).setDuration(400).start()
-        ObjectAnimator.ofFloat(star, "scaleX", 0f, 1.2f, 1f).setDuration(400).start()
-        ObjectAnimator.ofFloat(star, "alpha", 0f, 1f).setDuration(400).start()
+        star.scaleX = 0.8f
+        star.scaleY = 0.8f
+        star.alpha = 0f
+        ObjectAnimator.ofFloat(star, "scaleY", 0.8f, 1.2f, 1f).setDuration(400L).start()
+        ObjectAnimator.ofFloat(star, "scaleX", 0.8f, 1.2f, 1f).setDuration(400L).start()
+        ObjectAnimator.ofFloat(star, "alpha", 0f, 1f).setDuration(200L).start()
     }
 
     override fun getItemCount() = mPassList.size + 1
@@ -202,4 +193,49 @@ class PassListAdapter(
         }
         return 0
     }
+
+    fun getPositionForLevel(level: Int): Int {
+        for (i in mPassList.indices) {
+            for (j in 0 until 4) {
+                if (mPassList[i][j]?.mPassNum == level) return mPassList.size - i
+            }
+        }
+        return getPosition()
+    }
+
+    fun getTopOffsetDpForLevel(level: Int): Int {
+        val indexInRow = (level - 1).floorMod(4)
+        return (3 - indexInRow) * LEVEL_VERTICAL_STEP_DP
+    }
+
+    fun getCurrentTodoLevel(): Int? {
+        for (row in mPassList) {
+            for (entity in row) {
+                if (entity?.mStatus == PassStatus.TODO) return entity.mPassNum
+            }
+        }
+        return null
+    }
+
+    fun getCurrentProgressOffsetDp(): Int {
+        val completedLevel = getCurrentTodoLevel()?.minus(1) ?: getMaxCompletedLevel()
+        return MapScrollPolicy.offsetDpAfterCompletedLevel(completedLevel)
+    }
+
+    private fun getMaxCompletedLevel(): Int {
+        var maxCompletedLevel = 0
+        for (row in mPassList) {
+            for (entity in row) {
+                if (entity?.mStatus == PassStatus.COMPLETED) {
+                    maxCompletedLevel = maxOf(maxCompletedLevel, entity.mPassNum)
+                }
+            }
+        }
+        return maxCompletedLevel
+    }
+
+    private fun Int.floorMod(other: Int): Int {
+        return ((this % other) + other) % other
+    }
+
 }

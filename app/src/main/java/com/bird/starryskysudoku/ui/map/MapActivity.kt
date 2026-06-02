@@ -1,19 +1,18 @@
 package com.bird.starryskysudoku.ui.map
 
+import android.animation.AnimatorSet
 import android.animation.ObjectAnimator
-import android.content.Context
 import android.content.Intent
 import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
-import android.view.animation.AnimationUtils
+import android.view.animation.LinearInterpolator
 import android.widget.ImageView
 import android.widget.TextView
 import android.widget.Toast
 import androidx.activity.OnBackPressedCallback
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
-import androidx.core.content.edit
 import androidx.lifecycle.ViewModelProvider
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
@@ -23,16 +22,15 @@ import com.bird.starryskysudoku.data.database.DatabaseInitializer
 import com.bird.starryskysudoku.data.entity.MapEntity
 import com.bird.starryskysudoku.databinding.ActivityMappageBinding
 import com.bird.starryskysudoku.media.PlayMusic
-import com.bird.starryskysudoku.ui.common.flashThreeTimes
 import com.bird.starryskysudoku.ui.play.PlayRoute
 
 class MapActivity : AppCompatActivity() {
 
     companion object {
         private const val MAX_LEVEL = 40
-        const val EXTRA_FLASH_HOME = MapRoute.EXTRA_FLASH_HOME
-        private const val PREFS_UI_STATE = "ui_state"
-        private const val KEY_FLASH_HOME = "flash_home"
+        private const val MAP_PASS_ROW_HEIGHT_DP = 340
+        private const val MAP_BOTTOM_STAR_REVEAL_DP = 96
+        private const val MAP_STAR_VISUAL_HEIGHT_DP = 88
     }
 
     private lateinit var mSettings: ImageView
@@ -41,6 +39,7 @@ class MapActivity : AppCompatActivity() {
     private lateinit var mSmallShootingStar: ImageView
     private lateinit var mBackgroundStars: ImageView
     private lateinit var mRecyclerView: RecyclerView
+    private lateinit var mLayoutManager: LinearLayoutManager
     private lateinit var mLoginStatus: TextView
     private lateinit var mAdapter: PassListAdapter
     private lateinit var mViewModel: MapViewModel
@@ -83,7 +82,6 @@ class MapActivity : AppCompatActivity() {
         mPassDialogController = MapPassDialogController(
             mActivity = this,
             mLayoutInflater = layoutInflater,
-            mRecyclerView = mRecyclerView,
             mViewModel = mViewModel,
             mHandler = mHandler,
             mGetUsername = { mCurrentUsername },
@@ -95,7 +93,12 @@ class MapActivity : AppCompatActivity() {
                 )
             },
             mParseLevel = { parseLevel(it) },
-            mGetRollingPosition = { getRollingPosition(it) }
+            mScrollAfterCompletedLevel = { completedLevel ->
+                scrollMapAfterCompletedLevel(completedLevel)
+            },
+            mSetMapInteractionEnabled = { enabled ->
+                setMapInteractionEnabled(enabled)
+            }
         )
 
         initList()
@@ -103,13 +106,12 @@ class MapActivity : AppCompatActivity() {
         refreshLoginState()
         initMapData()
         initBackHandler()
-        if (consumeHomeFlashRequest()) flashHome()
     }
 
     private fun initMapData() {
         mMapLoaded = true
-        mViewModel.loadMapData(mCurrentUsername)
         mPassDialogController.consumeNavigationExtras(intent)
+        mViewModel.loadMapData(mCurrentUsername)
     }
 
     private fun refreshLoginState() {
@@ -127,16 +129,15 @@ class MapActivity : AppCompatActivity() {
     }
 
     private fun initList() {
-        mRecyclerView.layoutManager = LinearLayoutManager(this@MapActivity)
+        mLayoutManager = LinearLayoutManager(this@MapActivity)
+        mRecyclerView.layoutManager = mLayoutManager
         mAdapter = PassListAdapter(emptyList(), mPassDialogController.lightStars)
         mRecyclerView.adapter = mAdapter
 
         mViewModel.mMapData.observe(this) { data ->
             mAdapter = PassListAdapter(data, mPassDialogController.lightStars)
             mRecyclerView.adapter = mAdapter
-            mRecyclerView.scrollToPosition(mAdapter.getPosition())
-            mRecyclerView.smoothScrollBy(0, 150)
-
+            positionMapToCurrentPass()
             mAdapter.setOpenListener(object : PassListAdapter.OpenPlayPage {
                 override fun onOpen(entity: MapEntity) {
                     mPassDialogController.openForEntity(entity)
@@ -145,15 +146,114 @@ class MapActivity : AppCompatActivity() {
         }
     }
 
+
+    private fun positionMapToCurrentPass() {
+        if (restorePendingReturnAnchor()) return
+        positionMapToLevel(
+            level = mPassDialogController.pendingCompletedLevel,
+            skipProgressOffset = mPassDialogController.hasPendingWinNavigation
+        )
+    }
+
+    private fun restorePendingReturnAnchor(): Boolean {
+        if (!mPassDialogController.hasPendingReturnAnchor) return false
+        val adapterPosition = mPassDialogController.pendingReturnAnchorPosition ?: return false
+        val topOffsetPx = mPassDialogController.pendingReturnAnchorOffsetPx ?: return false
+        if (adapterPosition !in 0 until mAdapter.itemCount) return false
+        mPassDialogController.clearPendingReturnAnchor()
+        mRecyclerView.post {
+            mLayoutManager.scrollToPositionWithOffset(adapterPosition, topOffsetPx)
+        }
+        return true
+    }
+
+    private fun positionMapToLevel(level: Int?, skipProgressOffset: Boolean) {
+        mRecyclerView.post {
+            val completedOffsetDp = if (skipProgressOffset) {
+                0
+            } else {
+                mAdapter.getCurrentProgressOffsetDp()
+            }
+            val targetLevel = level ?: mAdapter.getCurrentTodoLevel()
+            val adapterPosition = targetLevel?.let { mAdapter.getPositionForLevel(it) } ?: mAdapter.getPosition()
+            val levelOffsetDp = targetLevel?.let { mAdapter.getTopOffsetDpForLevel(it) } ?: 0
+            val offset = mRecyclerView.height -
+                dpToPx(MAP_BOTTOM_STAR_REVEAL_DP + MAP_STAR_VISUAL_HEIGHT_DP) -
+                dpToPx(levelOffsetDp) +
+                dpToPx(completedOffsetDp)
+            mLayoutManager.scrollToPositionWithOffset(adapterPosition, offset)
+        }
+    }
+
+    private fun scrollMapAfterCompletedLevel(completedLevel: Int) {
+        val offsetDp = MapScrollPolicy.offsetDpAfterCompletedLevel(completedLevel)
+        if (offsetDp <= 0) return
+        mRecyclerView.smoothScrollBy(0, -dpToPx(offsetDp))
+    }
+
+    private fun setMapInteractionEnabled(enabled: Boolean) {
+        mRecyclerView.isEnabled = enabled
+        mSettings.isEnabled = enabled
+        mRecyclerView.alpha = if (enabled) 1f else 0.96f
+    }
+
+    private fun dpToPx(dp: Int): Int {
+        return (dp * resources.displayMetrics.density).toInt()
+    }
+
     private fun initShootingStar() {
-        mBigShootingStar.startAnimation(AnimationUtils.loadAnimation(this, R.anim.shootingstar_big))
-        mSmallShootingStar.startAnimation(AnimationUtils.loadAnimation(this, R.anim.shootingstar_small))
+        startShootingStarLoop(
+            star = mBigShootingStar,
+            delayMillis = 0L,
+            durationMillis = 1200L,
+            translateX = -1300f,
+            translateY = 550f
+        )
+        startShootingStarLoop(
+            star = mSmallShootingStar,
+            delayMillis = 2000L,
+            durationMillis = 600L,
+            translateX = -1100f,
+            translateY = 400f
+        )
         ObjectAnimator.ofFloat(mBackgroundStars, "alpha", 0.5f, 1f).apply {
             duration = 1500
             repeatCount = ObjectAnimator.INFINITE
             repeatMode = ObjectAnimator.REVERSE
+            interpolator = LinearInterpolator()
             start()
         }
+    }
+
+    private fun startShootingStarLoop(
+        star: ImageView,
+        delayMillis: Long,
+        durationMillis: Long,
+        translateX: Float,
+        translateY: Float
+    ) {
+        val runnable = object : Runnable {
+            override fun run() {
+                star.alpha = 0f
+                star.translationX = 0f
+                star.translationY = 0f
+                val moveX = ObjectAnimator.ofFloat(star, "translationX", 0f, translateX)
+                val moveY = ObjectAnimator.ofFloat(star, "translationY", 0f, translateY)
+                val fadeIn = ObjectAnimator.ofFloat(star, "alpha", 0f, 1f).setDuration(200L)
+                val fadeOut = ObjectAnimator.ofFloat(star, "alpha", 1f, 0f).apply {
+                    startDelay = (durationMillis - 200L).coerceAtLeast(0L)
+                    duration = 200L
+                }
+                AnimatorSet().apply {
+                    playTogether(moveX, moveY, fadeIn, fadeOut)
+                    duration = durationMillis
+                    interpolator = LinearInterpolator()
+                    start()
+                }
+                mHandler.postDelayed(this, 6000L)
+            }
+        }
+        mHandler.postDelayed(runnable, delayMillis)
     }
 
     private fun initBackHandler() {
@@ -171,14 +271,14 @@ class MapActivity : AppCompatActivity() {
     }
 
     private fun createPlayIntent(num: String): Intent {
-        return PlayRoute.create(this@MapActivity, parseLevel(num) ?: 1, mCurrentUsername)
+        val intent = PlayRoute.create(this@MapActivity, parseLevel(num) ?: 1, mCurrentUsername)
+        return MapRoute.putReturnAnchor(
+            intent = intent,
+            adapterPosition = mLayoutManager.findFirstVisibleItemPosition(),
+            topOffsetPx = mRecyclerView.getChildAt(0)?.top ?: 0
+        )
     }
 
-    private fun getRollingPosition(num: String): Int {
-        val position = parseLevel(num) ?: return 1
-        val n = (position - 1) / 4
-        return if (n in 0..8) 10 - n else 1
-    }
 
     override fun onPause() {
         mNotificationNavigator.onPause()
@@ -205,18 +305,5 @@ class MapActivity : AppCompatActivity() {
 
     private fun parseLevel(raw: String?): Int? {
         return raw?.toIntOrNull()?.takeIf { it in 1..MAX_LEVEL }
-    }
-
-    private fun consumeHomeFlashRequest(): Boolean {
-        val prefs = getSharedPreferences(PREFS_UI_STATE, Context.MODE_PRIVATE)
-        val fromPrefs = prefs.getBoolean(KEY_FLASH_HOME, false)
-        if (fromPrefs) prefs.edit { putBoolean(KEY_FLASH_HOME, false) }
-        return MapRoute.consumeHomeFlashRequest(intent, fromPrefs)
-    }
-
-    private fun flashHome() {
-        mBinding.root.post {
-            mBinding.root.flashThreeTimes()
-        }
     }
 }
