@@ -5,29 +5,19 @@ import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.bird.starryskysudoku.account.LauncherSessionReader
-import com.bird.starryskysudoku.data.database.AppDatabase
 import com.bird.starryskysudoku.data.entity.MapEntity
-import com.bird.starryskysudoku.data.entity.UserMapEntity
-import com.bird.starryskysudoku.data.repository.UserProgressRepository
+import com.bird.starryskysudoku.data.repository.MapRepository
 import kotlinx.coroutines.launch
 
-class MapViewModel(private val mDb: AppDatabase) : ViewModel() {
+class MapViewModel(private val mMapRepository: MapRepository) : ViewModel() {
 
-    private val mUserProgressRepository = UserProgressRepository(mDb)
     private val mMapDataSource = MutableLiveData<List<Array<MapEntity?>>>()
     val mMapData: LiveData<List<Array<MapEntity?>>> = mMapDataSource
 
     fun loadMapData(username: String = LauncherSessionReader.GUEST_USERNAME) {
         viewModelScope.launch {
-            val safeUsername = mUserProgressRepository.ensureUserMap(username)
-            val allMaps = mDb.userMapDao().getAllForUser(safeUsername).map { it.toMapEntity() }
-            val grouped = allMaps.chunked(4).map { chunk ->
-                arrayOf(
-                    chunk.getOrNull(0), chunk.getOrNull(1),
-                    chunk.getOrNull(2), chunk.getOrNull(3)
-                )
-            }
-            mMapDataSource.value = grouped
+            // 地图数据总是以最新用户名重新拉取，保证游客和登录用户状态隔离。
+            mMapDataSource.value = mMapRepository.loadMapData(username)
         }
     }
 
@@ -37,8 +27,8 @@ class MapViewModel(private val mDb: AppDatabase) : ViewModel() {
         callback: (String?) -> Unit
     ) {
         viewModelScope.launch {
-            val safeUsername = mUserProgressRepository.ensureUserMap(username)
-            callback(mDb.userMapDao().getByUserAndPass(safeUsername, passNum)?.mStatus)
+            // 这里继续保留回调接口，减少旧弹窗控制器的改造范围。
+            callback(mMapRepository.getPassStatus(username, passNum))
         }
     }
 
@@ -52,8 +42,7 @@ class MapViewModel(private val mDb: AppDatabase) : ViewModel() {
         callback: (String) -> Unit
     ) {
         viewModelScope.launch {
-            val safeUsername = mUserProgressRepository.ensureUserMap(username)
-            callback((mDb.userMapDao().getByUserAndPass(safeUsername, passNum)?.mPlayTime ?: 0).toString())
+            callback(mMapRepository.getPassTimes(username, passNum))
         }
     }
 
@@ -67,8 +56,7 @@ class MapViewModel(private val mDb: AppDatabase) : ViewModel() {
         status: String
     ) {
         viewModelScope.launch {
-            val safeUsername = mUserProgressRepository.ensureUserMap(username)
-            mDb.userMapDao().updateStatus(safeUsername, passNum, status)
+            mMapRepository.updateStatus(username, passNum, status)
         }
     }
 
@@ -78,20 +66,12 @@ class MapViewModel(private val mDb: AppDatabase) : ViewModel() {
 
     fun updateCompleteNum(username: String = LauncherSessionReader.GUEST_USERNAME, passNum: Int) {
         viewModelScope.launch {
-            val safeUsername = mUserProgressRepository.ensureUserMap(username)
-            val map = mDb.userMapDao().getByUserAndPass(safeUsername, passNum)
-            val newTimes = (map?.mPlayTime ?: 0) + 1
-            mDb.userMapDao().updatePlayTime(safeUsername, passNum, newTimes)
+            // 这里累加的是进入该关的游玩次数，而不是已通关关卡数。
+            mMapRepository.incrementPlayTime(username, passNum)
         }
     }
 
     fun updateCompleteNum(passNum: Int) {
         updateCompleteNum(LauncherSessionReader.GUEST_USERNAME, passNum)
     }
-
-    private fun UserMapEntity.toMapEntity() = MapEntity(
-        mPassNum = mPassNum,
-        mStatus = mStatus,
-        mPlayTime = mPlayTime
-    )
 }

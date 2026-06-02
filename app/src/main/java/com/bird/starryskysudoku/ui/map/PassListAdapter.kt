@@ -60,6 +60,7 @@ class PassListAdapter(
         }
 
         val mStatus = arrayOfNulls<String>(4)
+        // 每一行的星星光效都独立管理，回收时统一取消，避免旧动画串到新行。
         private val mLightAnimators = arrayOfNulls<ValueAnimator>(4)
         private val mLightStarRunnables = arrayOfNulls<Runnable>(4)
 
@@ -107,6 +108,7 @@ class PassListAdapter(
 
         holder.cancelPendingAnimations()
         val context = holder.itemView.context
+        // 列表头部固定在最上方，数据行按视觉顺序需要从尾部倒着取。
         val item = mPassList[mPassList.size - position]
 
         for (i in 0 until 4) {
@@ -123,6 +125,7 @@ class PassListAdapter(
                     holder.mStars[i].setImageResource(R.drawable.map_star_completed)
 
                     if (entity.mPassNum == mLightStar) {
+                        // 新拿到的星星延迟一点再点亮，让滚动和音效更有层次感。
                         holder.setLightStarRunnable(idx, Runnable {
                             PlayMusic.getInstance().playMapLightStar()
                             animateStar(holder.mStars[idx])
@@ -143,6 +146,7 @@ class PassListAdapter(
                 }
                 PassStatus.TODO -> {
                     holder.mLights[i].visibility = View.VISIBLE
+                    // 当前可挑战关卡持续做呼吸灯效果，提示玩家下一步入口。
                     ValueAnimator.ofFloat(0.1f, 1f).apply {
                         duration = 1500
                         repeatCount = ObjectAnimator.INFINITE
@@ -190,6 +194,7 @@ class PassListAdapter(
     override fun getItemCount() = mPassList.size + 1
 
     fun getPosition(): Int {
+        // 默认滚动到第一个待通关关卡所在行，方便玩家继续当前进度。
         for (i in mPassList.indices) {
             for (j in 0 until 4) {
                 if (mPassList[i][j]?.mStatus == PassStatus.TODO) return mPassList.size - i

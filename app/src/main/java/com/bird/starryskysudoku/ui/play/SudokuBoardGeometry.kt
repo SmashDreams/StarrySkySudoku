@@ -1,6 +1,7 @@
 package com.bird.starryskysudoku.ui.play
 
 object SudokuBoardGeometry {
+    // 这些常量直接对应当前棋盘素材的留白和边框尺寸，供绘制与引导高亮共用。
     const val BOARD_SIZE = 9
     const val CELL_INSET = 28f
     const val BORDER_INSET = 24f
@@ -13,6 +14,7 @@ object SudokuBoardGeometry {
         val bottom: Float
     )
 
+    // 通过视图宽度反推单格边长，保证不同屏幕尺寸下棋盘比例一致。
     fun cellSize(width: Float): Float = (width - CELL_SIZE_OFFSET) / BOARD_SIZE
 
     fun boardBorderRect(
@@ -22,6 +24,7 @@ object SudokuBoardGeometry {
         padding: Float = 0f
     ): BoardRect {
         val boardSize = cellSize(width) * BOARD_SIZE
+        // 外框从粗边框内侧开始计算，和棋盘实际绘制边界保持一致。
         return BoardRect(
             left = left + BORDER_INSET - padding,
             top = top + BORDER_INSET - padding,
@@ -40,6 +43,7 @@ object SudokuBoardGeometry {
         rightBottomAdjust: Float = 0f
     ): BoardRect {
         val size = cellSize(width)
+        // 右下边允许单独微调，便于引导蒙层与像素边框精确对齐。
         return BoardRect(
             left = left + CELL_INSET + col * size - padding,
             top = top + CELL_INSET + row * size - padding,
@@ -77,6 +81,7 @@ object SudokuBoardGeometry {
     ): BoardRect {
         val endRow = startRow + rowSpan
         val endCol = startCol + colSpan
+        // 区域矩形按网格线位置计算，适合做教程聚焦框或整块高亮。
         return BoardRect(
             left = left + gridLineOffset(width, startCol) - padding,
             top = top + gridLineOffset(width, startRow) - padding,
@@ -86,6 +91,7 @@ object SudokuBoardGeometry {
     }
 
     private fun gridLineOffset(width: Float, index: Int): Float {
+        // 三宫边界使用更粗的外框内边距，普通格线使用单格内边距。
         val inset = if (index % 3 == 0) BORDER_INSET else CELL_INSET
         return inset + index * cellSize(width)
     }

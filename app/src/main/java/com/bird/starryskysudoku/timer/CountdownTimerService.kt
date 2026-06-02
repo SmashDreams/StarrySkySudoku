@@ -146,7 +146,7 @@ class CountdownTimerService : Service() {
             )
         } catch (exception: SecurityException) {
             /*
-             * Android 13+ 允许用户撤销通知权限；倒计时广播仍继续驱动游戏界面。
+             * 13 及以上系统允许用户撤销通知权限；倒计时广播仍继续驱动游戏界面。
              */
         }
     }

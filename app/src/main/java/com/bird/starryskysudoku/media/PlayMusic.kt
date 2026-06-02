@@ -4,7 +4,6 @@ import android.app.Application
 import android.content.Context
 import android.content.SharedPreferences
 import android.media.AudioAttributes
-import android.media.MediaPlayer
 import android.media.SoundPool
 import android.util.Log
 import com.bird.starryskysudoku.AppSettings
@@ -28,20 +27,22 @@ class PlayMusic private constructor() {
     enum class MusicType {
         BUTTONTAP, WRONG, DIALOGSHOW,
         WINNING, LOSING, GETSTAR,
-        MAPLIGHTSTAR, BGM, TIMESUP
+        MAPLIGHTSTAR, TIMESUP
     }
 
     private lateinit var mSoundPool: SoundPool
     private lateinit var mTimesUpPool: SoundPool
-    private var mBgmPlayer: MediaPlayer? = null
     private lateinit var mPrefs: SharedPreferences
     private val mMusicMap = mutableMapOf<MusicType, Int>()
     private val mSoundIdMap = mutableMapOf<MusicType, Int>()
+    // 需要显式停止的长一点的提示音，会把流编号缓存在这里。
     private val mStreamMap = mutableMapOf<MusicType, Int>()
+    // 仅负责短音效与提示音，背景音乐改由独立服务管理。
     private var mInitialized = false
 
     fun init(application: Application) {
         if (mInitialized) return
+        // 音效开关在应用启动后就要可读，避免页面首次点击时再延迟初始化配置。
         mPrefs = application.getSharedPreferences(AppSettings.PREFS_MUSIC, Context.MODE_PRIVATE)
 
         val audioAttrs = AudioAttributes.Builder()
@@ -65,6 +66,7 @@ class PlayMusic private constructor() {
     }
 
     private fun initResource() {
+        // 这里只登记资源映射，真正的加载统一交给后面的音效加载流程处理。
         mMusicMap[MusicType.BUTTONTAP] = R.raw.button_tap
         mMusicMap[MusicType.WRONG] = R.raw.wrong_placement
         mMusicMap[MusicType.DIALOGSHOW] = R.raw.popup_appear
@@ -72,19 +74,12 @@ class PlayMusic private constructor() {
         mMusicMap[MusicType.LOSING] = R.raw.puzzle_fail
         mMusicMap[MusicType.GETSTAR] = R.raw.popup_star
         mMusicMap[MusicType.MAPLIGHTSTAR] = R.raw.map_star_on
-        mMusicMap[MusicType.BGM] = R.raw.bgm
         mMusicMap[MusicType.TIMESUP] = R.raw.time
     }
 
     private fun loadSounds(context: Context) {
-        val bgmRes = mMusicMap[MusicType.BGM]!!
-        mBgmPlayer = MediaPlayer.create(context, bgmRes).apply {
-            isLooping = true
-            setVolume(0.2f, 0.2f)
-        }
-
         for ((type, resId) in mMusicMap) {
-            if (type == MusicType.BGM) continue
+            // 倒计时结束提示音单独使用一个池，避免与普通音效抢占唯一流。
             val id = if (type == MusicType.TIMESUP) {
                 mTimesUpPool.load(context, resId, 1)
             } else {
@@ -97,22 +92,6 @@ class PlayMusic private constructor() {
 
     private fun isOpened(type: String): Boolean = mPrefs.getBoolean(type, true)
 
-    fun playBGM() {
-        if (!mInitialized) return
-        try {
-            if (isOpened(AppSettings.KEY_MUSIC) && mBgmPlayer?.isPlaying == false) {
-                mBgmPlayer?.start()
-            }
-        } catch (e: IllegalStateException) {
-            e.printStackTrace()
-        }
-    }
-
-    fun stopBGM() {
-        if (!mInitialized) return
-        try { mBgmPlayer?.pause() } catch (e: IllegalStateException) { e.printStackTrace() }
-    }
-
     fun playButtonTap() {
         if (mInitialized && isOpened(AppSettings.KEY_AUDIO)) {
             mSoundPool.play(mSoundIdMap[MusicType.BUTTONTAP] ?: return, 0.4f, 0.4f, 1, 0, 1f)
@@ -123,6 +102,7 @@ class PlayMusic private constructor() {
 
     fun stopDialogShow() {
         if (!mInitialized) return
+        // 保持原有静音占位逻辑，立即打断弹窗出现音效。
         mSoundPool.play(mSoundIdMap[MusicType.BUTTONTAP] ?: return, 0f, 0f, 1, 0, 1f)
     }
 
@@ -162,9 +142,8 @@ class PlayMusic private constructor() {
         try {
             mSoundPool.release()
             mTimesUpPool.release()
-            mBgmPlayer?.apply { stop(); release() }
         } catch (e: IllegalStateException) { e.printStackTrace() }
-        mBgmPlayer = null
+        // 释放后把缓存索引一起清空，避免旧流编号在下次初始化后被误用。
         mSoundIdMap.clear()
         mStreamMap.clear()
         mInitialized = false

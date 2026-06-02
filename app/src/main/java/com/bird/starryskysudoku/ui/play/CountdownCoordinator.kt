@@ -21,6 +21,7 @@ class CountdownCoordinator(
     private val mCountdownReceiver = object : BroadcastReceiver() {
         override fun onReceive(context: Context?, intent: Intent?) {
             if (intent?.action != CountdownTimerContract.ACTION_COUNTDOWN_TICK) return
+            // 页面不自己持有计时器，只接收服务广播回来的剩余秒数。
             val remainingSeconds = intent.getIntExtra(
                 CountdownTimerContract.EXTRA_REMAINING_SECONDS,
                 CountdownTimerContract.DEFAULT_TOTAL_SECONDS
@@ -31,6 +32,7 @@ class CountdownCoordinator(
 
     fun onStart() {
         if (mReceiverRegistered) return
+        // 只在页面可见时注册接收器，避免后台页面继续消费倒计时广播。
         ContextCompat.registerReceiver(
             mActivity,
             mCountdownReceiver,
@@ -48,6 +50,7 @@ class CountdownCoordinator(
 
     fun start() {
         if (!mCanStart()) return
+        // 每次重启服务时都带上当前剩余时间，让暂停恢复不会丢进度。
         val serviceIntent = Intent(mActivity, CountdownTimerService::class.java)
             .putExtra(CountdownTimerContract.EXTRA_INITIAL_SECONDS, mGetRemainingSeconds())
             .putExtra(CountdownTimerContract.EXTRA_LEVEL_NUMBER, mGetLevel())

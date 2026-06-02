@@ -4,6 +4,7 @@ import androidx.room.ColumnInfo
 import androidx.room.Entity
 
 @Entity(tableName = "user_map", primaryKeys = ["username", "pass_num"])
+// 用户关卡进度表按“用户名 + 关卡号”唯一确定一行。
 data class UserMapEntity(
     @ColumnInfo(name = "username") val mUsername: String,
     @ColumnInfo(name = "pass_num") val mPassNum: Int,

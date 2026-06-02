@@ -6,6 +6,7 @@ import com.bird.starrysky.contracts.SharedGameResultsContract
 import com.bird.starrysky.contracts.SharedSessionContract
 
 object GameResultContract {
+    // 本项目对外共享战绩时完全对齐公共契约，避免两个应用之间字段漂移。
     const val AUTHORITY = SharedGameResultsContract.AUTHORITY
     const val READ_PERMISSION = SharedGameResultsContract.READ_PERMISSION
     const val WRITE_PERMISSION = SharedGameResultsContract.WRITE_PERMISSION
@@ -42,6 +43,7 @@ object GameResultContract {
             createdAt: Long = System.currentTimeMillis(),
             username: String = SharedSessionContract.GUEST_USERNAME
         ): ContentValues {
+            // 统一通过共享契约生成内容值，确保字段名和默认值保持一致。
             return SharedGameResultsContract.Results.toContentValues(
                 level = level,
                 elapsedSeconds = elapsedSeconds,

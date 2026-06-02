@@ -12,6 +12,7 @@ class GuideDesignCanvasLayout @JvmOverloads constructor(
     defStyleAttr: Int = 0
 ) : FrameLayout(context, attrs, defStyleAttr) {
 
+    // 所有子视图都按同一张设计画布缩放并居中，方便教学蒙层与内容精准对齐。
     private var mFrame = GuideDesignCanvas.fit(0, 0)
 
     override fun onMeasure(widthMeasureSpec: Int, heightMeasureSpec: Int) {

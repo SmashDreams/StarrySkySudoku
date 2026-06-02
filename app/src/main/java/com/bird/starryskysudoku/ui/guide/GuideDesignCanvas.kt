@@ -4,6 +4,7 @@ import kotlin.math.min
 import kotlin.math.roundToInt
 
 object GuideDesignCanvas {
+    // 教学页所有聚焦坐标都以这套设计稿尺寸为基准做缩放。
     const val DESIGN_WIDTH = 720
     const val DESIGN_HEIGHT = 1280
 
@@ -20,6 +21,7 @@ object GuideDesignCanvas {
             return Frame(scale = 0f, width = 0, height = 0, left = 0, top = 0)
         }
 
+        // 始终保持完整设计稿可见，多余空间留给四周留白。
         val scale = min(
             parentWidth.toFloat() / DESIGN_WIDTH,
             parentHeight.toFloat() / DESIGN_HEIGHT

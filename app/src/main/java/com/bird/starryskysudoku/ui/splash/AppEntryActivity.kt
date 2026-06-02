@@ -25,6 +25,7 @@ class AppEntryActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         installSplashScreen()
         super.onCreate(savedInstanceState)
+        // 入口页本身不使用独立布局，直接按语言切换对应的静态启动图。
         val splashImage = ImageView(this).apply {
             scaleType = ImageView.ScaleType.CENTER_CROP
             setImageResource(getSplashImageRes())
@@ -39,6 +40,7 @@ class AppEntryActivity : AppCompatActivity() {
 
         val isFirstLaunch = getSharedPreferences(PREFS_FIRST, MODE_PRIVATE)
             .getBoolean(KEY_FIRST, true)
+        // 首次启动先进入引导，后续直接落到地图页。
         val nextActivity = if (isFirstLaunch) {
             Intent(this, GuideActivity::class.java)
         } else {
@@ -51,6 +53,7 @@ class AppEntryActivity : AppCompatActivity() {
     }
 
     private fun getSplashImageRes(): Int {
+        // 优先读取应用当前生效语言，拿不到时再回退到本地偏好配置。
         val language = AppCompatDelegate.getApplicationLocales()[0]?.language
             ?: getSharedPreferences(AppSettings.PREFS_LANGUAGE, MODE_PRIVATE)
                 .getString(AppSettings.KEY_LANGUAGE, AppSettings.DEFAULT_LANGUAGE)

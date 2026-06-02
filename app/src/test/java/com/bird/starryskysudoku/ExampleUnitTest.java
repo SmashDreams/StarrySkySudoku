@@ -10,6 +10,7 @@ import static org.junit.Assert.*;
 public class ExampleUnitTest {
     @Test
     public void additionIsCorrect() {
+        // 保留默认示例断言，确认本地单元测试链路可正常执行。
         assertEquals(4, 2 + 2);
     }
 }

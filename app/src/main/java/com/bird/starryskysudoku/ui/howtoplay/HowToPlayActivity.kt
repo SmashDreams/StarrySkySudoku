@@ -30,10 +30,9 @@ class HowToPlayActivity : AppCompatActivity() {
     }
 
     private fun closePage() {
+        // 玩法说明属于地图页侧边入口，关闭时统一使用返回地图的转场动画。
         PlayMusic.getInstance().playButtonTap()
         finishWithTransition(R.anim.mappage_back, R.anim.setguide_right_out)
     }
 
-    override fun onResume() { super.onResume(); PlayMusic.getInstance().playBGM() }
-    override fun onPause() { super.onPause(); PlayMusic.getInstance().stopBGM() }
 }

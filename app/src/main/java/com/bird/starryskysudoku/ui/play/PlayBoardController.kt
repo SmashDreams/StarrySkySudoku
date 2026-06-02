@@ -15,6 +15,7 @@ class PlayBoardController(
     private val mGetLevel: () -> Int
 ) {
     fun init() {
+        // 先初始化棋盘数据，再建立观察和触摸回调，避免首次渲染拿到空引用。
         mViewModel.initBoard(mGetLevel())
         observeBoard()
         initTouchListener()
@@ -29,7 +30,8 @@ class PlayBoardController(
         }
     }
 
-    private fun ensureTagData(board: Array<Array<PlayViewModel.CellData>>) {
+    private fun ensureTagData(board: Array<Array<BoardCell>>) {
+        // 只有空格才需要候选数容器，题面数字不浪费额外对象。
         for (row in 0 until 9) {
             for (col in 0 until 9) {
                 if (board[row][col].mValue == "0" && mTagData[row][col] == null) {
@@ -46,6 +48,7 @@ class PlayBoardController(
                 mViewModel.selectCell(row, col)
 
                 val cell = mViewModel.mBoard.value?.get(row)?.get(col) ?: return
+                // 每次选格后都同步更新数字键和笔记按钮的可点击视觉状态。
                 refreshCellActionAlpha(cell, row, col)
                 mBroadView.invalidate()
                 PlayMusic.getInstance().playButtonTap()
@@ -54,7 +57,7 @@ class PlayBoardController(
     }
 
     private fun refreshCellActionAlpha(
-        cell: PlayViewModel.CellData,
+        cell: BoardCell,
         row: Int,
         col: Int
     ) {

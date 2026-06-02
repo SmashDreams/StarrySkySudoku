@@ -40,8 +40,6 @@ class GuideActivity : AppCompatActivity() {
         mBinding = ActivityGuidepageBinding.inflate(layoutInflater)
         setContentView(mBinding.root)
 
-        PlayMusic.getInstance().playBGM()
-
         bindViews()
         initTouch()
         initBackHandler()
@@ -82,6 +80,7 @@ class GuideActivity : AppCompatActivity() {
     private fun loadLevelOneBoard() {
         val db = DatabaseInitializer.getDatabase(this)
         lifecycleScope.launch {
+            // 本页固定借用第一关题面做演示，避免额外维护一套教程棋盘资源。
             val values = db.problemDao().getValuesForLevel(FIRST_LEVEL)
             if (values.size == 81) {
                 mLevelOneValues = values
@@ -92,6 +91,7 @@ class GuideActivity : AppCompatActivity() {
 
     private fun renderStep() {
         val step = mSteps[mCurrentStep]
+        // 每一步都重建演示状态，保证从任意步骤返回时界面表现一致。
         mDescription.text = descriptionText(step)
         mHint.setText(if (step == GuideStep.GOOD_LUCK) R.string.guide_start else R.string.tap)
 
@@ -118,6 +118,7 @@ class GuideActivity : AppCompatActivity() {
     }
 
     private fun renderSpotlight(step: GuideStep) {
+        // 聚焦框只负责提示当前步骤重点，棋盘高亮由引导棋盘工厂负责。
         when (step) {
             GuideStep.WELCOME -> mSpotlight.setHighlights(listOf(boardBorderRect(5f)), dimmed = true)
             GuideStep.RULE_UNIQUE -> mSpotlight.setHighlights(ruleHighlights(), dimmed = true)
@@ -131,6 +132,7 @@ class GuideActivity : AppCompatActivity() {
     private fun ruleHighlights(): List<RectF> {
         val row = demoCellIndex().first
         val col = demoCellIndex().second
+        // 规则演示不是只框住一个格子，而是把同行、同列和同宫拆成多个聚焦区域。
         return GuideRuleHighlightCells.regionsFor(row, col).map { region ->
             boardAreaRect(
                 startRow = region.startRow,
@@ -150,6 +152,7 @@ class GuideActivity : AppCompatActivity() {
 
     private fun boardBorderRect(extraPadding: Float): RectF {
         val origin = viewRect(mBoard, 0f)
+        // 棋盘外框沿用统一几何工具，保证引导高亮和真实棋盘边界完全重合。
         return SudokuBoardGeometry.boardBorderRect(
             width = mBoard.width.toFloat(),
             left = origin.left,
@@ -167,6 +170,7 @@ class GuideActivity : AppCompatActivity() {
         rightBottomPadding: Float
     ): RectF {
         val origin = viewRect(mBoard, 0f)
+        // 这里先按设计坐标求出区域，再补左右下角微调，让虚线框更贴合素材边界。
         val rect = SudokuBoardGeometry.boardRegionRect(
             width = mBoard.width.toFloat(),
             startRow = startRow,
@@ -200,6 +204,7 @@ class GuideActivity : AppCompatActivity() {
     private fun viewRect(view: View, extraPadding: Float): RectF {
         val rootLocation = IntArray(2)
         val viewLocation = IntArray(2)
+        // 聚焦层和内容层共用根布局坐标系，避免不同父容器带来额外偏移。
         mRoot.getLocationOnScreen(rootLocation)
         view.getLocationOnScreen(viewLocation)
         val left = (viewLocation[0] - rootLocation[0]).toFloat()
@@ -214,6 +219,7 @@ class GuideActivity : AppCompatActivity() {
 
     private fun numberKeyRect(view: View): RectF {
         val rect = viewRect(view, 0f)
+        // 数字键素材四周自带留白，这里再向内收一点让聚焦框更贴近按钮主体。
         rect.inset(NUMBER_KEY_HORIZONTAL_INSET, NUMBER_KEY_VERTICAL_INSET)
         return rect
     }
@@ -225,6 +231,7 @@ class GuideActivity : AppCompatActivity() {
     private fun demoCellIndex(): Pair<Int, Int> {
         var bestCell: Pair<Int, Int>? = null
         var bestDistance = Int.MAX_VALUE
+        // 教学页和棋盘工厂都优先使用中心附近空格，保证聚焦位置稳定。
         for (index in mLevelOneValues.indices) {
             if (mLevelOneValues[index] == 0) {
                 val row = index / 9
@@ -250,6 +257,7 @@ class GuideActivity : AppCompatActivity() {
     }
 
     private fun finishGuide() {
+        // 首次引导只展示一次，完成后直接进入地图页。
         getSharedPreferences("firstcome", MODE_PRIVATE).edit {
             putBoolean("first", false)
         }
@@ -275,13 +283,12 @@ class GuideActivity : AppCompatActivity() {
     private fun initBackHandler() {
         onBackPressedDispatcher.addCallback(this, object : OnBackPressedCallback(true) {
             override fun handleOnBackPressed() {
+                // 本页返回键直接退出应用，避免回到没有完成初始化的入口页。
                 finishAffinity()
             }
         })
     }
 
-    override fun onResume() { super.onResume(); PlayMusic.getInstance().playBGM() }
-    override fun onPause() { super.onPause(); PlayMusic.getInstance().stopBGM() }
 
     companion object {
         private const val FIRST_LEVEL = 1

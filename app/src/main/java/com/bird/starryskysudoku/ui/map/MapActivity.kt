@@ -104,7 +104,6 @@ class MapActivity : AppCompatActivity() {
         initMapData()
         initBackHandler()
         if (consumeHomeFlashRequest()) flashHome()
-        PlayMusic.getInstance().playBGM()
     }
 
     private fun initMapData() {
@@ -184,13 +183,11 @@ class MapActivity : AppCompatActivity() {
     override fun onPause() {
         mNotificationNavigator.onPause()
         super.onPause()
-        PlayMusic.getInstance().stopBGM()
     }
 
     override fun onResume() {
         super.onResume()
         mNotificationNavigator.onResume()
-        PlayMusic.getInstance().playBGM()
         refreshLoginState()
     }
 

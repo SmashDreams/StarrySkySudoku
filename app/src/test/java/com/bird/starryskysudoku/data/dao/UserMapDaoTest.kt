@@ -3,6 +3,7 @@ package com.bird.starryskysudoku.data.dao
 import androidx.room.Room
 import com.bird.starryskysudoku.data.database.AppDatabase
 import com.bird.starryskysudoku.data.entity.UserMapEntity
+import com.bird.starryskysudoku.data.repository.PlayRepository
 import com.bird.starryskysudoku.ui.play.PlayViewModel
 import kotlinx.coroutines.runBlocking
 import org.junit.After
@@ -73,7 +74,7 @@ class UserMapDaoTest {
             )
         )
 
-        PlayViewModel(mDb).updatePassStatus("alice", 1, 2)
+        PlayViewModel(PlayRepository(mDb)).updatePassStatus("alice", 1, 2)
 
         val firstPass = requireNotNull(dao.getByUserAndPass("alice", 1))
         val secondPass = requireNotNull(dao.getByUserAndPass("alice", 2))

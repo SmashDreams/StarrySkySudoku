@@ -1,6 +1,7 @@
 package com.bird.starryskysudoku.ui.play
 
 class TagData {
+    // 用固定长度数组保存一到九的候选数，便于和数字键索引直接对应。
     val mTags: Array<String> = Array(9) { "0" }
 
     fun setTag(number: String) {

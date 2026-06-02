@@ -9,6 +9,7 @@ import com.bird.starryskysudoku.R
 import com.bird.starryskysudoku.databinding.DialogLoseBinding
 import com.bird.starryskysudoku.databinding.DialogPauseBinding
 import com.bird.starryskysudoku.databinding.DialogWinBinding
+import com.bird.starryskysudoku.media.BgmMusicController
 import com.bird.starryskysudoku.media.PlayMusic
 import com.bird.starryskysudoku.ui.common.startActivityWithTransition
 import com.bird.starryskysudoku.ui.dialog.MyDialog
@@ -119,12 +120,12 @@ class PlayDialogController(
                 musicBtn.setImageResource(R.drawable.icon_music_off)
                 mMusicOpened = false
                 prefs.edit { putBoolean(AppSettings.KEY_MUSIC, false) }
-                PlayMusic.getInstance().stopBGM()
+                BgmMusicController.stop(mActivity)
             } else {
                 musicBtn.setImageResource(R.drawable.icon_music_on)
                 mMusicOpened = true
                 prefs.edit { putBoolean(AppSettings.KEY_MUSIC, true) }
-                PlayMusic.getInstance().playBGM()
+                BgmMusicController.playIfEnabled(mActivity)
             }
         }
 
@@ -211,7 +212,7 @@ class PlayDialogController(
 
     private fun startReplacementPlayActivity(level: Int) {
         /*
-         * 重新进入棋盘页时，旧 Activity 的 onDestroy 不再停止倒计时服务，
+         * 重新进入棋盘页时，旧页面销毁回调不再停止倒计时服务，
          * 避免新棋盘刚启动的服务被旧页面生命周期误杀。
          */
         mPrepareForReplacementPlayActivity()

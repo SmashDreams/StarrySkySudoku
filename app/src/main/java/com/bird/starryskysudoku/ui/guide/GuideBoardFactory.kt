@@ -1,5 +1,6 @@
 package com.bird.starryskysudoku.ui.guide
 
+import com.bird.starryskysudoku.ui.play.BoardCell
 import com.bird.starryskysudoku.ui.play.PlayViewModel
 
 object GuideBoardFactory {
@@ -7,7 +8,7 @@ object GuideBoardFactory {
     private const val DEMO_NUMBER = "7"
     private const val CENTER_INDEX = 4
 
-    fun createBoard(values: List<Int>, step: GuideStep): Array<Array<PlayViewModel.CellData>> {
+    fun createBoard(values: List<Int>, step: GuideStep): Array<Array<BoardCell>> {
         val board = createBaseBoard(values)
         val selectedCell = findDemoEmptyCell(board)
 
@@ -17,6 +18,7 @@ object GuideBoardFactory {
             GuideStep.SELECT_CELL,
             GuideStep.TIMER -> highlightRelatedCells(board, selectedCell.first, selectedCell.second)
             GuideStep.ENTER_NUMBER -> {
+                // 教学输入步骤固定把演示数字写入当前高亮空格。
                 highlightRelatedCells(board, selectedCell.first, selectedCell.second)
                 board[selectedCell.first][selectedCell.second].mValue = DEMO_NUMBER
             }
@@ -26,11 +28,11 @@ object GuideBoardFactory {
         return board
     }
 
-    private fun createBaseBoard(values: List<Int>): Array<Array<PlayViewModel.CellData>> {
+    private fun createBaseBoard(values: List<Int>): Array<Array<BoardCell>> {
         return Array(BOARD_SIZE) { row ->
             Array(BOARD_SIZE) { col ->
                 val value = values.getOrNull(row * BOARD_SIZE + col)?.takeIf { it in 0..9 } ?: 0
-                PlayViewModel.CellData(
+                BoardCell(
                     mRow = row,
                     mCol = col,
                     mValue = value.toString(),
@@ -41,9 +43,10 @@ object GuideBoardFactory {
         }
     }
 
-    private fun findDemoEmptyCell(board: Array<Array<PlayViewModel.CellData>>): Pair<Int, Int> {
+    private fun findDemoEmptyCell(board: Array<Array<BoardCell>>): Pair<Int, Int> {
         var bestCell: Pair<Int, Int>? = null
         var bestDistance = Int.MAX_VALUE
+        // 优先找离棋盘中心最近的空格，让教程聚焦位置更稳定也更自然。
         for (row in 0 until BOARD_SIZE) {
             for (col in 0 until BOARD_SIZE) {
                 if (board[row][col].mValue == "0") {
@@ -59,7 +62,7 @@ object GuideBoardFactory {
     }
 
     private fun highlightRelatedCells(
-        board: Array<Array<PlayViewModel.CellData>>,
+        board: Array<Array<BoardCell>>,
         selectedRow: Int,
         selectedCol: Int
     ) {
@@ -76,8 +79,9 @@ object GuideBoardFactory {
         }
     }
 
-    private fun markDemoProgress(board: Array<Array<PlayViewModel.CellData>>) {
+    private fun markDemoProgress(board: Array<Array<BoardCell>>) {
         var filled = 0
+        // 结束页只演示“棋盘逐步填满”的效果，不要求生成真实可解局面。
         for (row in 0 until BOARD_SIZE) {
             for (col in 0 until BOARD_SIZE) {
                 val cell = board[row][col]

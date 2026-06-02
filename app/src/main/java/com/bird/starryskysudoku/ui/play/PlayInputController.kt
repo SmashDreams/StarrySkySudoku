@@ -22,6 +22,7 @@ class PlayInputController(
     private val mOnPuzzleCompleted: suspend (Int) -> Unit
 ) {
     fun init() {
+        // 输入控制拆成标签、数字、撤销三组事件，便于分别维护交互规则。
         initTagButton()
         initInsertButtons()
         initRevokeButton()
@@ -38,6 +39,7 @@ class PlayInputController(
         mTag.setOnClickListener {
             if (mViewModel.mHasWon.value == true) return@setOnClickListener
             val cell = currentCell() ?: return@setOnClickListener
+            // 题面数字和已填数字都不允许进入笔记模式。
             if (cell.mType == PlayViewModel.PROBLEM) {
                 PlayMusic.getInstance().playInputWrong()
                 return@setOnClickListener
@@ -72,6 +74,7 @@ class PlayInputController(
             mNumbers[index]?.setOnClickListener {
                 if (mViewModel.mHasWon.value == true || !mViewModel.canInsert()) return@setOnClickListener
                 val cell = currentCell() ?: return@setOnClickListener
+                // 没有选中有效空格时，数字键一律按错误输入处理。
                 if (cell.mType == PlayViewModel.PROBLEM || mViewModel.getCurrentBlock() == 0) {
                     PlayMusic.getInstance().playInputWrong()
                     return@setOnClickListener
@@ -98,6 +101,7 @@ class PlayInputController(
         mRevoke.setOnClickListener {
             if (mViewModel.mHasWon.value == true || mViewModel.getCurrentBlock() == 0) return@setOnClickListener
             mScope.launch {
+                // 撤销既可能恢复数字，也可能恢复笔记，所以统一从历史栈取最近一步。
                 val history = mViewModel.undo()
                 if (history == null) {
                     clearSelectionAfterEmptyUndo()
@@ -114,11 +118,12 @@ class PlayInputController(
             mViewModel.insertNumber(mViewModel.getCurrentRow(), mViewModel.getCurrentCol(), number)
             mRevoke.alpha = 1f
             mTag.alpha = 0.55f
-            mBroadView.initData(mViewModel.mBoard.value!!)
+            mViewModel.mBoard.value?.let { mBroadView.initData(it) }
             mBroadView.invalidate()
 
             if (mViewModel.mHasWon.value == true) {
                 val level = mGetLevel()
+                // 通关后先更新地图进度，再异步记录战绩。
                 mViewModel.updatePassStatus(mGetUsername(), level, level + 1)
                 mOnPuzzleCompleted(level)
             }
@@ -126,7 +131,7 @@ class PlayInputController(
     }
 
     private fun insertOrRemoveTag(
-        cell: PlayViewModel.CellData,
+        cell: BoardCell,
         number: String,
         numberIndex: Int
     ) {
@@ -137,6 +142,7 @@ class PlayInputController(
         PlayMusic.getInstance().playButtonTap()
         mRevoke.alpha = 1f
         mScope.launch {
+            // 候选数的明暗和笔记数据保持一一对应，点击后立即刷新当前键位透明度。
             val added = mViewModel.insertOrRemoveTag(
                 mViewModel.getCurrentRow(),
                 mViewModel.getCurrentCol(),
@@ -154,69 +160,24 @@ class PlayInputController(
         mRevoke.alpha = 0.55f
         mTag.alpha = 1f
         mTag.setImageResource(R.drawable.icon_notes_off)
-        mViewModel.setTagMode(false)
-        mViewModel.setCurrentPosition(mViewModel.getCurrentRow(), mViewModel.getCurrentCol(), 0)
-        val board = mViewModel.mBoard.value!!
-        for (row in 0 until 9) {
-            for (col in 0 until 9) {
-                board[row][col].mStatus = PlayViewModel.SELECT_NONE
-            }
+        // 没有历史可撤销时，回到无选中基线状态并提示用户。
+        mViewModel.clearSelectionAfterEmptyUndo()?.let { board ->
+            mBroadView.initData(board)
         }
-        mBroadView.initData(board)
         mBroadView.invalidate()
     }
 
     private fun restoreHistory(history: com.bird.starryskysudoku.data.entity.HistoryEntity) {
-        val block = mViewModel.mBoard.value
-            ?.get(history.mRow)
-            ?.get(history.mCol)
-            ?.mBlock ?: 0
-        mViewModel.setCurrentPosition(history.mRow, history.mCol, block)
         PlayMusic.getInstance().playButtonTap()
-
-        if (history.mType == PlayViewModel.TYPE_NUMBER) {
-            restoreNumberHistory(history)
-        } else {
-            restoreTagHistory(history)
-        }
-    }
-
-    private fun restoreNumberHistory(history: com.bird.starryskysudoku.data.entity.HistoryEntity) {
-        mViewModel.setTagMode(false)
-        mViewModel.setLastValue(history.mValue.toString())
-        mTag.setImageResource(R.drawable.icon_notes_off)
-        for (button in mNumbers) button?.alpha = 1f
-
-        val board = mViewModel.mBoard.value!!
-        board[history.mRow][history.mCol].mValue = history.mValue.toString()
-        board[history.mRow][history.mCol].mStatus = PlayViewModel.BE_SELECTED
-        mViewModel.selectCell(history.mRow, history.mCol)
-        mTag.alpha = if (history.mValue == 0) 1f else 0.55f
-        mBroadView.initData(board)
-    }
-
-    private fun restoreTagHistory(history: com.bird.starryskysudoku.data.entity.HistoryEntity) {
-        val board = mViewModel.mBoard.value!!
-        board[history.mRow][history.mCol].mStatus = PlayViewModel.BE_SELECTED
-        mTag.alpha = 1f
-        mViewModel.setTagMode(true)
-        mTag.setImageResource(R.drawable.icon_notes_on)
-
-        val tagData = mTagData[history.mRow][history.mCol]!!
-        val historyValue = history.mValue.toString()
-        if (tagData.haveTag(historyValue)) {
-            tagData.deleteTag(historyValue)
-            mNumbers[history.mValue - 1]?.alpha = 1f
-        } else {
-            tagData.setTag(historyValue)
-            mNumbers[history.mValue - 1]?.alpha = 0.55f
+        // 视图模型负责还原数据，本控制器只把按钮透明度和棋盘视图同步回对应状态。
+        val restored = mViewModel.restoreHistory(history, mTagData) ?: return
+        mTag.alpha = restored.mTagAlpha
+        mTag.setImageResource(if (restored.mTagEnabled) R.drawable.icon_notes_on else R.drawable.icon_notes_off)
+        for (index in 0 until 9) {
+            mNumbers[index]?.alpha = restored.mNumberAlphas[index]
         }
         mBroadView.initTagData(mTagData)
-
-        for (index in 0 until 9) {
-            mNumbers[index]?.alpha = if (tagData.haveTag((index + 1).toString())) 0.55f else 1f
-        }
-        mBroadView.initData(board)
+        mBroadView.initData(restored.mBoard)
     }
 
     private fun refreshNumberAlphaForTags() {
@@ -230,8 +191,8 @@ class PlayInputController(
         }
     }
 
-    private fun currentCell(): PlayViewModel.CellData? {
-        return mViewModel.mBoard.value?.get(mViewModel.getCurrentRow())?.get(mViewModel.getCurrentCol())
+    private fun currentCell(): BoardCell? {
+        return mViewModel.currentCell()
     }
 
     private fun canAnimateSelectedCell(): Boolean {
@@ -242,6 +203,7 @@ class PlayInputController(
     }
 
     private fun animatePress(view: android.view.View, event: MotionEvent) {
+        // 这里统一按压缩放反馈，避免按钮和数字键各自维护一套动画。
         when (event.action) {
             MotionEvent.ACTION_DOWN -> view.animate().scaleX(0.8f).scaleY(0.8f).setDuration(100).start()
             MotionEvent.ACTION_UP,

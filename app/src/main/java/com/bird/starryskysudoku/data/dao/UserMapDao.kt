@@ -8,6 +8,7 @@ import com.bird.starryskysudoku.data.entity.UserMapEntity
 
 @Dao
 interface UserMapDao {
+    // 地图页展示需要整张关卡表，因此按关卡号升序一次性读取。
     @Query("SELECT * FROM user_map WHERE username = :username ORDER BY pass_num")
     suspend fun getAllForUser(username: String): List<UserMapEntity>
 

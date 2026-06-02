@@ -10,6 +10,7 @@ import androidx.core.os.LocaleListCompat
 import com.bird.starryskysudoku.AppSettings
 import com.bird.starryskysudoku.R
 import com.bird.starryskysudoku.databinding.DialogSettingsBinding
+import com.bird.starryskysudoku.media.BgmMusicController
 import com.bird.starryskysudoku.media.PlayMusic
 import com.bird.starryskysudoku.ui.common.startActivityWithTransition
 import com.bird.starryskysudoku.ui.dialog.MyDialog
@@ -27,7 +28,7 @@ class MapSettingsController(
 
     fun init() {
         /*
-         * 设置弹窗读写的开关状态与 PlayMusic 共用同一组 SharedPreferences。
+         * 设置弹窗读写的开关状态与音频模块共用同一组偏好配置。
          */
         val musicPrefs = mActivity.getSharedPreferences(AppSettings.PREFS_MUSIC, Context.MODE_PRIVATE)
         mMusicOpened = musicPrefs.getBoolean(AppSettings.KEY_MUSIC, true)
@@ -83,7 +84,7 @@ class MapSettingsController(
             val newLang = if (mLanguage == "zh") "en" else "zh"
             mLanguage = newLang
             /*
-             * 切换语言会触发 Activity 重建，用持久标记让重建后的首页闪烁提示用户仍在地图页。
+             * 切换语言会触发页面重建，用持久标记让重建后的首页闪烁提示用户仍在地图页。
              */
             mActivity.getSharedPreferences(AppSettings.PREFS_LANGUAGE, Context.MODE_PRIVATE).edit {
                 putString(AppSettings.KEY_LANGUAGE, newLang)
@@ -102,12 +103,12 @@ class MapSettingsController(
                 musicSwitch.setImageResource(R.drawable.icon_music_off)
                 mMusicOpened = false
                 prefs.edit { putBoolean(AppSettings.KEY_MUSIC, false) }
-                PlayMusic.getInstance().stopBGM()
+                BgmMusicController.stop(mActivity)
             } else {
                 musicSwitch.setImageResource(R.drawable.icon_music_on)
                 mMusicOpened = true
                 prefs.edit { putBoolean(AppSettings.KEY_MUSIC, true) }
-                PlayMusic.getInstance().playBGM()
+                BgmMusicController.playIfEnabled(mActivity)
             }
         }
 

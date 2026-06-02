@@ -19,7 +19,7 @@ class BroadView : AppCompatImageView {
         const val EMPTY = 0
     }
 
-    private var mData: Array<Array<PlayViewModel.CellData>> = Array(9) { Array(9) { PlayViewModel.CellData(0, 0, "0", 0) } }
+    private var mData: Array<Array<BoardCell>> = Array(9) { Array(9) { BoardCell(0, 0, "0", 0) } }
     private var mTagData: Array<Array<TagData?>> = Array(9) { arrayOfNulls(9) }
     private var mWidth = 0f
     private var mHeight = 0f
@@ -40,6 +40,7 @@ class BroadView : AppCompatImageView {
     private lateinit var mEmptyLight: Bitmap
     private lateinit var mEmptyWrong: Bitmap
     private lateinit var mEmptySelected: Bitmap
+    // 背景格子、数字和边框分别使用独立画笔，避免样式互相污染。
     private val mBitmapPaint = Paint(Paint.ANTI_ALIAS_FLAG or Paint.FILTER_BITMAP_FLAG)
     private val mCellRect = Rect()
     private val mOuterRect = Rect()
@@ -87,6 +88,7 @@ class BroadView : AppCompatImageView {
     fun setLine(line: Int) { mLine = line }
 
     private fun initView() {
+        // 不同状态的格子背景预先解码，绘制时只做位图切换，降低重绘负担。
         mProblemNormal = BitmapFactory.decodeResource(resources, R.drawable.sudoku_cell_given)
         mProblemLight = BitmapFactory.decodeResource(resources, R.drawable.sudoku_cell_given_selected)
         mProblemWrong = BitmapFactory.decodeResource(resources, R.drawable.sudoku_cell_given_error)
@@ -96,13 +98,14 @@ class BroadView : AppCompatImageView {
         mEmptySelected = BitmapFactory.decodeResource(resources, R.drawable.sudoku_cell_editable_focused)
     }
 
-    fun initData(data: Array<Array<PlayViewModel.CellData>>) { mData = data }
+    fun initData(data: Array<Array<BoardCell>>) { mData = data }
     fun initTagData(tagData: Array<Array<TagData?>>) { mTagData = tagData }
-    fun overDone(data: Array<Array<PlayViewModel.CellData>>) { mData = data; mHasDone = true }
+    fun overDone(data: Array<Array<BoardCell>>) { mData = data; mHasDone = true }
     fun setWrong(wrong: Boolean) { mWrong = wrong }
 
     override fun onSizeChanged(w: Int, h: Int, oldw: Int, oldh: Int) {
         super.onSizeChanged(w, h, oldw, oldh)
+        // 棋盘是正方形素材，宽高都按同一单格尺寸计算。
         mWidth = SudokuBoardGeometry.cellSize(w.toFloat())
         mHeight = SudokuBoardGeometry.cellSize(h.toFloat())
     }
@@ -116,6 +119,7 @@ class BroadView : AppCompatImageView {
                     (SudokuBoardGeometry.CELL_INSET + (mWidth * (j + 1))).toInt(), (SudokuBoardGeometry.CELL_INSET + (mWidth * (i + 1))).toInt()
                 )
                 if (mData[i][j].mType == PROBLEM) {
+                    // 题面数字和玩家填写格使用不同底图，选中与错误态再分开处理。
                     when {
                         mData[i][j].mStatus == SELECT_ON || mData[i][j].mStatus == BE_SELECTED ->
                             canvas.drawBitmap(mProblemLight, null, mCellRect, mBitmapPaint)
@@ -146,6 +150,7 @@ class BroadView : AppCompatImageView {
         for (i in 0 until 9) {
             for (j in 0 until 9) {
                 if (mData[i][j].mValue == "0") {
+                    // 只有空格才绘制九宫笔记，已填数字不会叠加候选数。
                     val cellLeft = SudokuBoardGeometry.CELL_INSET + mWidth * j
                     val cellTop = SudokuBoardGeometry.CELL_INSET + mWidth * i
                     var position = 0
@@ -170,6 +175,7 @@ class BroadView : AppCompatImageView {
         super.onDrawForeground(canvas)
 
         if (!mHasDone) {
+            // 常规状态下所有数字使用统一字号。
             mNumberPaint.textSize = 80f
             mNumberPaint.alpha = 255
             for (i in 0 until 9) {
@@ -183,6 +189,7 @@ class BroadView : AppCompatImageView {
                 }
             }
         } else {
+            // 通关动画阶段只对当前行使用外部动画传入的字号和透明度。
             for (i in 0 until 9) {
                 for (j in 0 until 9) {
                     val cellLeft = SudokuBoardGeometry.CELL_INSET + mWidth * j; val cellTop = SudokuBoardGeometry.CELL_INSET + mWidth * i
@@ -240,6 +247,7 @@ class BroadView : AppCompatImageView {
         when (event.action) {
             MotionEvent.ACTION_DOWN -> {
                 val x = event.x; val y = event.y
+                // 只接受棋盘区域内的点击，边框和留白区域直接忽略。
                 if (x < SudokuBoardGeometry.CELL_INSET || y < SudokuBoardGeometry.CELL_INSET || x >= SudokuBoardGeometry.CELL_INSET + mWidth * SudokuBoardGeometry.BOARD_SIZE || y >= SudokuBoardGeometry.CELL_INSET + mWidth * SudokuBoardGeometry.BOARD_SIZE) return false
                 mCol = ((x - SudokuBoardGeometry.CELL_INSET) / mWidth).toInt().coerceIn(0, 8)
                 mRow = ((y - SudokuBoardGeometry.CELL_INSET) / mWidth).toInt().coerceIn(0, 8)
@@ -262,6 +270,7 @@ class BroadView : AppCompatImageView {
 
     fun getBigBlock(row: Int, col: Int): Int {
         if (row < 0 || row > 8 || col < 0 || col > 8) return 0
+        // 宫号按 1..9 返回，与棋盘数据里的宫编号字段保持一致。
         return (row / 3) * 3 + (col / 3) + 1
     }
 }

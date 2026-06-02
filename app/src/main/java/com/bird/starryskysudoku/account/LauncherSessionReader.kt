@@ -11,6 +11,7 @@ object LauncherSessionReader {
 
     fun readUsername(contentResolver: ContentResolver): String {
         return try {
+            // 启动器进程不可用或未登录时，一律回退成游客身份，避免页面层处理异常分支。
             contentResolver.query(
                 LauncherSessionContract.Session.CONTENT_URI,
                 null,
@@ -38,6 +39,7 @@ object LauncherSessionReader {
     private fun Cursor.readBoolean(columnName: String): Boolean {
         val index = getColumnIndex(columnName)
         if (index < 0) return false
+        // 兼容共享进程可能返回的字符串布尔值和数字布尔值。
         return when (getString(index)?.lowercase()) {
             "1", "true" -> true
             else -> false

@@ -15,6 +15,7 @@ object GuideRuleHighlightCells {
         val blockEndRow = blockStartRow + 3
         val blockEndCol = blockStartCol + 3
 
+        // 规则演示拆成“同行剩余区域 + 同列剩余区域 + 所在宫”，避免重复覆盖中心格。
         return buildList {
             addIfNotEmpty(row, 0, 1, blockStartCol)
             addIfNotEmpty(row, blockEndCol, 1, 9 - blockEndCol)

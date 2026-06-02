@@ -17,6 +17,7 @@ class GuideSpotlightView @JvmOverloads constructor(
     defStyleAttr: Int = 0
 ) : View(context, attrs, defStyleAttr) {
 
+    // 先整层压暗，再在高亮区域挖洞，最后补一圈虚线边框。
     private val mHighlights = mutableListOf<RectF>()
     private var mDimmed = false
     private val mDimPaint = Paint().apply { color = Color.argb(230, 0, 0, 0) }
@@ -34,6 +35,7 @@ class GuideSpotlightView @JvmOverloads constructor(
         mHighlights.clear()
         mHighlights.addAll(highlights)
         mDimmed = dimmed
+        // 没有高亮目标时直接隐藏自身，避免拦截不必要的绘制和点击。
         visibility = if (mDimmed) VISIBLE else GONE
         invalidate()
     }

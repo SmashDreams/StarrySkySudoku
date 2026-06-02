@@ -32,6 +32,17 @@ class PlayInputControllerStructureTest {
         assertTrue(controller.contains("mOnPuzzleCompleted"))
     }
 
+    @Test
+    fun inputControllerDelegatesBoardAndTagMutationToViewModel() {
+        val controller = mSourceRoot.resolve("ui/play/PlayInputController.kt").readText()
+
+        assertFalse(controller.contains("mBoard.value!!"))
+        assertFalse(controller.contains(".mValue ="))
+        assertFalse(controller.contains(".mStatus ="))
+        assertTrue(controller.contains("mViewModel.clearSelectionAfterEmptyUndo()"))
+        assertTrue(controller.contains("mViewModel.restoreHistory("))
+    }
+
     private fun locateSourceRoot(): File {
         var dir = File(requireNotNull(System.getProperty("user.dir"))).absoluteFile
         while (true) {

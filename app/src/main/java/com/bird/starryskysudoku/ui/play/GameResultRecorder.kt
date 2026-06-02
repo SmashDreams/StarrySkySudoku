@@ -14,6 +14,7 @@ class GameResultRecorder(
         completed: Boolean,
         username: String
     ): Boolean {
+        // 统一把剩余秒数换算成耗时秒数，便于外部应用直接展示战绩。
         val elapsedSeconds = (CountdownTimerContract.DEFAULT_TOTAL_SECONDS - remainingSeconds)
             .coerceAtLeast(0)
         return try {
@@ -26,6 +27,7 @@ class GameResultRecorder(
             )
             val insertedUri = mContentResolver.insert(GameResultContract.Results.CONTENT_URI, values)
                 ?: return false
+            // 再查一遍刚插入的数据，确认提供器和权限链路都真正可用。
             mContentResolver.query(insertedUri, null, null, null, null)?.use { cursor ->
                 if (!cursor.moveToFirst()) return false
                 cursor.getInt(cursor.getColumnIndexOrThrow(GameResultContract.Results.COLUMN_LEVEL))

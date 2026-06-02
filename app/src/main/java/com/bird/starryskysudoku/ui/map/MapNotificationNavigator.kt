@@ -109,7 +109,7 @@ class MapNotificationNavigator(
     private fun completeVendorNotificationWarmupIfReady() {
         if (!mWaitingVendorNotificationWarmup) return
         /*
-         * 华为 Android 12 需要等地图页恢复并获得焦点后再进入棋盘，避免授权页覆盖棋盘。
+         * 华为 12 版本系统需要等地图页恢复并获得焦点后再进入棋盘，避免授权页覆盖棋盘。
          */
         if (!mCanCompleteVendorNotificationWarmup || !mMapResumed || !mMapHasWindowFocus) return
 

@@ -36,6 +36,7 @@ class PlayGameStateController(
     private val mHandler = Handler(Looper.getMainLooper())
 
     fun init() {
+        // 进度条最大值直接复用整局秒数，后续每秒更新当前剩余时间即可。
         mTimeProgressBar.max = CountdownTimerContract.DEFAULT_TOTAL_SECONDS
         observeRemainingSeconds()
         observeGameState()
@@ -49,6 +50,7 @@ class PlayGameStateController(
         mViewModel.mRemainingSeconds.observe(mLifecycleOwner) { seconds ->
             val min = seconds / 60
             val sec = seconds % 60
+            // 文本和进度条都只依赖同一个剩余秒数源，避免界面内部出现不同步。
             mTimeProgressBar.progress = seconds
             mRemainingMins.text = String.format(Locale.ROOT, "%02d", min)
             mRemainingSecs.text = String.format(Locale.ROOT, "%02d", sec)
@@ -57,6 +59,7 @@ class PlayGameStateController(
     }
 
     private fun refreshCountdownColor(seconds: Int) {
+        // 最后十秒统一切红并播放提示音，强化时间压力。
         if (seconds in 1..10) {
             setCountdownTextColor(R.color.red)
             PlayMusic.getInstance().playTimesUp()
@@ -78,6 +81,7 @@ class PlayGameStateController(
         }
 
         mViewModel.mHasWon.observe(mLifecycleOwner) { won ->
+            // 只有未暂停状态下的真实通关才触发动画，避免恢复页面时重复播放。
             if (won && !mIsPaused()) {
                 mCountdownCoordinator.stop()
                 PlayMusic.getInstance().stopTimesUp()
@@ -93,6 +97,7 @@ class PlayGameStateController(
 
     private fun playWinAnimation() {
         val board = mViewModel.mBoard.value ?: return
+        // 通关动画前先清掉高亮，让逐行闪烁只保留数字本身。
         for (row in 0 until 9) {
             for (col in 0 until 9) {
                 board[row][col].mStatus = PlayViewModel.SELECT_NONE
@@ -103,6 +108,7 @@ class PlayGameStateController(
 
         val winningAnims = Array(9) { AnimatorSet() }
         for (line in 8 downTo 0) {
+            // 从底部到顶部逐行闪动，和原项目视觉节奏保持一致。
             winningAnims[line] = AnimatorSet().apply {
                 playTogether(
                     ObjectAnimator.ofInt(mBroadView, "TextSize", 80, 100, 80),
@@ -122,6 +128,7 @@ class PlayGameStateController(
     }
 
     private fun showLoseState() {
+        // 失败态先冻结棋盘和音效，再异步落库，最后延迟弹出失败弹窗。
         mBroadView.setWrong(true)
         PlayMusic.getInstance().stopTimesUp()
         PlayMusic.getInstance().playLosing()
@@ -137,6 +144,7 @@ class PlayGameStateController(
         mBroadView.setWrong(true)
         PlayMusic.getInstance().playInputWrong()
         mViewModel.setCanInsert(false)
+        // 错误提示期间临时冻结输入，等恢复原值后再放开继续操作。
         mHandler.postDelayed({
             mViewModel.revertWrongInput(mViewModel.getCurrentRow(), mViewModel.getCurrentCol())
             mBroadView.initData(mViewModel.mBoard.value!!)

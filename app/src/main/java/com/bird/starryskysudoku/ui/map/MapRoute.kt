@@ -4,6 +4,7 @@ import android.content.Context
 import android.content.Intent
 
 object MapRoute {
+    // 地图页通过这些参数区分来自首页、胜利页和失败页的不同滚动与提示需求。
     const val EXTRA_FLASH_HOME = "flash_home"
     const val EXTRA_ROLL_LEVEL = "roll"
     const val EXTRA_NEXT_LEVEL = "next"
@@ -32,6 +33,7 @@ object MapRoute {
 
     fun consumeHomeFlashRequest(intent: Intent, fromPrefs: Boolean): Boolean {
         val fromIntent = intent.getBooleanExtra(EXTRA_FLASH_HOME, false)
+        // 读取后立即清掉一次性参数，避免页面复用时重复闪烁。
         intent.removeExtra(EXTRA_FLASH_HOME)
         return fromIntent || fromPrefs
     }

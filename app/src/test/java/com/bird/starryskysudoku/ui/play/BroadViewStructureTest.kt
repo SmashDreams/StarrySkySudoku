@@ -19,4 +19,14 @@ class BroadViewStructureTest {
         assertTrue(source.contains("private val mCellRect"))
         assertFalse(source.contains("drawBitmap(mProblemLight, null, rect, Paint())"))
     }
+
+    @Test
+    fun broadViewUsesStandaloneBoardCellRenderModel() {
+        val boardCell = File("src/main/java/com/bird/starryskysudoku/ui/play/BoardCell.kt")
+
+        assertTrue(boardCell.isFile)
+        assertTrue(source.contains("Array<Array<BoardCell>>"))
+        assertFalse(source.contains("PlayViewModel.CellData"))
+        assertFalse(boardCell.readText().contains("PlayViewModel"))
+    }
 }

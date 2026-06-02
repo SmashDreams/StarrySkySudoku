@@ -27,6 +27,7 @@ class MyDialogManager private constructor() {
     }
 
     fun show(dialog: MyDialog) {
+        // 统一做显隐保护，避免重复显示或关闭导致状态异常。
         if (!dialog.isShowing) dialog.show()
     }
 
