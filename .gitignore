@@ -21,3 +21,6 @@ CODE_REVIEW_REPORT.md
 CLAUDE.md
 docs/
 .worktrees/
+
+# Local stress-test artifacts
+artifacts/
