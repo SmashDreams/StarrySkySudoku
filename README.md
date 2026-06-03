@@ -90,13 +90,13 @@ projects/
   StarrySkyTeaHouse/
 ```
 
-星空茶苑会引用 `../StarrySkySudoku/shared-contracts/` 中的共享契约，并可在 `StarrySkyTeaHouse` 目录下执行 `./gradlew syncBundledSudokuApk`，重新内置当前星空数独 Debug APK。
+星空茶苑会引用 `../StarrySkySudoku/shared-contracts/` 中的共享契约，并可在 `StarrySkyTeaHouse` 目录下执行 `./gradlew syncBundledSudokuApk`，重新内置当前星空数独 Release APK。
 
 ## 构建
 项目使用 Gradle Wrapper 构建：
 
 ```bash
-./gradlew assembleDebug
+./gradlew assembleRelease
 ```
 
 运行本地单元测试：

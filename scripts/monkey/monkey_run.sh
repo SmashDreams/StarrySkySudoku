@@ -2,6 +2,9 @@
 
 set -euo pipefail
 
+SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+PROJECT_DIR="$(cd "$SCRIPT_DIR/../.." && pwd)"
+
 PACKAGE="com.bird.starryskysudoku"
 EVENTS=50000
 THROTTLE_MS=200
@@ -10,8 +13,8 @@ SEED=""
 DEVICE=""
 CAPTURE_BUGREPORT=1
 AUTO_LAUNCH=1
-OUTPUT_ROOT="artifacts/monkey"
-APK_PATH="app/build/outputs/apk/debug/app-debug.apk"
+OUTPUT_ROOT="$PROJECT_DIR/artifacts/monkey"
+APK_PATH="$PROJECT_DIR/app/build/outputs/apk/debug/app-debug.apk"
 FRESH_GRANT_MODE=0
 
 usage() {
@@ -503,9 +506,9 @@ LOGCAT_CRASH_PID=$!
 "${ADB[@]}" logcat -v threadtime ActivityTaskManager:I ActivityManager:I WindowManager:I monkey:I *:S > "$LOGCAT_EVENTS" &
 LOGCAT_EVENTS_PID=$!
 
-record_summary_line "run_dir=$RUN_DIR"
-record_summary_line "status=running"
-record_summary_line "interventions=0"
+record_summary_line "运行目录: $RUN_DIR"
+record_summary_line "运行状态: 运行中"
+record_summary_line "自动恢复次数: 0"
 
 remaining_events="$EVENTS"
 batch_index=0
@@ -560,28 +563,28 @@ sleep 3
 
 if [[ "$CAPTURE_BUGREPORT" -eq 1 ]]; then
   if "${ADB[@]}" bugreport "$BUGREPORT_FILE" >/dev/null 2>&1; then
-    record_summary_line "bugreport=$BUGREPORT_FILE"
+    record_summary_line "Bugreport: $BUGREPORT_FILE"
   else
-    record_summary_line "bugreport=failed"
+    record_summary_line "Bugreport: 抓取失败"
   fi
 else
-  record_summary_line "bugreport=skipped"
+  record_summary_line "Bugreport: 已跳过"
 fi
 
-collect_dropbox_package_entries "crash" "fatal_or_native_crash_matches"
-collect_dropbox_package_entries "anr" "anr_matches"
-collect_package_matches "Process ${PACKAGE_REGEX} \\(pid .* has died" "$LOGCAT_ALL" "process_death_matches"
-collect_dropbox_package_entries "issue" "dropbox_issue_matches"
-collect_matches "Events injected" "$MONKEY_LOG" "monkey_completion_markers"
-record_summary_line "interventions=$INTERVENTION_COUNT"
+collect_dropbox_package_entries "crash" "崩溃/原生崩溃"
+collect_dropbox_package_entries "anr" "ANR 无响应"
+collect_package_matches "Process ${PACKAGE_REGEX} \\(pid .* has died" "$LOGCAT_ALL" "进程死亡"
+collect_dropbox_package_entries "issue" "Dropbox 问题条目"
+collect_matches "Events injected" "$MONKEY_LOG" "Monkey 事件注入批次数"
+record_summary_line "自动恢复次数: $INTERVENTION_COUNT"
 
 if [[ "$remaining_events" -eq 0 ]]; then
-  record_summary_line "status=finished"
+  record_summary_line "运行状态: 已完成"
 else
-  record_summary_line "status=ended_with_interrupt_or_error"
+  record_summary_line "运行状态: 中断或异常退出"
 fi
 
-record_summary_line "artifacts_ready=1"
+record_summary_line "产物就绪: 是"
 
 echo
 echo "Monkey run complete."
