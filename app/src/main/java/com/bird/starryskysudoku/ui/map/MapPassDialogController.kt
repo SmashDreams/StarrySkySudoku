@@ -34,22 +34,22 @@ class MapPassDialogController(
     private var mActiveDialog: MyDialog? = null
     private var mInteractionLocked = false
 
-    val lightStars: Int
+    val mLightStarsValue: Int
         get() = mLightStars
 
-    val hasPendingWinNavigation: Boolean
+    val mHasPendingWinNavigation: Boolean
         get() = mCompletedNum != null
 
-    val pendingCompletedLevel: Int?
+    val mPendingCompletedLevel: Int?
         get() = mCompletedNum?.toIntOrNull()
 
-    val hasPendingReturnAnchor: Boolean
+    val mHasPendingReturnAnchor: Boolean
         get() = mReturnAnchorPosition != null && mReturnAnchorOffsetPx != null
 
-    val pendingReturnAnchorPosition: Int?
+    val mPendingReturnAnchorPosition: Int?
         get() = mReturnAnchorPosition
 
-    val pendingReturnAnchorOffsetPx: Int?
+    val mPendingReturnAnchorOffsetPx: Int?
         get() = mReturnAnchorOffsetPx
 
     fun clearPendingReturnAnchor() {

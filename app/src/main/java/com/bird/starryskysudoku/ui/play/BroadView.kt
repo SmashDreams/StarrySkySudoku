@@ -19,6 +19,7 @@ class BroadView : AppCompatImageView {
         const val EMPTY = 0
     }
 
+    // 棋盘本体数据和候选数数据分开保存，便于分别重绘格子底图与九宫笔记。
     private var mData: Array<Array<BoardCell>> = Array(9) { Array(9) { BoardCell(0, 0, "0", 0) } }
     private var mTagData: Array<Array<TagData?>> = Array(9) { arrayOfNulls(9) }
     private var mWidth = 0f
@@ -140,6 +141,8 @@ class BroadView : AppCompatImageView {
                 }
             }
         }
+
+        // 格子底图画完后，数字、笔记和边框分别在后续绘制阶段叠加。
     }
 
     override fun dispatchDraw(canvas: Canvas) {
@@ -236,8 +239,8 @@ class BroadView : AppCompatImageView {
          */
         val boardBorder = SudokuBoardGeometry.boardBorderRect(width.toFloat())
         mOuterRect.set(
-            boardBorder.left.toInt(), boardBorder.top.toInt(),
-            boardBorder.right.toInt(), boardBorder.bottom.toInt()
+            boardBorder.mLeft.toInt(), boardBorder.mTop.toInt(),
+            boardBorder.mRight.toInt(), boardBorder.mBottom.toInt()
         )
         canvas.drawRect(mOuterRect, mOuterBorderPaint)
     }
@@ -264,6 +267,7 @@ class BroadView : AppCompatImageView {
 
     override fun performClick(): Boolean {
         super.performClick()
+        // 统一在点击完成后再把最终格子位置回调给上层，兼容无障碍点击链路。
         mListener?.onTouch(mRow, mCol, mBigBlock)
         return true
     }

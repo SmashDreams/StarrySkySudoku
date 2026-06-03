@@ -26,12 +26,14 @@ object LauncherSessionReader {
                 if (loggedIn && username.isNotBlank()) username else GUEST_USERNAME
             } ?: GUEST_USERNAME
         } catch (e: RuntimeException) {
-            Log.w(TAG, "Unable to read launcher session; using guest", e)
+            // 共享提供器异常时不向上传播，统一降级成游客继续游戏流程。
+            Log.w(TAG, "读取 launcher session 失败，改用 guest 身份", e)
             GUEST_USERNAME
         }
     }
 
     private fun Cursor.readString(columnName: String): String {
+        // 共享契约字段允许缺失，读不到时直接按空串处理，避免外部版本差异导致崩溃。
         val index = getColumnIndex(columnName)
         return if (index >= 0) getString(index).orEmpty().trim() else ""
     }

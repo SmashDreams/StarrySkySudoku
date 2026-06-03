@@ -53,6 +53,19 @@ class UserProgressRepositoryTest {
     }
 
     @Test
+    fun ensureUserMapBackfillsMissingLevelsWithoutOverwritingExistingRows() = runBlocking {
+        seedBaseMap()
+        val repository = UserProgressRepository(mDb)
+
+        repository.ensureUserMap(LauncherSessionReader.GUEST_USERNAME)
+
+        val rows = mDb.userMapDao().getAllForUser(LauncherSessionReader.GUEST_USERNAME)
+        assertEquals(40, rows.size)
+        assertEquals(7, requireNotNull(mDb.userMapDao().getByUserAndPass(LauncherSessionReader.GUEST_USERNAME, 1)).mPlayTime)
+        assertEquals(PassStatus.LOCKED, requireNotNull(mDb.userMapDao().getByUserAndPass(LauncherSessionReader.GUEST_USERNAME, 40)).mStatus)
+    }
+
+    @Test
     fun completePassIncrementsPlayTimeAndKeepsCompletedNextPass() = runBlocking {
         seedBaseMap()
         val repository = UserProgressRepository(mDb)

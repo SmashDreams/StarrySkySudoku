@@ -9,16 +9,16 @@ object GuideDesignCanvas {
     const val DESIGN_HEIGHT = 1280
 
     data class Frame(
-        val scale: Float,
-        val width: Int,
-        val height: Int,
-        val left: Int,
-        val top: Int
+        val mScale: Float,
+        val mWidth: Int,
+        val mHeight: Int,
+        val mLeft: Int,
+        val mTop: Int
     )
 
     fun fit(parentWidth: Int, parentHeight: Int): Frame {
         if (parentWidth <= 0 || parentHeight <= 0) {
-            return Frame(scale = 0f, width = 0, height = 0, left = 0, top = 0)
+            return Frame(mScale = 0f, mWidth = 0, mHeight = 0, mLeft = 0, mTop = 0)
         }
 
         // 始终保持完整设计稿可见，多余空间留给四周留白。
@@ -29,11 +29,11 @@ object GuideDesignCanvas {
         val width = (DESIGN_WIDTH * scale).roundToInt()
         val height = (DESIGN_HEIGHT * scale).roundToInt()
         return Frame(
-            scale = scale,
-            width = width,
-            height = height,
-            left = (parentWidth - width) / 2,
-            top = (parentHeight - height) / 2
+            mScale = scale,
+            mWidth = width,
+            mHeight = height,
+            mLeft = (parentWidth - width) / 2,
+            mTop = (parentHeight - height) / 2
         )
     }
 }

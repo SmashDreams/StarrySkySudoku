@@ -5,6 +5,7 @@ import com.bird.starryskysudoku.data.entity.MapEntity
 import com.bird.starryskysudoku.data.entity.UserMapEntity
 
 class MapRepository(private val mDb: AppDatabase) {
+    // 地图仓储负责保证“用户进度存在”与“页面展示结构可用”这两件事同时成立。
     private val mUserProgressRepository = UserProgressRepository(mDb)
 
     suspend fun loadMapData(username: String): List<Array<MapEntity?>> {
@@ -23,11 +24,13 @@ class MapRepository(private val mDb: AppDatabase) {
 
     suspend fun getPassStatus(username: String, passNum: Int): String? {
         val safeUsername = mUserProgressRepository.ensureUserMap(username)
+        // 查询前先确保该用户的整张地图已补齐，避免新用户直接读到空结果。
         return mDb.userMapDao().getByUserAndPass(safeUsername, passNum)?.mStatus
     }
 
     suspend fun getPassTimes(username: String, passNum: Int): String {
         val safeUsername = mUserProgressRepository.ensureUserMap(username)
+        // 弹窗文案直接使用字符串次数，仓储层顺手把数据库整数转成展示格式。
         return (mDb.userMapDao().getByUserAndPass(safeUsername, passNum)?.mPlayTime ?: 0).toString()
     }
 
@@ -39,6 +42,7 @@ class MapRepository(private val mDb: AppDatabase) {
     suspend fun incrementPlayTime(username: String, passNum: Int) {
         val safeUsername = mUserProgressRepository.ensureUserMap(username)
         val map = mDb.userMapDao().getByUserAndPass(safeUsername, passNum)
+        // 游玩次数按读取旧值再加一的方式更新，兼容首次进入该关时还没有历史次数的情况。
         mDb.userMapDao().updatePlayTime(safeUsername, passNum, (map?.mPlayTime ?: 0) + 1)
     }
 

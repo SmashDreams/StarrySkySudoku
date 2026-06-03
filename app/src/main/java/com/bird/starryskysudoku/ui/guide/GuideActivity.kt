@@ -6,7 +6,7 @@ import android.view.View
 import android.widget.ProgressBar
 import android.widget.TextView
 import androidx.activity.OnBackPressedCallback
-import androidx.appcompat.app.AppCompatActivity
+import com.bird.starryskysudoku.ui.common.BaseLocalizedActivity
 import androidx.core.content.edit
 import androidx.lifecycle.lifecycleScope
 import com.bird.starryskysudoku.R
@@ -19,7 +19,7 @@ import com.bird.starryskysudoku.ui.play.BroadView
 import com.bird.starryskysudoku.ui.play.SudokuBoardGeometry
 import kotlinx.coroutines.launch
 
-class GuideActivity : AppCompatActivity() {
+class GuideActivity : BaseLocalizedActivity() {
 
     private val mSteps = GuideStep.entries.toTypedArray()
     private lateinit var mBinding: ActivityGuidepageBinding
@@ -135,10 +135,10 @@ class GuideActivity : AppCompatActivity() {
         // 规则演示不是只框住一个格子，而是把同行、同列和同宫拆成多个聚焦区域。
         return GuideRuleHighlightCells.regionsFor(row, col).map { region ->
             boardAreaRect(
-                startRow = region.startRow,
-                startCol = region.startCol,
-                rowSpan = region.rowSpan,
-                colSpan = region.colSpan,
+                startRow = region.mStartRow,
+                startCol = region.mStartCol,
+                rowSpan = region.mRowSpan,
+                colSpan = region.mColSpan,
                 leftTopPadding = 3f,
                 rightBottomPadding = 2f
             )
@@ -225,7 +225,7 @@ class GuideActivity : AppCompatActivity() {
     }
 
     private fun SudokuBoardGeometry.BoardRect.toRectF(): RectF {
-        return RectF(left, top, right, bottom)
+        return RectF(mLeft, mTop, mRight, mBottom)
     }
 
     private fun demoCellIndex(): Pair<Int, Int> {

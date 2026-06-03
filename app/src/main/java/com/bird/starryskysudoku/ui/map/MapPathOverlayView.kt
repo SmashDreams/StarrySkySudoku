@@ -19,6 +19,7 @@ class MapPathOverlayView @JvmOverloads constructor(
     defStyleAttr: Int = 0
 ) : View(context, attrs, defStyleAttr) {
 
+    // 路径层只负责虚线连接关系，星星图片和数字文本仍由列表项自己绘制。
     private val mPathPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
         style = Paint.Style.STROKE
         strokeWidth = dpToPx(PATH_WIDTH_DP)
@@ -36,6 +37,7 @@ class MapPathOverlayView @JvmOverloads constructor(
         previousRowBelow: Array<MapEntity?>?,
         hasNextRowAbove: Boolean
     ) {
+        // 绑定当前行与相邻行数据后统一重绘，避免适配器为每条连接线单独维护视图。
         mStars = stars
         mRow = row
         mPreviousRowBelow = previousRowBelow
@@ -68,6 +70,7 @@ class MapPathOverlayView @JvmOverloads constructor(
 
     private fun drawIncomingConnector(canvas: Canvas, centers: List<PointF>) {
         val previousRow = mPreviousRowBelow ?: return
+        // 每一行都从下方上一行的第四颗星延续过来，所以入口固定连向当前行第一颗星。
         val boundary = PointF(crossRowBoundaryX(centers), height.toFloat())
         drawSegment(
             canvas = canvas,
@@ -83,6 +86,7 @@ class MapPathOverlayView @JvmOverloads constructor(
         val lastLevel = mRow.getOrNull(3)?.mPassNum ?: return
         if (!mHasNextRowAbove || lastLevel >= MAX_LEVEL) return
 
+        // 当前行最后一颗星如果不是最终关，就向上接到下一行入口形成连续路径。
         val boundary = PointF(crossRowBoundaryX(centers), 0f)
         drawSegment(
             canvas = canvas,
@@ -100,6 +104,7 @@ class MapPathOverlayView @JvmOverloads constructor(
         val nextFirstY = first.y - height
         val denominator = nextFirstY - last.y
         if (denominator == 0f) return (first.x + last.x) / 2f
+        // 用当前行末星和下一行首星的连线，反推它与上下边界的交点位置。
         val progressToTopBoundary = (0f - last.y) / denominator
         return last.x + (first.x - last.x) * progressToTopBoundary
     }
@@ -138,6 +143,7 @@ class MapPathOverlayView @JvmOverloads constructor(
 
         val ux = dx / length
         val uy = dy / length
+        // 线段两端向内收一点，避免虚线直接扎进星星贴图内部。
         return PointF(
             from.x + ux * (if (trimStart) inset else 0f),
             from.y + uy * (if (trimStart) inset else 0f)

@@ -14,6 +14,6 @@ class PlayViewModelFactory(
         if (modelClass.isAssignableFrom(PlayViewModel::class.java)) {
             return PlayViewModel(PlayRepository(mDb)) as T
         }
-        throw IllegalArgumentException("Unknown ViewModel class")
+        throw IllegalArgumentException("未知的 ViewModel 类型")
     }
 }

@@ -13,6 +13,7 @@ object GameResultContract {
     const val CONTENT_URI_BASE = SharedGameResultsContract.CONTENT_URI_BASE
 
     object Results {
+        // 这些范围和字段名都直接跟随公共契约，避免本应用和宿主对有效数据理解不一致。
         const val MIN_LEVEL = SharedGameResultsContract.Results.MIN_LEVEL
         const val MAX_LEVEL = SharedGameResultsContract.Results.MAX_LEVEL
         const val MAX_GAME_SECONDS = SharedGameResultsContract.Results.MAX_GAME_SECONDS

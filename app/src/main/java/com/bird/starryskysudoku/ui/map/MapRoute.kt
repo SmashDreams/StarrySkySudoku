@@ -37,12 +37,14 @@ object MapRoute {
             .putExtra(EXTRA_LOSE_LEVEL, level.toString())
     }
 
+    // 进入棋盘页前记录当前地图锚点，返回时可恢复到离开前看到的位置。
     fun putReturnAnchor(intent: Intent, adapterPosition: Int, topOffsetPx: Int): Intent {
         return intent
             .putExtra(EXTRA_RETURN_ANCHOR_POSITION, adapterPosition)
             .putExtra(EXTRA_RETURN_ANCHOR_OFFSET, topOffsetPx)
     }
 
+    // 部分跳转会重建 Intent，这里把地图滚动锚点一并透传，避免返回后跳到默认位置。
     fun copyReturnAnchor(target: Intent, source: Intent): Intent {
         if (source.hasExtra(EXTRA_RETURN_ANCHOR_POSITION) && source.hasExtra(EXTRA_RETURN_ANCHOR_OFFSET)) {
             val adapterPosition = source.getIntExtra(EXTRA_RETURN_ANCHOR_POSITION, RECYCLER_VIEW_NO_POSITION)
@@ -54,6 +56,12 @@ object MapRoute {
             )
         }
         return target
+    }
+
+    // 语言切换等场景会主动清掉旧锚点，避免列表布局变化后复用过期坐标。
+    fun clearReturnAnchor(intent: Intent) {
+        intent.removeExtra(EXTRA_RETURN_ANCHOR_POSITION)
+        intent.removeExtra(EXTRA_RETURN_ANCHOR_OFFSET)
     }
 
     private const val RECYCLER_VIEW_NO_POSITION = -1

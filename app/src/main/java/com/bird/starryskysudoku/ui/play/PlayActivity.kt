@@ -1,10 +1,12 @@
 package com.bird.starryskysudoku.ui.play
 
 import android.os.Bundle
+import android.view.View
 import android.widget.ImageView
 import android.widget.ProgressBar
 import android.widget.TextView
-import androidx.appcompat.app.AppCompatActivity
+import com.bird.starryskysudoku.BuildConfig
+import com.bird.starryskysudoku.ui.common.BaseLocalizedActivity
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.lifecycleScope
 import com.bird.starryskysudoku.account.LauncherSessionReader
@@ -14,10 +16,11 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
-class PlayActivity : AppCompatActivity() {
+class PlayActivity : BaseLocalizedActivity() {
 
     companion object {
         private const val MAX_LEVEL = 40
+        private const val DEBUG_COMPLETE_TOGGLE_TAP_COUNT = 5
         const val EXTRA_USERNAME = PlayRoute.EXTRA_USERNAME
     }
 
@@ -54,6 +57,7 @@ class PlayActivity : AppCompatActivity() {
     private var mNum = "1"
     private var mCurrentUsername = LauncherSessionReader.GUEST_USERNAME
     private var mTagData = Array(9) { arrayOfNulls<TagData>(9) }
+    private var mDebugCompleteToggleTapCount = 0
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -72,6 +76,7 @@ class PlayActivity : AppCompatActivity() {
             mActivity = this,
             mGetRemainingSeconds = { mViewModel.getRemainingSeconds() },
             mGetLevel = { parseLevel(mNum) },
+            mGetUsername = { mCurrentUsername },
             mCanStart = {
                 mViewModel.mHasWon.value != true && mViewModel.mTimerFinished.value != true
             },
@@ -163,8 +168,9 @@ class PlayActivity : AppCompatActivity() {
         mGameStateController.init()
         mInputController.init()
         mNavigationController.init()
-        initDebugCompleteButton()
+        if (BuildConfig.DEBUG) initDebugCompleteButton()
         mBinding.root.post {
+            // 等首帧布局完成后再启动倒计时，避免恢复页面时先收到广播再初始化控件。
             if (!mIsPaused) mCountdownCoordinator.start()
         }
     }
@@ -225,9 +231,25 @@ class PlayActivity : AppCompatActivity() {
     }
 
     private fun initDebugCompleteButton() {
+        // 调试入口默认隐藏，连续点击固定区域后才显式暴露，避免影响正式交互。
+        mDebugCompleteButton.visibility = View.GONE
+        val toggleDebugComplete = View.OnClickListener {
+            mDebugCompleteToggleTapCount++
+            if (mDebugCompleteToggleTapCount < DEBUG_COMPLETE_TOGGLE_TAP_COUNT) return@OnClickListener
+            mDebugCompleteToggleTapCount = 0
+            mDebugCompleteButton.visibility = if (mDebugCompleteButton.visibility == View.VISIBLE) {
+                View.GONE
+            } else {
+                View.VISIBLE
+            }
+        }
+        mBinding.linearlayout3.setOnClickListener(toggleDebugComplete)
+        mBinding.textview25.setOnClickListener(toggleDebugComplete)
+        mPlayNum.setOnClickListener(toggleDebugComplete)
         mDebugCompleteButton.setOnClickListener {
             if (mViewModel.mHasWon.value == true) return@setOnClickListener
             lifecycleScope.launch {
+                // 直接走正常通关链路，验证胜利弹窗和地图解锁逻辑是否完整。
                 val level = parseLevel(mNum)
                 mViewModel.updatePassStatus(mCurrentUsername, level, level + 1)
                 saveAndQueryGameResultThroughProvider(level, completed = true)

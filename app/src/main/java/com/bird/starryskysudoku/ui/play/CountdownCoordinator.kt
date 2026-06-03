@@ -14,6 +14,7 @@ class CountdownCoordinator(
     private val mActivity: AppCompatActivity,
     private val mGetRemainingSeconds: () -> Int,
     private val mGetLevel: () -> Int,
+    private val mGetUsername: () -> String,
     private val mCanStart: () -> Boolean,
     private val mOnTick: (Int) -> Unit
 ) {
@@ -50,14 +51,16 @@ class CountdownCoordinator(
 
     fun start() {
         if (!mCanStart()) return
-        // 每次重启服务时都带上当前剩余时间，让暂停恢复不会丢进度。
+        // 页面恢复或重新进入时把关卡、用户名和剩余秒数一并交给服务，保证倒计时可无缝续跑。
         val serviceIntent = Intent(mActivity, CountdownTimerService::class.java)
             .putExtra(CountdownTimerContract.EXTRA_INITIAL_SECONDS, mGetRemainingSeconds())
             .putExtra(CountdownTimerContract.EXTRA_LEVEL_NUMBER, mGetLevel())
+            .putExtra(CountdownTimerContract.EXTRA_USERNAME, mGetUsername())
         try {
             mActivity.startService(serviceIntent)
         } catch (exception: RuntimeException) {
-            Log.w(TAG, "Unable to start countdown service while app state is changing", exception)
+            // 页面正在切换前后台或销毁时，启动服务可能短暂失败，这里只做保护性兜底。
+            Log.w(TAG, "app 状态切换期间无法启动倒计时 service", exception)
         }
     }
 

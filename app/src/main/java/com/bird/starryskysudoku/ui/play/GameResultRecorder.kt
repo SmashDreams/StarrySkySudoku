@@ -18,6 +18,7 @@ class GameResultRecorder(
         val elapsedSeconds = (CountdownTimerContract.DEFAULT_TOTAL_SECONDS - remainingSeconds)
             .coerceAtLeast(0)
         return try {
+            // 战绩统一经由共享契约组装内容值，保证本应用和外部读取方字段完全一致。
             val values = GameResultContract.Results.toContentValues(
                 level = level,
                 elapsedSeconds = elapsedSeconds,
@@ -30,6 +31,7 @@ class GameResultRecorder(
             // 再查一遍刚插入的数据，确认提供器和权限链路都真正可用。
             mContentResolver.query(insertedUri, null, null, null, null)?.use { cursor ->
                 if (!cursor.moveToFirst()) return false
+                // 这里只验证关键字段都能正常读回，不在页面层重复解析完整业务对象。
                 cursor.getInt(cursor.getColumnIndexOrThrow(GameResultContract.Results.COLUMN_LEVEL))
                 cursor.getInt(cursor.getColumnIndexOrThrow(GameResultContract.Results.COLUMN_ELAPSED_SECONDS))
                 cursor.getInt(cursor.getColumnIndexOrThrow(GameResultContract.Results.COLUMN_COMPLETED))

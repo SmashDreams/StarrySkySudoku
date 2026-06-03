@@ -4,28 +4,28 @@ import android.content.Context
 import com.bird.starryskysudoku.AppSettings
 
 object BgmMusicController {
-    private var mService: BgmMusicService? = null
+    private var sService: BgmMusicService? = null
 
     fun onServiceBound(service: BgmMusicService) {
-        mService = service
+        sService = service
         playIfEnabled(service)
     }
 
     fun onServiceUnbound(service: BgmMusicService?) {
-        if (mService === service || service == null) mService = null
+        if (sService === service || service == null) sService = null
     }
 
     fun playIfEnabled(context: Context) {
         if (!isMusicEnabled(context)) return
-        mService?.playIfEnabled()
+        sService?.playIfEnabled()
     }
 
     fun pause() {
-        mService?.pause()
+        sService?.pause()
     }
 
     fun stop(context: Context) {
-        mService?.stopPlayback()
+        sService?.stopPlayback()
     }
 
     private fun isMusicEnabled(context: Context): Boolean {

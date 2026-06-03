@@ -18,18 +18,24 @@ class UserProgressRepository(private val mDb: AppDatabase) {
 
     suspend fun ensureUserMap(username: String): String {
         val safeUsername = username.trim().ifEmpty { LauncherSessionReader.GUEST_USERNAME }
-        if (mDb.userMapDao().getAllForUser(safeUsername).isNotEmpty()) return safeUsername
-
-        // 首次进入地图的用户自动生成完整四十关进度，第一关默认可玩。
-        val userRows = (1..MAX_LEVEL).map { passNum ->
-            UserMapEntity(
-                mUsername = safeUsername,
-                mPassNum = passNum,
-                mStatus = if (passNum == 1) PassStatus.TODO else PassStatus.LOCKED,
-                mPlayTime = 0
-            )
+        val existingPasses = mDb.userMapDao()
+            .getAllForUser(safeUsername)
+            .map { it.mPassNum }
+            .toSet()
+        val missingRows = (1..MAX_LEVEL)
+            .filterNot { it in existingPasses }
+            .map { passNum ->
+                UserMapEntity(
+                    mUsername = safeUsername,
+                    mPassNum = passNum,
+                    mStatus = if (passNum == 1) PassStatus.TODO else PassStatus.LOCKED,
+                    mPlayTime = 0
+                )
+            }
+        if (missingRows.isNotEmpty()) {
+            // 只补齐缺失关卡，不覆盖已有状态和游玩次数。
+            mDb.userMapDao().insertAll(missingRows)
         }
-        mDb.userMapDao().insertAll(userRows)
         return safeUsername
     }
 

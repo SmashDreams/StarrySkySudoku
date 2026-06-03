@@ -4,14 +4,13 @@ import android.content.Context
 import android.content.Intent
 import android.widget.ImageView
 import androidx.appcompat.app.AppCompatActivity
-import androidx.appcompat.app.AppCompatDelegate
 import androidx.core.content.edit
-import androidx.core.os.LocaleListCompat
 import com.bird.starryskysudoku.AppSettings
 import com.bird.starryskysudoku.R
 import com.bird.starryskysudoku.databinding.DialogSettingsBinding
 import com.bird.starryskysudoku.media.BgmMusicController
 import com.bird.starryskysudoku.media.PlayMusic
+import com.bird.starryskysudoku.ui.common.AppLocaleContext
 import com.bird.starryskysudoku.ui.common.startActivityWithTransition
 import com.bird.starryskysudoku.ui.dialog.MyDialog
 import com.bird.starryskysudoku.ui.dialog.MyDialogManager
@@ -19,7 +18,8 @@ import com.bird.starryskysudoku.ui.howtoplay.HowToPlayActivity
 
 class MapSettingsController(
     private val mActivity: AppCompatActivity,
-    private val mSettingsButton: ImageView
+    private val mSettingsButton: ImageView,
+    private val mOnLanguageChanged: () -> Unit = {}
 ) {
     private lateinit var mSettingsDialog: MyDialog
     private var mMusicOpened = true
@@ -33,8 +33,7 @@ class MapSettingsController(
         val musicPrefs = mActivity.getSharedPreferences(AppSettings.PREFS_MUSIC, Context.MODE_PRIVATE)
         mMusicOpened = musicPrefs.getBoolean(AppSettings.KEY_MUSIC, true)
         mAudioOpened = musicPrefs.getBoolean(AppSettings.KEY_AUDIO, true)
-        mLanguage = mActivity.getSharedPreferences(AppSettings.PREFS_LANGUAGE, Context.MODE_PRIVATE)
-            .getString(AppSettings.KEY_LANGUAGE, AppSettings.DEFAULT_LANGUAGE) ?: AppSettings.DEFAULT_LANGUAGE
+        mLanguage = readEffectiveLanguage()
 
         val settingsBinding = DialogSettingsBinding.inflate(mActivity.layoutInflater)
         mSettingsDialog = MyDialogManager.getInstance()
@@ -62,6 +61,7 @@ class MapSettingsController(
             audioSwitch.setImageResource(
                 if (mAudioOpened) R.drawable.icon_sound_on else R.drawable.icon_sound_off
             )
+            refreshSettingsTexts(settingsBinding)
             MyDialogManager.getInstance().show(mSettingsDialog)
         }
 
@@ -86,8 +86,13 @@ class MapSettingsController(
             mActivity.getSharedPreferences(AppSettings.PREFS_LANGUAGE, Context.MODE_PRIVATE).edit {
                 putString(AppSettings.KEY_LANGUAGE, newLang)
             }
-            AppCompatDelegate.setApplicationLocales(LocaleListCompat.forLanguageTags(newLang))
-            MyDialogManager.getInstance().hide(mSettingsDialog)
+            // 不重建页面，直接刷新当前资源和地图页文案。
+            AppLocaleContext.applyLanguageToCurrentResources(mActivity, newLang)
+            refreshSettingsTexts(settingsBinding)
+            mOnLanguageChanged()
+            // 语言切换后列表高度和文案可能变化，旧锚点不再可靠。
+            MapRoute.clearReturnAnchor(mActivity.intent)
+            MyDialogManager.getInstance().hideImmediately(mSettingsDialog)
         }
 
         musicSwitch.setOnClickListener {
@@ -121,4 +126,13 @@ class MapSettingsController(
         }
     }
 
+    private fun refreshSettingsTexts(settingsBinding: DialogSettingsBinding) {
+        settingsBinding.textview5.setText(R.string.setting)
+        settingsBinding.settingsHowtoplay.setText(R.string.How)
+        settingsBinding.settingsLanguage.setText(R.string.language)
+    }
+
+    private fun readEffectiveLanguage(): String {
+        return AppLocaleContext.readEffectiveLanguage(mActivity)
+    }
 }

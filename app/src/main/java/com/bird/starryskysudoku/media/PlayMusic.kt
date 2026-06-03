@@ -30,6 +30,7 @@ class PlayMusic private constructor() {
         MAPLIGHTSTAR, TIMESUP
     }
 
+    // 资源映射、加载后的音效编号、以及正在播放的流编号分开缓存，便于按类型查找和停止。
     private lateinit var mSoundPool: SoundPool
     private lateinit var mTimesUpPool: SoundPool
     private lateinit var mPrefs: SharedPreferences
@@ -87,7 +88,7 @@ class PlayMusic private constructor() {
             }
             mSoundIdMap[type] = id
         }
-        Log.w(TAG, "Load music success!")
+        Log.w(TAG, "音效资源加载完成")
     }
 
     private fun isOpened(type: String): Boolean = mPrefs.getBoolean(type, true)
@@ -128,6 +129,7 @@ class PlayMusic private constructor() {
 
     fun playTimesUp() {
         if (mInitialized && isOpened(AppSettings.KEY_AUDIO)) {
+            // 超时提示音需要支持中途手动停止，所以保留这次播放对应的流编号。
             mStreamMap[MusicType.TIMESUP] = mTimesUpPool.play(
                 mSoundIdMap[MusicType.TIMESUP] ?: return, 1f, 1f, 1, 0, 1f)
         }
@@ -142,7 +144,10 @@ class PlayMusic private constructor() {
         try {
             mSoundPool.release()
             mTimesUpPool.release()
-        } catch (e: IllegalStateException) { e.printStackTrace() }
+        } catch (e: IllegalStateException) {
+            // 释放阶段即使池状态异常，也继续清理本地缓存，避免下次初始化读到脏状态。
+            e.printStackTrace()
+        }
         // 释放后把缓存索引一起清空，避免旧流编号在下次初始化后被误用。
         mSoundIdMap.clear()
         mStreamMap.clear()

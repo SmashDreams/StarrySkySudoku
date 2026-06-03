@@ -2,13 +2,13 @@ package com.bird.starryskysudoku.ui.howtoplay
 
 import android.os.Bundle
 import androidx.activity.OnBackPressedCallback
-import androidx.appcompat.app.AppCompatActivity
+import com.bird.starryskysudoku.ui.common.BaseLocalizedActivity
 import com.bird.starryskysudoku.R
 import com.bird.starryskysudoku.databinding.ActivityHowtoplaypageBinding
 import com.bird.starryskysudoku.media.PlayMusic
 import com.bird.starryskysudoku.ui.common.finishWithTransition
 
-class HowToPlayActivity : AppCompatActivity() {
+class HowToPlayActivity : BaseLocalizedActivity() {
     private lateinit var mBinding: ActivityHowtoplaypageBinding
 
     override fun onCreate(savedInstanceState: Bundle?) {

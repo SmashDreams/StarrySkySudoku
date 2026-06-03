@@ -9,19 +9,19 @@ import org.junit.Test
 import java.io.File
 
 class PassListAdapterStructureTest {
-    private val source = File("src/main/java/com/bird/starryskysudoku/ui/map/PassListAdapter.kt").readText()
+    private val mSource = File("src/main/java/com/bird/starryskysudoku/ui/map/PassListAdapter.kt").readText()
 
     @Test
     fun adapterDoesNotOwnDialogs() {
-        assertFalse(source.contains("MyDialog"))
-        assertFalse(source.contains("MyDialogManager"))
-        assertFalse(source.contains("R.layout.dialog_passcheck"))
+        assertFalse(mSource.contains("MyDialog"))
+        assertFalse(mSource.contains("MyDialogManager"))
+        assertFalse(mSource.contains("R.layout.dialog_passcheck"))
     }
 
     @Test
     fun adapterCancelsAnimationsWhenViewsAreRecycled() {
-        assertTrue(source.contains("override fun onViewRecycled"))
-        assertTrue(source.contains("cancelPendingAnimations"))
+        assertTrue(mSource.contains("override fun onViewRecycled"))
+        assertTrue(mSource.contains("cancelPendingAnimations"))
     }
 
     @Test
@@ -34,14 +34,14 @@ class PassListAdapterStructureTest {
         assertTrue(layout.contains("android:layout_marginTop=\"84dp\""))
         assertTrue(layout.contains("android:layout_marginTop=\"168dp\""))
         assertTrue(layout.contains("android:layout_marginTop=\"252dp\""))
-        assertTrue(source.contains("binding.pathOverlay"))
-        assertTrue(source.contains("mPathOverlay?.bind"))
-        assertTrue(source.contains("getPositionForLevel"))
-        assertTrue(source.contains("getTopOffsetDpForLevel"))
-        assertTrue(source.contains("LEVEL_VERTICAL_STEP_DP = 84"))
-        assertTrue(source.contains("previousRowBelow"))
-        assertTrue(source.contains("hasNextRowAbove"))
-        assertFalse(source.contains("mLines"))
+        assertTrue(mSource.contains("binding.pathOverlay"))
+        assertTrue(mSource.contains("mPathOverlay?.bind"))
+        assertTrue(mSource.contains("getPositionForLevel"))
+        assertTrue(mSource.contains("getTopOffsetDpForLevel"))
+        assertTrue(mSource.contains("LEVEL_VERTICAL_STEP_DP = 84"))
+        assertTrue(mSource.contains("previousRowBelow"))
+        assertTrue(mSource.contains("hasNextRowAbove"))
+        assertFalse(mSource.contains("mLines"))
         assertFalse(layout.contains("@+id/line_"))
         assertTrue(overlay.contains("canvas.drawLine"))
         assertTrue(overlay.contains("DashPathEffect"))

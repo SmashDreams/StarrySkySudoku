@@ -25,6 +25,7 @@ class PlayBoardController(
 
     private fun observeBoard() {
         mViewModel.mBoard.observe(mLifecycleOwner) { board ->
+            // 每次棋盘数据刷新时都补齐空格的候选数容器，确保后续笔记逻辑可直接使用。
             ensureTagData(board)
             mBroadView.initData(board)
             mBroadView.initTagData(mTagData)
@@ -85,6 +86,7 @@ class PlayBoardController(
     }
 
     private fun refreshTagNumberAlpha(row: Int, col: Int) {
+        // 选中空格且处于笔记模式时，数字键明暗直接反映当前格子的候选数状态。
         val tagData = mTagData[row][col]
         for (index in 0 until 9) {
             val tagged = tagData != null && tagData.haveTag((index + 1).toString())
@@ -94,6 +96,7 @@ class PlayBoardController(
     }
 
     private fun disableCellActions() {
+        // 棋盘尚未选中任何格子前，底部操作区默认全部禁用。
         setNumberEnabled(false)
         setActionEnabled(mTag, false)
         setActionEnabled(mRevoke, false)

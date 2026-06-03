@@ -17,5 +17,7 @@ class MyDialogStructureTest {
         assertTrue(source.contains("view.isEnabled = false"))
         assertTrue(source.contains("handler.postDelayed(runnable, interactionLockDurationMillis)"))
         assertTrue(source.contains("if (interactionLocked) return"))
+        assertTrue(source.contains("dismissImmediately()"))
+        assertTrue(source.contains("windowAttributes.windowAnimations = 0"))
     }
 }

@@ -15,6 +15,7 @@ import androidx.core.app.NotificationCompat
 import androidx.core.content.ContextCompat
 import androidx.core.app.NotificationManagerCompat
 import com.bird.starryskysudoku.R
+import com.bird.starryskysudoku.account.LauncherSessionReader
 import com.bird.starryskysudoku.ui.play.PlayRoute
 
 class CountdownTimerService : Service() {
@@ -25,6 +26,7 @@ class CountdownTimerService : Service() {
      */
     private var mTimer: CountDownTimer? = null
     private var mLevelNumber = CountdownTimerContract.MIN_LEVEL_NUMBER
+    private var mUsername = LauncherSessionReader.GUEST_USERNAME
 
     override fun onBind(intent: Intent?): IBinder? = null
 
@@ -41,6 +43,12 @@ class CountdownTimerService : Service() {
             ?.getIntExtra(CountdownTimerContract.EXTRA_LEVEL_NUMBER, CountdownTimerContract.MIN_LEVEL_NUMBER)
             ?.let(CountdownTimerContract::normalizeLevelNumber)
             ?: CountdownTimerContract.MIN_LEVEL_NUMBER
+        // 通知点击需要带回当前玩家身份，避免游客和已登录用户串用关卡结果。
+        mUsername = intent
+            ?.getStringExtra(CountdownTimerContract.EXTRA_USERNAME)
+            ?.trim()
+            ?.takeIf { it.isNotEmpty() }
+            ?: LauncherSessionReader.GUEST_USERNAME
         startForegroundCountdown(initialSeconds)
         startCountdown(initialSeconds)
         return START_NOT_STICKY
@@ -113,10 +121,11 @@ class CountdownTimerService : Service() {
     }
 
     private fun buildNotification(remainingSeconds: Int): Notification {
+        // 前台通知点击后直接回到对应关卡，并保留当前用户上下文。
         val contentIntent = PendingIntent.getActivity(
             this,
             0,
-            PlayRoute.create(this, mLevelNumber, username = "").apply {
+            PlayRoute.create(this, mLevelNumber, username = mUsername).apply {
                 flags = Intent.FLAG_ACTIVITY_SINGLE_TOP or Intent.FLAG_ACTIVITY_CLEAR_TOP
             },
             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE

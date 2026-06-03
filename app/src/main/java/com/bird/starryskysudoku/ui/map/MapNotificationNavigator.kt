@@ -24,6 +24,7 @@ class MapNotificationNavigator(
     private val mActivity: AppCompatActivity,
     private val mPermissionLauncher: ActivityResultLauncher<String>
 ) {
+    // 地图页负责把“通知权限申请”和“真正进入棋盘”拆开，避免权限弹窗打断棋盘生命周期。
     private val mHandler = Handler(Looper.getMainLooper())
     private var mPendingPlayIntent: Intent? = null
     private var mPendingPlayShouldFinishMap = false
@@ -71,6 +72,7 @@ class MapNotificationNavigator(
         val finishMapAfterStart = mPendingPlayShouldFinishMap
         mPendingPlayIntent = null
         mPendingPlayShouldFinishMap = false
+        // 权限处理完成后只消费一次缓存跳转，避免旋转或重复回调多次进棋盘。
         startPlayPage(playIntent, finishMapAfterStart)
     }
 
@@ -98,6 +100,7 @@ class MapNotificationNavigator(
         mPendingPlayShouldFinishMap = finishMapAfterStart
         mWaitingVendorNotificationWarmup = true
         mCanCompleteVendorNotificationWarmup = false
+        // 先在地图页预热一次通知能力，把厂商授权页尽量提前暴露出来。
         showVendorNotificationPreflight()
         mHandler.postDelayed({
             mCanCompleteVendorNotificationWarmup = true
@@ -122,6 +125,7 @@ class MapNotificationNavigator(
     @SuppressLint("MissingPermission")
     private fun showVendorNotificationPreflight() {
         createNotificationChannel()
+        // 预热通知点击后仍回地图页，避免用户在权限链路中被直接带进棋盘页。
         val contentIntent = PendingIntent.getActivity(
             mActivity,
             0,
@@ -168,10 +172,12 @@ class MapNotificationNavigator(
             R.anim.playpage_show,
             R.anim.playpage_hide
         )
+        // 只有从关卡弹窗直接进棋盘时才关闭地图页；其余场景保留地图页在返回栈中。
         if (finishMapAfterStart) mActivity.finish()
     }
 
     private companion object {
+        // 厂商通知预热只需在当前进程做一次，避免每次进棋盘都额外等待。
         private var sVendorNotificationWarmupCompleted = false
         private const val VENDOR_WARMUP_NOTIFICATION_ID = 1002
         private const val VENDOR_WARMUP_DELAY_MS = 700L

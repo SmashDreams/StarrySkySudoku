@@ -11,11 +11,11 @@ class GuideRuleHighlightCellsTest {
 
         assertEquals(
             listOf(
-                GuideRuleHighlightCells.CellRegion(startRow = 4, startCol = 0, rowSpan = 1, colSpan = 3),
-                GuideRuleHighlightCells.CellRegion(startRow = 4, startCol = 6, rowSpan = 1, colSpan = 3),
-                GuideRuleHighlightCells.CellRegion(startRow = 0, startCol = 4, rowSpan = 3, colSpan = 1),
-                GuideRuleHighlightCells.CellRegion(startRow = 6, startCol = 4, rowSpan = 3, colSpan = 1),
-                GuideRuleHighlightCells.CellRegion(startRow = 3, startCol = 3, rowSpan = 3, colSpan = 3)
+                GuideRuleHighlightCells.CellRegion(mStartRow = 4, mStartCol = 0, mRowSpan = 1, mColSpan = 3),
+                GuideRuleHighlightCells.CellRegion(mStartRow = 4, mStartCol = 6, mRowSpan = 1, mColSpan = 3),
+                GuideRuleHighlightCells.CellRegion(mStartRow = 0, mStartCol = 4, mRowSpan = 3, mColSpan = 1),
+                GuideRuleHighlightCells.CellRegion(mStartRow = 6, mStartCol = 4, mRowSpan = 3, mColSpan = 1),
+                GuideRuleHighlightCells.CellRegion(mStartRow = 3, mStartCol = 3, mRowSpan = 3, mColSpan = 3)
             ),
             regions
         )
@@ -27,9 +27,9 @@ class GuideRuleHighlightCellsTest {
 
         assertEquals(
             listOf(
-                GuideRuleHighlightCells.CellRegion(startRow = 1, startCol = 0, rowSpan = 1, colSpan = 6),
-                GuideRuleHighlightCells.CellRegion(startRow = 3, startCol = 7, rowSpan = 6, colSpan = 1),
-                GuideRuleHighlightCells.CellRegion(startRow = 0, startCol = 6, rowSpan = 3, colSpan = 3)
+                GuideRuleHighlightCells.CellRegion(mStartRow = 1, mStartCol = 0, mRowSpan = 1, mColSpan = 6),
+                GuideRuleHighlightCells.CellRegion(mStartRow = 3, mStartCol = 7, mRowSpan = 6, mColSpan = 1),
+                GuideRuleHighlightCells.CellRegion(mStartRow = 0, mStartCol = 6, mRowSpan = 3, mColSpan = 3)
             ),
             regions
         )

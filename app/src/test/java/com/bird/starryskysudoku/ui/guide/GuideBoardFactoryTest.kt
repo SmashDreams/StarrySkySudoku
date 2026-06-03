@@ -6,7 +6,7 @@ import org.junit.Test
 
 class GuideBoardFactoryTest {
 
-    private val firstLevelValues = List(81) { index ->
+    private val mFirstLevelValues = List(81) { index ->
         when (index) {
             0 -> 8
             1 -> 4
@@ -18,7 +18,7 @@ class GuideBoardFactoryTest {
 
     @Test
     fun `welcome board uses supplied level one values instead of hardcoded puzzle`() {
-        val board = GuideBoardFactory.createBoard(firstLevelValues, GuideStep.WELCOME)
+        val board = GuideBoardFactory.createBoard(mFirstLevelValues, GuideStep.WELCOME)
 
         assertEquals("8", board[0][0].mValue)
         assertEquals("4", board[0][1].mValue)
@@ -31,7 +31,7 @@ class GuideBoardFactoryTest {
 
     @Test
     fun `select cell step highlights the selected empty cell and related row column and block`() {
-        val board = GuideBoardFactory.createBoard(firstLevelValues, GuideStep.SELECT_CELL)
+        val board = GuideBoardFactory.createBoard(mFirstLevelValues, GuideStep.SELECT_CELL)
 
         assertEquals(PlayViewModel.BE_SELECTED, board[4][4].mStatus)
         assertEquals(PlayViewModel.SELECT_ON, board[4][7].mStatus)
@@ -42,7 +42,7 @@ class GuideBoardFactoryTest {
 
     @Test
     fun `enter number step fills the demo selected empty cell without changing it into a given clue`() {
-        val board = GuideBoardFactory.createBoard(firstLevelValues, GuideStep.ENTER_NUMBER)
+        val board = GuideBoardFactory.createBoard(mFirstLevelValues, GuideStep.ENTER_NUMBER)
 
         assertEquals("7", board[4][4].mValue)
         assertEquals(PlayViewModel.EMPTY, board[4][4].mType)

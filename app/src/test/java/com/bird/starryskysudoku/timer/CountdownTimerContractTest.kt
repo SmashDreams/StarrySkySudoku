@@ -10,6 +10,7 @@ class CountdownTimerContractTest {
         assertEquals("com.bird.action.SUDOKU_COUNTDOWN_TICK", CountdownTimerContract.ACTION_COUNTDOWN_TICK)
         assertEquals("remaining_seconds", CountdownTimerContract.EXTRA_REMAINING_SECONDS)
         assertEquals("initial_seconds", CountdownTimerContract.EXTRA_INITIAL_SECONDS)
+        assertEquals("username", CountdownTimerContract.EXTRA_USERNAME)
     }
 
     @Test

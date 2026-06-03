@@ -9,6 +9,7 @@ object GuideBoardFactory {
     private const val CENTER_INDEX = 4
 
     fun createBoard(values: List<Int>, step: GuideStep): Array<Array<BoardCell>> {
+        // 教学棋盘始终从真实题面复制一份，再按当前步骤叠加演示高亮和示例数字。
         val board = createBaseBoard(values)
         val selectedCell = findDemoEmptyCell(board)
 
@@ -31,6 +32,7 @@ object GuideBoardFactory {
     private fun createBaseBoard(values: List<Int>): Array<Array<BoardCell>> {
         return Array(BOARD_SIZE) { row ->
             Array(BOARD_SIZE) { col ->
+                // 题库异常或缺值时统一按空格兜底，避免教学页因为坏数据直接崩溃。
                 val value = values.getOrNull(row * BOARD_SIZE + col)?.takeIf { it in 0..9 } ?: 0
                 BoardCell(
                     mRow = row,
@@ -67,6 +69,7 @@ object GuideBoardFactory {
         selectedCol: Int
     ) {
         val selectedBlock = board[selectedRow][selectedCol].mBlock
+        // 教学高亮复用正式棋盘的“同行、同列、同宫”规则，保证引导和实战一致。
         for (row in 0 until BOARD_SIZE) {
             for (col in 0 until BOARD_SIZE) {
                 val cell = board[row][col]

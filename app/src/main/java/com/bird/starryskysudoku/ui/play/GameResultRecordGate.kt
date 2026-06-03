@@ -1,6 +1,7 @@
 package com.bird.starryskysudoku.ui.play
 
 class GameResultRecordGate {
+    // 记录闸门只关心“这一局是否已经写过战绩”，不区分胜利还是失败来源。
     private var mRecorded = false
 
     fun markIfFirst(levelNum: Int, completed: Boolean): Boolean {
@@ -11,6 +12,7 @@ class GameResultRecordGate {
     }
 
     fun unmark() {
+        // 写入失败时放开闸门，允许后续重试重新落库。
         mRecorded = false
     }
 }

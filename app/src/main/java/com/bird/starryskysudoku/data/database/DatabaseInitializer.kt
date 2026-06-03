@@ -38,6 +38,7 @@ object DatabaseInitializer {
 
     internal val sMigration3To4 = object : Migration(3, 4) {
         override fun migrate(db: SupportSQLiteDatabase) {
+            // 从这一版开始把地图进度按用户名拆分，游客历史也同步迁入新表。
             db.execSQL(
                 """
                 CREATE TABLE IF NOT EXISTS user_map (
@@ -61,6 +62,7 @@ object DatabaseInitializer {
 
     internal val sMigration4To5 = object : Migration(4, 5) {
         override fun migrate(db: SupportSQLiteDatabase) {
+            // 旧版本把游玩次数存成文本，这里整表重建并转换成整数列。
             db.execSQL(
                 """
                 CREATE TABLE map_v5 (
@@ -103,6 +105,7 @@ object DatabaseInitializer {
 
     internal val sMigration5To6 = object : Migration(5, 6) {
         override fun migrate(db: SupportSQLiteDatabase) {
+            // 用户专属进度表已经完全接管地图数据，遗留公共 map 表可以安全移除。
             db.execSQL("DROP TABLE IF EXISTS map")
         }
     }
@@ -111,6 +114,7 @@ object DatabaseInitializer {
     private var sInstance: AppDatabase? = null
 
     fun getDatabase(context: Context): AppDatabase {
+        // 数据库实例按进程单例缓存，避免多页面并发打开多个 Room 实例。
         return sInstance ?: synchronized(this) {
             sInstance ?: buildDatabase(context).also { sInstance = it }
         }

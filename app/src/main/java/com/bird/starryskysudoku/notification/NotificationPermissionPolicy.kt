@@ -13,6 +13,7 @@ object NotificationPermissionPolicy {
     }
 
     fun shouldStartPlayImmediately(sdkInt: Int, permissionStatus: Int): Boolean {
+        // 只要不需要再弹通知权限，就允许地图页直接进入棋盘。
         return !shouldRequestPostNotifications(sdkInt, permissionStatus)
     }
 

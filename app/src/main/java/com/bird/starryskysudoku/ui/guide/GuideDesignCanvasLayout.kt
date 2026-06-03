@@ -20,8 +20,8 @@ class GuideDesignCanvasLayout @JvmOverloads constructor(
         val parentHeight = MeasureSpec.getSize(heightMeasureSpec)
         mFrame = GuideDesignCanvas.fit(parentWidth, parentHeight)
 
-        val childWidthSpec = MeasureSpec.makeMeasureSpec(mFrame.width, MeasureSpec.EXACTLY)
-        val childHeightSpec = MeasureSpec.makeMeasureSpec(mFrame.height, MeasureSpec.EXACTLY)
+        val childWidthSpec = MeasureSpec.makeMeasureSpec(mFrame.mWidth, MeasureSpec.EXACTLY)
+        val childHeightSpec = MeasureSpec.makeMeasureSpec(mFrame.mHeight, MeasureSpec.EXACTLY)
         for (index in 0 until childCount) {
             val child = getChildAt(index)
             if (child.visibility != View.GONE) {
@@ -37,10 +37,10 @@ class GuideDesignCanvasLayout @JvmOverloads constructor(
             val child = getChildAt(index)
             if (child.visibility != View.GONE) {
                 child.layout(
-                    mFrame.left,
-                    mFrame.top,
-                    mFrame.left + mFrame.width,
-                    mFrame.top + mFrame.height
+                    mFrame.mLeft,
+                    mFrame.mTop,
+                    mFrame.mLeft + mFrame.mWidth,
+                    mFrame.mTop + mFrame.mHeight
                 )
             }
         }

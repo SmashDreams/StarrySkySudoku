@@ -63,6 +63,7 @@
         android:textColor="#020A13"
         android:textSize="13sp"
         android:textStyle="bold"
+        android:visibility="gone"
         app:layout_constraintEnd_toEndOf="@id/play_pause"
         app:layout_constraintTop_toBottomOf="@id/play_pause" />
 

@@ -195,6 +195,7 @@ class PassListAdapter(
     }
 
     fun getPositionForLevel(level: Int): Int {
+        // 胜利、失败和通知返回都可能指定具体关卡，这里按关卡号直接反查所在行。
         for (i in mPassList.indices) {
             for (j in 0 until 4) {
                 if (mPassList[i][j]?.mPassNum == level) return mPassList.size - i
@@ -204,11 +205,13 @@ class PassListAdapter(
     }
 
     fun getTopOffsetDpForLevel(level: Int): Int {
+        // 同一行四颗星在竖直方向错落排布，返回时需要按列号补上额外高度偏移。
         val indexInRow = (level - 1).floorMod(4)
         return (3 - indexInRow) * LEVEL_VERTICAL_STEP_DP
     }
 
     fun getCurrentTodoLevel(): Int? {
+        // 当前待挑战关卡用于地图页首次定位和胜利返回后的默认落点。
         for (row in mPassList) {
             for (entity in row) {
                 if (entity?.mStatus == PassStatus.TODO) return entity.mPassNum

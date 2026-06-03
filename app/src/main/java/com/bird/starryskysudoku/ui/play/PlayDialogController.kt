@@ -28,6 +28,7 @@ class PlayDialogController(
     private val mStartCountdownService: () -> Unit,
     private val mPrepareForReplacementPlayActivity: () -> Unit
 ) {
+    // 棋盘页所有终局、暂停和设置相关弹窗统一收口到这里，避免页面同时维护多套按钮逻辑。
     private var mMusicOpened = true
     private var mAudioOpened = true
     private lateinit var mPauseDialog: MyDialog
@@ -57,6 +58,7 @@ class PlayDialogController(
     }
 
     fun showWinDialogWithStarAnimation() {
+        // 胜利页先显示弹窗，再补一段延迟星星动画和音效，保持原项目的奖励节奏。
         showWinDialog()
         val winStar = mWinDialogBinding.winStarOn
         winStar.visibility = View.INVISIBLE
@@ -93,6 +95,7 @@ class PlayDialogController(
         pauseDialogBinding.pauseClose.setOnClickListener {
             PlayMusic.getInstance().playButtonTap()
             MyDialogManager.getInstance().hide(mPauseDialog)
+            // 继续游戏时先恢复页面暂停标记，再重新拉起后台倒计时服务。
             mSetPaused(false)
             mStartCountdownService()
         }
@@ -122,6 +125,7 @@ class PlayDialogController(
     }
 
     private fun initSettingsButtons(pauseDialogBinding: DialogPauseBinding) {
+        // 暂停弹窗里的音频开关直接复用地图页同一组偏好值，保证全局行为一致。
         val musicBtn = pauseDialogBinding.pauseMusic
         musicBtn.setImageResource(if (mMusicOpened) R.drawable.icon_music_on else R.drawable.icon_music_off)
         musicBtn.setOnClickListener {
@@ -178,6 +182,7 @@ class PlayDialogController(
         loseDialogBinding.loseRetry.setOnClickListener {
             PlayMusic.getInstance().playButtonTap()
             mRunAfterClearingHistory {
+                // 失败重开仍先回地图页，由地图页统一负责失败提示和滚动定位。
                 mActivity.startActivityWithTransition(
                     createMapReturnIntent(MapRoute.createAfterLose(mActivity, mGetLevel())),
                     R.anim.playpage_show,
@@ -192,6 +197,7 @@ class PlayDialogController(
         mWinDialogBinding = DialogWinBinding.inflate(mActivity.layoutInflater)
         mWinDialog = MyDialogManager.getInstance()
             .initView(mActivity, R.layout.dialog_win, mWinDialogBinding.root)
+        // 星星奖励动画期间临时锁住按钮，避免用户在动画没播完前重复触发返回或下一关。
         mWinDialog.setInteractionLockDuration(WIN_DIALOG_INTERACTION_LOCK_MILLIS)
         mWinDialog.setCanceledOnTouchOutside(false)
 
@@ -243,6 +249,7 @@ class PlayDialogController(
     }
 
     private fun createMapReturnIntent(intent: Intent): Intent {
+        // 从棋盘回地图时始终带回离开前的列表锚点，减少用户重复滚动。
         return MapRoute.copyReturnAnchor(intent, mActivity.intent)
     }
 

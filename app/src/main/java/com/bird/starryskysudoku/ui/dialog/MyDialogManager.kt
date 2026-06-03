@@ -34,4 +34,8 @@ class MyDialogManager private constructor() {
     fun hide(dialog: MyDialog) {
         if (dialog.isShowing) dialog.dismiss()
     }
+
+    fun hideImmediately(dialog: MyDialog) {
+        if (dialog.isShowing) dialog.dismissImmediately()
+    }
 }

@@ -50,7 +50,12 @@ class PlayInputControllerStructureTest {
         val layout = locateProjectRoot().resolve("app/src/main/res/layout/activity_play.xml").readText()
 
         assertTrue(layout.contains("@+id/play_debug_complete"))
+        assertTrue(layout.contains("android:visibility=\"gone\""))
         assertTrue(activity.contains("initDebugCompleteButton()"))
+        assertTrue(activity.contains("DEBUG_COMPLETE_TOGGLE_TAP_COUNT = 5"))
+        assertTrue(activity.contains("mBinding.linearlayout3.setOnClickListener(toggleDebugComplete)"))
+        assertTrue(activity.contains("mBinding.textview25.setOnClickListener(toggleDebugComplete)"))
+        assertTrue(activity.contains("mPlayNum.setOnClickListener(toggleDebugComplete)"))
         assertTrue(activity.contains("mViewModel.updatePassStatus(mCurrentUsername, level, level + 1)"))
         assertTrue(activity.contains("mViewModel.markWonForDebug()"))
         assertTrue(viewModel.contains("fun markWonForDebug()"))

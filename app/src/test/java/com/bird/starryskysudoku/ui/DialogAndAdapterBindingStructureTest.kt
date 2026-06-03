@@ -22,6 +22,13 @@ class DialogAndAdapterBindingStructureTest {
 
         assertTrue(passDialogController.contains("DialogPasscheckBinding"))
         assertTrue(settingsController.contains("DialogSettingsBinding"))
+        assertTrue(settingsController.contains("MapRoute.clearReturnAnchor(mActivity.intent)"))
+        assertTrue(settingsController.contains("hideImmediately(mSettingsDialog)"))
+        assertFalse(settingsController.contains("mRestartAfterLanguageChange()"))
+        assertTrue(settingsController.contains("readEffectiveLanguage()"))
+        assertTrue(settingsController.contains("AppLocaleContext.applyLanguageToCurrentResources"))
+        assertTrue(settingsController.contains("refreshSettingsTexts(settingsBinding)"))
+        assertTrue(settingsController.contains("mOnLanguageChanged()"))
         assertFalse(settingsController.contains("mSettingsDialog.findViewById"))
         assertFalse(passDialogController.contains("findViewById<TextView>(R.id.passcheck"))
         assertFalse(passDialogController.contains("findViewById<ImageView>(R.id.passcheck"))

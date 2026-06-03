@@ -11,6 +11,7 @@ import kotlinx.coroutines.launch
 
 class MapViewModel(private val mMapRepository: MapRepository) : ViewModel() {
 
+    // 地图页列表已经按适配器需要的二维结构整好形，页面只负责观察并渲染。
     private val mMapDataSource = MutableLiveData<List<Array<MapEntity?>>>()
     val mMapData: LiveData<List<Array<MapEntity?>>> = mMapDataSource
 
@@ -42,6 +43,7 @@ class MapViewModel(private val mMapRepository: MapRepository) : ViewModel() {
         callback: (String) -> Unit
     ) {
         viewModelScope.launch {
+            // 次数查询仍保留回调风格，和旧弹窗绑定代码保持最小改动。
             callback(mMapRepository.getPassTimes(username, passNum))
         }
     }
@@ -56,6 +58,7 @@ class MapViewModel(private val mMapRepository: MapRepository) : ViewModel() {
         status: String
     ) {
         viewModelScope.launch {
+            // 地图状态写入统一经由仓储层，避免页面直接感知数据库结构。
             mMapRepository.updateStatus(username, passNum, status)
         }
     }

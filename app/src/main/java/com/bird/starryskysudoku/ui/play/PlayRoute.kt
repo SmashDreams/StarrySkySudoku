@@ -12,6 +12,7 @@ object PlayRoute {
     private const val MAX_LEVEL = 40
 
     fun create(context: Context, level: Int, username: String): Intent {
+        // 跳转棋盘页时统一在这里裁剪关卡范围并附带当前用户名，避免各入口自行拼参数。
         return Intent(context, PlayActivity::class.java)
             .putExtra(EXTRA_LEVEL, level.coerceIn(MIN_LEVEL, MAX_LEVEL).toString())
             .putExtra(EXTRA_USERNAME, username)
@@ -24,6 +25,7 @@ object PlayRoute {
     }
 
     fun readUsername(intent: Intent): String? {
+        // 空用户名一律视为未携带，交给上层决定是否回退成游客或会话用户。
         return intent.getStringExtra(EXTRA_USERNAME)?.takeIf { it.isNotBlank() }
     }
 

@@ -14,6 +14,6 @@ class MapViewModelFactory(
         if (modelClass.isAssignableFrom(MapViewModel::class.java)) {
             return MapViewModel(MapRepository(mDb)) as T
         }
-        throw IllegalArgumentException("Unknown ViewModel class")
+        throw IllegalArgumentException("未知的 ViewModel 类型")
     }
 }

@@ -188,6 +188,7 @@ class PlayInputController(
     }
 
     private fun refreshNumberAlphaForTags() {
+        // 进入笔记模式时立即根据当前格子的候选数，刷新九个数字键的选中明暗。
         val tagData = mTagData[mViewModel.getCurrentRow()][mViewModel.getCurrentCol()]
         for (index in 0 until 9) {
             mNumbers[index]?.alpha = if (tagData != null && tagData.haveTag((index + 1).toString())) {
@@ -203,6 +204,7 @@ class PlayInputController(
     }
 
     private fun canAnimateSelectedCell(): Boolean {
+        // 只有存在可编辑焦点格时才播放按压动画，避免禁用按钮也表现得像可操作。
         val cell = currentCell()
         return mViewModel.getCurrentBlock() != 0 &&
             cell?.mType != PlayViewModel.PROBLEM &&

@@ -3,10 +3,10 @@ package com.bird.starryskysudoku.ui.guide
 object GuideRuleHighlightCells {
 
     data class CellRegion(
-        val startRow: Int,
-        val startCol: Int,
-        val rowSpan: Int,
-        val colSpan: Int
+        val mStartRow: Int,
+        val mStartCol: Int,
+        val mRowSpan: Int,
+        val mColSpan: Int
     )
 
     fun regionsFor(row: Int, col: Int): List<CellRegion> {

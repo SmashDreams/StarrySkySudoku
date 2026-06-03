@@ -14,10 +14,10 @@ class SudokuBoardGeometryTest {
     fun `board border rect uses BroadView outer border inset`() {
         val rect = SudokuBoardGeometry.boardBorderRect(width = 370f, left = 10f, top = 20f, padding = 2f)
 
-        assertEquals(32f, rect.left, 0.001f)
-        assertEquals(42f, rect.top, 0.001f)
-        assertEquals(352f, rect.right, 0.001f)
-        assertEquals(362f, rect.bottom, 0.001f)
+        assertEquals(32f, rect.mLeft, 0.001f)
+        assertEquals(42f, rect.mTop, 0.001f)
+        assertEquals(352f, rect.mRight, 0.001f)
+        assertEquals(362f, rect.mBottom, 0.001f)
     }
 
     @Test
@@ -33,10 +33,10 @@ class SudokuBoardGeometryTest {
         )
         val cellSize = 316f / 9f
 
-        assertEquals(10f + 28f + 4 * cellSize - 1f, rect.left, 0.001f)
-        assertEquals(20f + 28f + 4 * cellSize - 1f, rect.top, 0.001f)
-        assertEquals(10f + 28f + 5 * cellSize - 2f + 1f, rect.right, 0.001f)
-        assertEquals(20f + 28f + 5 * cellSize - 2f + 1f, rect.bottom, 0.001f)
+        assertEquals(10f + 28f + 4 * cellSize - 1f, rect.mLeft, 0.001f)
+        assertEquals(20f + 28f + 4 * cellSize - 1f, rect.mTop, 0.001f)
+        assertEquals(10f + 28f + 5 * cellSize - 2f + 1f, rect.mRight, 0.001f)
+        assertEquals(20f + 28f + 5 * cellSize - 2f + 1f, rect.mBottom, 0.001f)
     }
 
     @Test
@@ -44,10 +44,10 @@ class SudokuBoardGeometryTest {
         val rect = SudokuBoardGeometry.blockRect(width = 370f, blockRow = 1, blockCol = 1, left = 10f, top = 20f, padding = 1f)
         val blockSize = 316f / 3f
 
-        assertEquals(10f + 24f + blockSize - 1f, rect.left, 0.001f)
-        assertEquals(20f + 24f + blockSize - 1f, rect.top, 0.001f)
-        assertEquals(10f + 24f + 2 * blockSize + 1f, rect.right, 0.001f)
-        assertEquals(20f + 24f + 2 * blockSize + 1f, rect.bottom, 0.001f)
+        assertEquals(10f + 24f + blockSize - 1f, rect.mLeft, 0.001f)
+        assertEquals(20f + 24f + blockSize - 1f, rect.mTop, 0.001f)
+        assertEquals(10f + 24f + 2 * blockSize + 1f, rect.mRight, 0.001f)
+        assertEquals(20f + 24f + 2 * blockSize + 1f, rect.mBottom, 0.001f)
     }
 
     @Test
@@ -64,10 +64,10 @@ class SudokuBoardGeometryTest {
         )
         val cellSize = 316f / 9f
 
-        assertEquals(10f + 24f - 1f, rect.left, 0.001f)
-        assertEquals(20f + 28f + 4 * cellSize - 1f, rect.top, 0.001f)
-        assertEquals(10f + 24f + 9 * cellSize + 1f, rect.right, 0.001f)
-        assertEquals(20f + 28f + 5 * cellSize + 1f, rect.bottom, 0.001f)
+        assertEquals(10f + 24f - 1f, rect.mLeft, 0.001f)
+        assertEquals(20f + 28f + 4 * cellSize - 1f, rect.mTop, 0.001f)
+        assertEquals(10f + 24f + 9 * cellSize + 1f, rect.mRight, 0.001f)
+        assertEquals(20f + 28f + 5 * cellSize + 1f, rect.mBottom, 0.001f)
     }
 
     @Test
@@ -84,9 +84,9 @@ class SudokuBoardGeometryTest {
         )
         val cellSize = 316f / 9f
 
-        assertEquals(10f + 28f + 4 * cellSize, rect.left, 0.001f)
-        assertEquals(20f + 28f + 4 * cellSize, rect.top, 0.001f)
-        assertEquals(10f + 28f + 5 * cellSize, rect.right, 0.001f)
-        assertEquals(20f + 28f + 5 * cellSize, rect.bottom, 0.001f)
+        assertEquals(10f + 28f + 4 * cellSize, rect.mLeft, 0.001f)
+        assertEquals(20f + 28f + 4 * cellSize, rect.mTop, 0.001f)
+        assertEquals(10f + 28f + 5 * cellSize, rect.mRight, 0.001f)
+        assertEquals(20f + 28f + 5 * cellSize, rect.mBottom, 0.001f)
     }
 }

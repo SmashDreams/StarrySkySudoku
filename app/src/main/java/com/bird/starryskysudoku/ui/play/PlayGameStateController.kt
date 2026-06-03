@@ -33,6 +33,7 @@ class PlayGameStateController(
     private val mGetLevel: () -> Int,
     private val mSaveGameResult: suspend (Int, Boolean) -> Unit
 ) {
+    // 棋盘页所有“随状态自动变化”的界面反馈都收在这里，避免分散在 Activity 各个生命周期里。
     private val mHandler = Handler(Looper.getMainLooper())
 
     fun init() {
@@ -77,6 +78,7 @@ class PlayGameStateController(
 
     private fun observeGameState() {
         mViewModel.mTimerFinished.observe(mLifecycleOwner) { finished ->
+            // 倒计时归零后只要状态首次变成结束，就切入失败流程。
             if (finished) showLoseState()
         }
 
@@ -91,6 +93,7 @@ class PlayGameStateController(
         }
 
         mViewModel.mIsWrong.observe(mLifecycleOwner) { wrong ->
+            // 错误输入由视图模型只抛一次信号，控制器负责短暂高亮和恢复。
             if (wrong) showWrongInputState()
         }
     }
@@ -122,6 +125,7 @@ class PlayGameStateController(
         }
 
         mHandler.postDelayed({
+            // 棋盘闪烁结束后再弹胜利框，让奖励动画和星星音效衔接更自然。
             mDialogController.showWinDialogWithStarAnimation()
         }, WIN_DIALOG_DELAY_MILLIS)
     }

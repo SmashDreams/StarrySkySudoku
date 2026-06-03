@@ -6,18 +6,18 @@ import org.junit.Test
 import java.io.File
 
 class BroadViewStructureTest {
-    private val source = File("src/main/java/com/bird/starryskysudoku/ui/play/BroadView.kt").readText()
+    private val mSource = File("src/main/java/com/bird/starryskysudoku/ui/play/BroadView.kt").readText()
 
     @Test
     fun drawingCodeDoesNotSuppressAllocationWarnings() {
-        assertFalse(source.contains("DrawAllocation"))
+        assertFalse(mSource.contains("DrawAllocation"))
     }
 
     @Test
     fun drawingCodeReusesPaintAndRectObjects() {
-        assertTrue(source.contains("private val mBitmapPaint"))
-        assertTrue(source.contains("private val mCellRect"))
-        assertFalse(source.contains("drawBitmap(mProblemLight, null, rect, Paint())"))
+        assertTrue(mSource.contains("private val mBitmapPaint"))
+        assertTrue(mSource.contains("private val mCellRect"))
+        assertFalse(mSource.contains("drawBitmap(mProblemLight, null, rect, Paint())"))
     }
 
     @Test
@@ -25,8 +25,8 @@ class BroadViewStructureTest {
         val boardCell = File("src/main/java/com/bird/starryskysudoku/ui/play/BoardCell.kt")
 
         assertTrue(boardCell.isFile)
-        assertTrue(source.contains("Array<Array<BoardCell>>"))
-        assertFalse(source.contains("PlayViewModel.CellData"))
+        assertTrue(mSource.contains("Array<Array<BoardCell>>"))
+        assertFalse(mSource.contains("PlayViewModel.CellData"))
         assertFalse(boardCell.readText().contains("PlayViewModel"))
     }
 }

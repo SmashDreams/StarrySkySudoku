@@ -6,15 +6,17 @@ import android.content.Intent
 import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
+import android.view.View
 import android.view.animation.LinearInterpolator
 import android.widget.ImageView
 import android.widget.TextView
 import android.widget.Toast
 import androidx.activity.OnBackPressedCallback
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.appcompat.app.AppCompatActivity
+import com.bird.starryskysudoku.ui.common.BaseLocalizedActivity
 import androidx.lifecycle.ViewModelProvider
 import androidx.recyclerview.widget.LinearLayoutManager
+import androidx.core.view.doOnPreDraw
 import androidx.recyclerview.widget.RecyclerView
 import com.bird.starryskysudoku.R
 import com.bird.starryskysudoku.account.LauncherSessionReader
@@ -24,13 +26,15 @@ import com.bird.starryskysudoku.databinding.ActivityMappageBinding
 import com.bird.starryskysudoku.media.PlayMusic
 import com.bird.starryskysudoku.ui.play.PlayRoute
 
-class MapActivity : AppCompatActivity() {
+class MapActivity : BaseLocalizedActivity() {
 
     companion object {
         private const val MAX_LEVEL = 40
         private const val MAP_PASS_ROW_HEIGHT_DP = 340
         private const val MAP_BOTTOM_STAR_REVEAL_DP = 96
         private const val MAP_STAR_VISUAL_HEIGHT_DP = 88
+        private const val KEY_MAP_RESTORE_POSITION = "map_restore_position"
+        private const val KEY_MAP_RESTORE_TOP_OFFSET = "map_restore_top_offset"
     }
 
     private lateinit var mSettings: ImageView
@@ -50,6 +54,8 @@ class MapActivity : AppCompatActivity() {
     private var mBackPressCount = 0
     private var mCurrentUsername = LauncherSessionReader.GUEST_USERNAME
     private var mMapLoaded = false
+    private var mPendingRestorePosition: Int? = null
+    private var mPendingRestoreTopOffsetPx: Int? = null
     private val mHandler = Handler(Looper.getMainLooper())
     private val mNotificationPermissionLauncher =
         registerForActivityResult(ActivityResultContracts.RequestPermission()) {
@@ -64,7 +70,15 @@ class MapActivity : AppCompatActivity() {
         val db = DatabaseInitializer.getDatabase(this)
         mViewModel = ViewModelProvider(this, MapViewModelFactory(db))[MapViewModel::class.java]
 
+        mPendingRestorePosition = savedInstanceState
+            ?.takeIf { it.containsKey(KEY_MAP_RESTORE_POSITION) }
+            ?.getInt(KEY_MAP_RESTORE_POSITION)
+        mPendingRestoreTopOffsetPx = savedInstanceState
+            ?.takeIf { it.containsKey(KEY_MAP_RESTORE_TOP_OFFSET) }
+            ?.getInt(KEY_MAP_RESTORE_TOP_OFFSET)
+
         mRecyclerView = mBinding.passList
+        mRecyclerView.visibility = View.INVISIBLE
         mBigShootingStar = mBinding.sstarBig
         mSmallShootingStar = mBinding.sstarSmall
         mBackgroundStars = mBinding.mapBgstar
@@ -78,7 +92,11 @@ class MapActivity : AppCompatActivity() {
          * 地图页只负责组装控制器，弹窗、设置和通知权限流程分别放到独立类里维护。
          */
         mNotificationNavigator = MapNotificationNavigator(this, mNotificationPermissionLauncher)
-        mSettingsController = MapSettingsController(this, mSettings).also { it.init() }
+        mSettingsController = MapSettingsController(
+            mActivity = this,
+            mSettingsButton = mSettings,
+            mOnLanguageChanged = { refreshVisibleLanguage() }
+        ).also { it.init() }
         mPassDialogController = MapPassDialogController(
             mActivity = this,
             mLayoutInflater = layoutInflater,
@@ -131,11 +149,11 @@ class MapActivity : AppCompatActivity() {
     private fun initList() {
         mLayoutManager = LinearLayoutManager(this@MapActivity)
         mRecyclerView.layoutManager = mLayoutManager
-        mAdapter = PassListAdapter(emptyList(), mPassDialogController.lightStars)
+        mAdapter = PassListAdapter(emptyList(), mPassDialogController.mLightStarsValue)
         mRecyclerView.adapter = mAdapter
 
         mViewModel.mMapData.observe(this) { data ->
-            mAdapter = PassListAdapter(data, mPassDialogController.lightStars)
+            mAdapter = PassListAdapter(data, mPassDialogController.mLightStarsValue)
             mRecyclerView.adapter = mAdapter
             positionMapToCurrentPass()
             mAdapter.setOpenListener(object : PassListAdapter.OpenPlayPage {
@@ -148,27 +166,45 @@ class MapActivity : AppCompatActivity() {
 
 
     private fun positionMapToCurrentPass() {
+        if (restorePendingConfigPosition()) return
         if (restorePendingReturnAnchor()) return
         positionMapToLevel(
-            level = mPassDialogController.pendingCompletedLevel,
-            skipProgressOffset = mPassDialogController.hasPendingWinNavigation
+            level = mPassDialogController.mPendingCompletedLevel,
+            skipProgressOffset = mPassDialogController.mHasPendingWinNavigation
         )
     }
 
+    private fun restorePendingConfigPosition(): Boolean {
+        // 旋转屏幕或系统回收重建时，优先恢复系统保存的列表位置。
+        val adapterPosition = mPendingRestorePosition ?: return false
+        val topOffsetPx = mPendingRestoreTopOffsetPx ?: return false
+        mPendingRestorePosition = null
+        mPendingRestoreTopOffsetPx = null
+        if (adapterPosition !in 0 until mAdapter.itemCount) {
+            return false
+        }
+        positionMapAndReveal {
+            mLayoutManager.scrollToPositionWithOffset(adapterPosition, topOffsetPx)
+        }
+        return true
+    }
+
     private fun restorePendingReturnAnchor(): Boolean {
-        if (!mPassDialogController.hasPendingReturnAnchor) return false
-        val adapterPosition = mPassDialogController.pendingReturnAnchorPosition ?: return false
-        val topOffsetPx = mPassDialogController.pendingReturnAnchorOffsetPx ?: return false
+        // 从棋盘页返回地图时，优先回到离开前的关卡附近，而不是重新按当前进度定位。
+        if (!mPassDialogController.mHasPendingReturnAnchor) return false
+        val adapterPosition = mPassDialogController.mPendingReturnAnchorPosition ?: return false
+        val topOffsetPx = mPassDialogController.mPendingReturnAnchorOffsetPx ?: return false
         if (adapterPosition !in 0 until mAdapter.itemCount) return false
         mPassDialogController.clearPendingReturnAnchor()
-        mRecyclerView.post {
+        positionMapAndReveal {
             mLayoutManager.scrollToPositionWithOffset(adapterPosition, topOffsetPx)
         }
         return true
     }
 
     private fun positionMapToLevel(level: Int?, skipProgressOffset: Boolean) {
-        mRecyclerView.post {
+        positionMapAndReveal {
+            // 胜利返回时根据已通关关卡做额外上移，其余场景按当前待挑战关卡定位。
             val completedOffsetDp = if (skipProgressOffset) {
                 0
             } else {
@@ -194,11 +230,45 @@ class MapActivity : AppCompatActivity() {
     private fun setMapInteractionEnabled(enabled: Boolean) {
         mRecyclerView.isEnabled = enabled
         mSettings.isEnabled = enabled
+        mLoginStatus.isEnabled = enabled
         mRecyclerView.alpha = if (enabled) 1f else 0.96f
+    }
+
+    private fun positionMapAndReveal(positionAction: () -> Unit) {
+        mRecyclerView.post {
+            positionAction()
+            // 先完成列表定位，再在下一帧显示，避免用户看到滚动到目标位置的过程。
+            mRecyclerView.doOnPreDraw {
+                mRecyclerView.visibility = View.VISIBLE
+                mBinding.root.alpha = 1f
+            }
+        }
+    }
+
+
+    private fun saveCurrentMapPosition(save: (Int, Int) -> Unit) {
+        if (!::mLayoutManager.isInitialized || !::mRecyclerView.isInitialized) return
+        val position = mLayoutManager.findFirstVisibleItemPosition()
+        if (position == RecyclerView.NO_POSITION) return
+        // 保存首个可见项和顶部偏移，保证返回后视觉位置与离开时一致。
+        save(position, mRecyclerView.getChildAt(0)?.top ?: 0)
+    }
+
+    override fun onSaveInstanceState(outState: Bundle) {
+        saveCurrentMapPosition { position, topOffset ->
+            outState.putInt(KEY_MAP_RESTORE_POSITION, position)
+            outState.putInt(KEY_MAP_RESTORE_TOP_OFFSET, topOffset)
+        }
+        super.onSaveInstanceState(outState)
     }
 
     private fun dpToPx(dp: Int): Int {
         return (dp * resources.displayMetrics.density).toInt()
+    }
+
+    private fun refreshVisibleLanguage() {
+        refreshLoginState()
+        if (::mAdapter.isInitialized) mAdapter.notifyItemChanged(0)
     }
 
     private fun initShootingStar() {
@@ -272,6 +342,7 @@ class MapActivity : AppCompatActivity() {
 
     private fun createPlayIntent(num: String): Intent {
         val intent = PlayRoute.create(this@MapActivity, parseLevel(num) ?: 1, mCurrentUsername)
+        // 打开棋盘页前把地图锚点写入 Intent，供失败/退出后恢复原浏览位置。
         return MapRoute.putReturnAnchor(
             intent = intent,
             adapterPosition = mLayoutManager.findFirstVisibleItemPosition(),

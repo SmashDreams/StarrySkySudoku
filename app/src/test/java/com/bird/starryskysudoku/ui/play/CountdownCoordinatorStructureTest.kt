@@ -35,6 +35,18 @@ class CountdownCoordinatorStructureTest {
         assertFalse(coordinator.contains("startForegroundService"))
     }
 
+    @Test
+    fun countdownNotificationKeepsGameplayUsername() {
+        val activity = mSourceRoot.resolve("ui/play/PlayActivity.kt").readText()
+        val coordinator = mSourceRoot.resolve("ui/play/CountdownCoordinator.kt").readText()
+        val service = mSourceRoot.resolve("timer/CountdownTimerService.kt").readText()
+
+        assertTrue(activity.contains("mGetUsername = { mCurrentUsername }"))
+        assertTrue(coordinator.contains("CountdownTimerContract.EXTRA_USERNAME"))
+        assertTrue(service.contains("CountdownTimerContract.EXTRA_USERNAME"))
+        assertFalse(service.contains("username = \"\""))
+    }
+
     private fun locateSourceRoot(): File {
         var dir = File(requireNotNull(System.getProperty("user.dir"))).absoluteFile
         while (true) {

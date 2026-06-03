@@ -32,34 +32,37 @@ class GameResultProvider : ContentProvider() {
             selection: String?,
             selectionArgs: Array<out String>?
         ): ResultQueryFilter {
+            // 对外只接受“按用户名过滤”这一种查询条件，减少提供器暴露面的复杂度。
             if (selection == null) {
                 if (!selectionArgs.isNullOrEmpty()) {
-                    throw IllegalArgumentException("Selection arguments require a selection")
+                    throw IllegalArgumentException("selectionArgs 不能脱离 selection 单独传入")
                 }
                 return ResultQueryFilter.All
             }
             if (selection != GameResultContract.Results.selectionForUsername()) {
-                throw IllegalArgumentException("Unsupported results selection: $selection")
+                throw IllegalArgumentException("不支持的 results selection：$selection")
             }
             if (selectionArgs?.size != 1) {
-                throw IllegalArgumentException("Username selection requires exactly one argument")
+                throw IllegalArgumentException("按用户名筛选时必须且只能传入一个参数")
             }
             val username = selectionArgs[0].trim()
             if (username.isBlank()) {
-                throw IllegalArgumentException("Username selection requires a nonblank argument")
+                throw IllegalArgumentException("按用户名筛选时参数不能为空白")
             }
             return ResultQueryFilter.Username(username)
         }
 
         internal fun requireSupportedSortOrder(sortOrder: String?) {
+            // 查询排序固定只支持“最新优先”，避免外部随意传参造成结果口径不一致。
             if (sortOrder != null && sortOrder != GameResultContract.Results.SORT_NEWEST_FIRST) {
-                throw IllegalArgumentException("Unsupported results sort order: $sortOrder")
+                throw IllegalArgumentException("不支持的 results 排序方式：$sortOrder")
             }
         }
 
         internal fun requireUnfilteredItemQuery(selection: String?, selectionArgs: Array<out String>?) {
+            // 单条地址已经唯一定位到记录本身，不再额外接受筛选条件。
             if (selection != null || !selectionArgs.isNullOrEmpty()) {
-                throw IllegalArgumentException("Item uri queries do not support selection filters")
+                throw IllegalArgumentException("单条 item uri 查询不支持额外 selection 过滤")
             }
         }
     }
@@ -70,7 +73,7 @@ class GameResultProvider : ContentProvider() {
         return when (sUriMatcher.match(uri)) {
             MATCH_RESULTS -> GameResultContract.Results.CONTENT_TYPE
             MATCH_RESULT_ID -> GameResultContract.Results.CONTENT_ITEM_TYPE
-            else -> throw IllegalArgumentException("Unsupported uri: $uri")
+            else -> throw IllegalArgumentException("不支持的 uri：$uri")
         }
     }
 
@@ -99,7 +102,7 @@ class GameResultProvider : ContentProvider() {
                 requireUnfilteredItemQuery(selection, selectionArgs)
                 dao.queryById(ContentUris.parseId(uri))
             }
-            else -> throw IllegalArgumentException("Unsupported uri: $uri")
+            else -> throw IllegalArgumentException("不支持的 uri：$uri")
         }
         cursor.setNotificationUri(appContext.contentResolver, uri)
         return cursor
@@ -107,9 +110,10 @@ class GameResultProvider : ContentProvider() {
 
     override fun insert(uri: Uri, values: ContentValues?): Uri {
         if (sUriMatcher.match(uri) != MATCH_RESULTS) {
-            throw IllegalArgumentException("Insert only supports collection uri: $uri")
+            throw IllegalArgumentException("insert 只支持 collection uri：$uri")
         }
-        val safeValues = values ?: throw IllegalArgumentException("ContentValues must not be null")
+        // 落库前先拦截空参数，避免后续字段校验报错时丢失根因。
+        val safeValues = values ?: throw IllegalArgumentException("ContentValues 不能为空")
         val appContext = requireNotNull(context?.applicationContext)
         /*
          * 清单文件中的写权限负责拦截普通外部应用。
@@ -126,7 +130,7 @@ class GameResultProvider : ContentProvider() {
 
     override fun delete(uri: Uri, selection: String?, selectionArgs: Array<out String>?): Int {
         if (sUriMatcher.match(uri) != MATCH_RESULT_ID) {
-            throw IllegalArgumentException("Delete only supports item uri: $uri")
+            throw IllegalArgumentException("delete 只支持 item uri：$uri")
         }
         requireUnfilteredItemQuery(selection, selectionArgs)
         val appContext = requireNotNull(context?.applicationContext)
@@ -148,5 +152,8 @@ class GameResultProvider : ContentProvider() {
         values: ContentValues?,
         selection: String?,
         selectionArgs: Array<out String>?
-    ): Int = 0
+    ): Int {
+        // 战绩只允许新增、查询和按条删除，不开放更新，避免外部篡改既有结果。
+        return 0
+    }
 }

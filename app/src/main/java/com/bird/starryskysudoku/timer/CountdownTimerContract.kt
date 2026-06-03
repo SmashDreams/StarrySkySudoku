@@ -7,6 +7,7 @@ object CountdownTimerContract {
     const val EXTRA_REMAINING_SECONDS = "remaining_seconds"
     const val EXTRA_INITIAL_SECONDS = "initial_seconds"
     const val EXTRA_LEVEL_NUMBER = "level_number"
+    const val EXTRA_USERNAME = "username"
     const val NOTIFICATION_CHANNEL_ID = "sudoku_countdown"
     const val NOTIFICATION_ID = 1001
     const val DEFAULT_TOTAL_SECONDS = 600

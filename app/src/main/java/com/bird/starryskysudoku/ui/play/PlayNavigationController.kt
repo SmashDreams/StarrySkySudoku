@@ -15,11 +15,13 @@ class PlayNavigationController(
     private val mIsPaused: () -> Boolean
 ) {
     fun init() {
+        // 页面导航层只处理暂停入口和生命周期恢复，不参与棋盘数据或倒计时计算。
         initPauseButton()
         initBackHandler()
     }
 
     fun onPause() {
+        // 页面离开前先收掉持续型提示音，避免回到后台后还残留终局或超时音效。
         PlayMusic.getInstance().stopTimesUp()
         if (mViewModel.mHasWon.value == true) {
             PlayMusic.getInstance().stopWinning()
@@ -39,6 +41,7 @@ class PlayNavigationController(
 
     private fun initPauseButton() {
         mPauseButton.setOnClickListener {
+            // 已通关后暂停按钮不再生效，避免胜利弹窗和暂停弹窗同时出现。
             if (mViewModel.mHasWon.value == true) return@setOnClickListener
             showPauseDialog()
         }
@@ -47,6 +50,7 @@ class PlayNavigationController(
     private fun initBackHandler() {
         mActivity.onBackPressedDispatcher.addCallback(mActivity, object : OnBackPressedCallback(true) {
             override fun handleOnBackPressed() {
+                // 棋盘页返回键不直接退出，统一走暂停弹窗，避免误触丢失当前局进度。
                 showPauseDialog()
             }
         })

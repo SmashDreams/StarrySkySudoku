@@ -32,6 +32,7 @@ class PlayViewModel(private val mPlayRepository: PlayRepository) : ViewModel() {
         val mNumberAlphas: FloatArray
     )
 
+    // 棋盘数据只通过这一份可观察源对外分发，页面重建后仍能直接拿到当前局面。
     private val mBoardSource = MutableLiveData<Array<Array<BoardCell>>>()
     val mBoard: LiveData<Array<Array<BoardCell>>> = mBoardSource
 
@@ -103,6 +104,7 @@ class PlayViewModel(private val mPlayRepository: PlayRepository) : ViewModel() {
 
     fun selectCell(row: Int, col: Int) {
         val board = mBoardSource.value ?: return
+        // 最近一次选中值会被缓存下来，供重复输入清空和错误恢复逻辑复用。
         mLastValue = PlayBoardRules.selectCell(board, row, col)
         mBoardSource.value = board
     }
@@ -171,6 +173,7 @@ class PlayViewModel(private val mPlayRepository: PlayRepository) : ViewModel() {
         tagData: Array<Array<TagData?>>
     ): RestoredHistoryState? {
         val board = mBoardSource.value ?: return null
+        // 撤销恢复前先把当前焦点切回历史记录对应格子，后续按钮明暗才能和棋盘状态对齐。
         val block = board.getOrNull(history.mRow)?.getOrNull(history.mCol)?.mBlock ?: 0
         setCurrentPosition(history.mRow, history.mCol, block)
 
@@ -212,6 +215,7 @@ class PlayViewModel(private val mPlayRepository: PlayRepository) : ViewModel() {
     }
 
     private suspend fun recordHistory(row: Int, col: Int, type: Int, value: Int) {
+        // 历史记录统一带上关卡和局标识，确保撤销永远只作用在当前这一局。
         mPlayRepository.recordHistory(newHistory(row, col, type, value), mCurrentPassNum, mGameSession)
     }
 

@@ -53,4 +53,20 @@ class MapRouteTest {
         assertEquals(8, mapIntent.getIntExtra(MapRoute.EXTRA_RETURN_ANCHOR_POSITION, -1))
         assertEquals(-42, mapIntent.getIntExtra(MapRoute.EXTRA_RETURN_ANCHOR_OFFSET, 0))
     }
+
+    @Test
+    fun clearReturnAnchorRemovesOnlyMapAnchorExtras() {
+        val intent = MapRoute.putReturnAnchor(
+            MapRoute.createAfterWin(RuntimeEnvironment.getApplication(), completedLevel = 5, nextLevel = 6),
+            adapterPosition = 8,
+            topOffsetPx = -42
+        )
+
+        MapRoute.clearReturnAnchor(intent)
+
+        assertFalse(intent.hasExtra(MapRoute.EXTRA_RETURN_ANCHOR_POSITION))
+        assertFalse(intent.hasExtra(MapRoute.EXTRA_RETURN_ANCHOR_OFFSET))
+        assertEquals("5", intent.getStringExtra(MapRoute.EXTRA_COMPLETED_LEVEL))
+        assertEquals("6", intent.getStringExtra(MapRoute.EXTRA_NEXT_LEVEL))
+    }
 }

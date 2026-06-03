@@ -19,6 +19,7 @@ fun Activity.startActivityWithTransition(
 fun Activity.finishWithTransition(@AnimRes enterAnim: Int, @AnimRes exitAnim: Int) {
     // 新系统关闭页动画需要单独调用覆盖接口，旧系统保持默认结束行为。
     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
+        // 关闭动画在新系统不会自动沿用 startActivity 的自定义转场，这里手动补齐。
         overrideActivityTransition(Activity.OVERRIDE_TRANSITION_CLOSE, enterAnim, exitAnim)
     }
     finish()

@@ -8,10 +8,10 @@ object SudokuBoardGeometry {
     const val CELL_SIZE_OFFSET = 54f
 
     data class BoardRect(
-        val left: Float,
-        val top: Float,
-        val right: Float,
-        val bottom: Float
+        val mLeft: Float,
+        val mTop: Float,
+        val mRight: Float,
+        val mBottom: Float
     )
 
     // 通过视图宽度反推单格边长，保证不同屏幕尺寸下棋盘比例一致。
@@ -26,10 +26,10 @@ object SudokuBoardGeometry {
         val boardSize = cellSize(width) * BOARD_SIZE
         // 外框从粗边框内侧开始计算，和棋盘实际绘制边界保持一致。
         return BoardRect(
-            left = left + BORDER_INSET - padding,
-            top = top + BORDER_INSET - padding,
-            right = left + BORDER_INSET + boardSize + padding,
-            bottom = top + BORDER_INSET + boardSize + padding
+            mLeft = left + BORDER_INSET - padding,
+            mTop = top + BORDER_INSET - padding,
+            mRight = left + BORDER_INSET + boardSize + padding,
+            mBottom = top + BORDER_INSET + boardSize + padding
         )
     }
 
@@ -45,10 +45,10 @@ object SudokuBoardGeometry {
         val size = cellSize(width)
         // 右下边允许单独微调，便于引导蒙层与像素边框精确对齐。
         return BoardRect(
-            left = left + CELL_INSET + col * size - padding,
-            top = top + CELL_INSET + row * size - padding,
-            right = left + CELL_INSET + (col + 1) * size - rightBottomAdjust + padding,
-            bottom = top + CELL_INSET + (row + 1) * size - rightBottomAdjust + padding
+            mLeft = left + CELL_INSET + col * size - padding,
+            mTop = top + CELL_INSET + row * size - padding,
+            mRight = left + CELL_INSET + (col + 1) * size - rightBottomAdjust + padding,
+            mBottom = top + CELL_INSET + (row + 1) * size - rightBottomAdjust + padding
         )
     }
 
@@ -62,10 +62,10 @@ object SudokuBoardGeometry {
     ): BoardRect {
         val blockSize = cellSize(width) * 3
         return BoardRect(
-            left = left + BORDER_INSET + blockCol * blockSize - padding,
-            top = top + BORDER_INSET + blockRow * blockSize - padding,
-            right = left + BORDER_INSET + (blockCol + 1) * blockSize + padding,
-            bottom = top + BORDER_INSET + (blockRow + 1) * blockSize + padding
+            mLeft = left + BORDER_INSET + blockCol * blockSize - padding,
+            mTop = top + BORDER_INSET + blockRow * blockSize - padding,
+            mRight = left + BORDER_INSET + (blockCol + 1) * blockSize + padding,
+            mBottom = top + BORDER_INSET + (blockRow + 1) * blockSize + padding
         )
     }
 
@@ -83,10 +83,10 @@ object SudokuBoardGeometry {
         val endCol = startCol + colSpan
         // 区域矩形按网格线位置计算，适合做教程聚焦框或整块高亮。
         return BoardRect(
-            left = left + gridLineOffset(width, startCol) - padding,
-            top = top + gridLineOffset(width, startRow) - padding,
-            right = left + gridLineOffset(width, endCol) + padding,
-            bottom = top + gridLineOffset(width, endRow) + padding
+            mLeft = left + gridLineOffset(width, startCol) - padding,
+            mTop = top + gridLineOffset(width, startRow) - padding,
+            mRight = left + gridLineOffset(width, endCol) + padding,
+            mBottom = top + gridLineOffset(width, endRow) + padding
         )
     }
 

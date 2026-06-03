@@ -4,7 +4,7 @@
 
 ## 当前版本
 - 版本：2.0
-- 更新内容：完成地图页结构拆分，将关卡弹窗、设置弹窗和通知权限导航拆成独立控制器；新增跨应用共享契约源码，统一维护茶苑登录态和数独战绩 Provider 的 URI、字段名与权限；同步更新星空茶苑联动说明。
+- 更新内容：完成页面逻辑加注释修正，补齐地图页、棋盘页、倒计时、战绩、登录态、语言切换和背景音乐等核心链路的中文注释；同步整理当前项目结构与脚本目录说明。
 
 ## 功能
 - 标准数独玩法：9×9 棋盘，行列宫内无重复
@@ -31,10 +31,14 @@
 
 ## 项目结构
 
+- `ui/splash/AppEntryActivity.kt`：启动页入口，负责首启引导分流和按当前语言选择启动图
+- `ui/common/BaseLocalizedActivity.kt`、`ui/common/AppLocaleContext.kt`：统一处理页面级语言上下文包装与即时刷新
+- `ui/common/ActivityTransitions.kt`：统一封装页面切换和关闭转场
 - `ui/map/MapActivity.kt`：地图页入口，负责组合控制器、列表展示、登录态刷新和生命周期分发
 - `ui/map/MapPassDialogController.kt`：关卡确认/重试弹窗、胜负返回地图后的弹窗消费和关卡跳转入口
 - `ui/map/MapSettingsController.kt`：设置弹窗、音乐音效开关、玩法页入口和语言切换
 - `ui/map/MapNotificationNavigator.kt`：进入棋盘前的通知权限申请、厂商通知预热和页面跳转
+- `ui/map/MapPathOverlayView.kt`、`ui/map/PassListAdapter.kt`：地图行内路径虚线绘制、星星状态和滚动定位辅助
 - `ui/play/PlayActivity.kt`：棋盘页入口，负责组合控制器和生命周期分发
 - `ui/play/PlayRoute.kt`、`ui/map/MapRoute.kt`：集中管理页面跳转 Intent 与 Extra Key
 - `ui/play/PlayBoardRules.kt`：纯棋盘规则，包括题面创建、选中高亮、填数冲突、完成判断和错误回滚
@@ -44,8 +48,17 @@
 - `ui/play/PlayDialogController.kt`：暂停、胜利、失败弹窗及弹窗内导航
 - `ui/play/PlayNavigationController.kt`：暂停按钮、返回键和页面恢复/暂停协调
 - `ui/play/CountdownCoordinator.kt`：倒计时前台服务启动、停止和广播接收
-- `ui/play/GameResultRecorder.kt`：通过 Provider 保存并校验游戏战绩
+- `ui/play/GameResultRecordGate.kt`、`ui/play/GameResultRecorder.kt`：终局战绩去重闸门与 Provider 落库校验
+- `timer/CountdownTimerService.kt`、`timer/CountdownTimerContract.kt`：前台倒计时 service 与广播/通知协议
+- `media/AppForegroundBgmController.kt`、`media/BgmMusicService.kt`、`media/BgmMusicController.kt`：应用前后台背景音乐 service 生命周期管理
+- `media/PlayMusic.kt`：页面短音效、提示音与流编号管理
+- `notification/NotificationPermissionPolicy.kt`：通知权限与厂商预热策略判定
+- `account/LauncherSessionReader.kt`、`account/LauncherSessionContract.kt`：茶苑登录态读取与共享契约适配
+- `data/provider/GameResultProvider.kt`、`data/provider/GameResultContract.kt`：战绩共享 Provider 与跨应用契约
+- `data/repository/MapRepository.kt`、`data/repository/PlayRepository.kt`、`data/repository/UserProgressRepository.kt`：地图、棋盘、用户进度仓储
+- `data/database/DatabaseInitializer.kt`：Room 初始化与数据库迁移
 - `shared-contracts/`：与星空茶苑共用的跨应用契约源码，避免 Provider 字段和 URI 两边漂移
+- `scripts/monkey_run.sh`、`scripts/issue/`：真机 monkey 压测脚本与问题记录文档
 
 ## 跨应用契约
 
@@ -96,6 +109,13 @@ projects/
 
 ```bash
 ./gradlew lintDebug
+```
+
+如需分别校验主工程和单元测试 Kotlin 编译：
+
+```bash
+./gradlew :app:compileDebugKotlin
+./gradlew :app:compileDebugUnitTestKotlin
 ```
 
 ## 版本记录

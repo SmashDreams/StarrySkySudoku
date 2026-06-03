@@ -15,6 +15,7 @@ import android.util.Log
 class AppForegroundBgmController(
     private val mApplication: Application
 ) : Application.ActivityLifecycleCallbacks {
+    // 应用前后台切换时由这里统一绑定、续播和延迟解绑背景音乐服务。
     private val mHandler = Handler(Looper.getMainLooper())
     private var mStartedActivities = 0
     private var mBound = false
@@ -37,6 +38,7 @@ class AppForegroundBgmController(
     override fun onActivityStarted(activity: Activity) {
         mStartedActivities++
         mHandler.removeCallbacks(mUnbindRunnable)
+        // 只要应用重新回到前台可见状态，就立即确保音乐服务已重新绑定。
         bind(activity)
     }
 
@@ -49,6 +51,7 @@ class AppForegroundBgmController(
     override fun onActivityStopped(activity: Activity) {
         mStartedActivities = (mStartedActivities - 1).coerceAtLeast(0)
         if (mStartedActivities == 0) {
+            // 最后一个页面离开前台时先暂停音乐，再延迟解绑，兼容快速页面切换抖动。
             BgmMusicController.pause()
             mHandler.postDelayed(mUnbindRunnable, BACKGROUND_UNBIND_DELAY_MS)
         }
@@ -63,18 +66,20 @@ class AppForegroundBgmController(
                 Context.BIND_AUTO_CREATE
             )
         } catch (exception: RuntimeException) {
-            Log.w(TAG, "Unable to bind BGM service while app state is changing", exception)
+            // 应用切后台或进程状态切换瞬间可能绑定失败，这里只做保护性兜底。
+            Log.w(TAG, "app 状态切换期间无法绑定背景音乐 service", exception)
             mBound = false
         }
     }
 
     private fun unbind() {
         if (!mBound) return
+        // 解绑前先通知控制器丢弃旧服务引用，避免后续误操作已经失效的 Binder。
         BgmMusicController.onServiceUnbound(mBoundService)
         try {
             mApplication.unbindService(mConnection)
         } catch (exception: IllegalArgumentException) {
-            Log.w(TAG, "BGM service was already unbound", exception)
+            Log.w(TAG, "背景音乐 service 已经解绑", exception)
         }
         mBoundService = null
         mBound = false
@@ -87,6 +92,7 @@ class AppForegroundBgmController(
 
     private companion object {
         private const val TAG = "AppForegroundBgm"
+        // 留一个极短延迟，避免页面切换过程中频繁解绑又立刻重绑。
         private const val BACKGROUND_UNBIND_DELAY_MS = 100L
     }
 }

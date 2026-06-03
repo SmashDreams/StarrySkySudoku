@@ -18,21 +18,22 @@ class MyDialog : ComponentDialog {
         private const val DEFAULT_ENTER_ANIMATION_MILLIS = 800L
     }
 
-    private val layout: Int
-    private val handler = Handler(Looper.getMainLooper())
-    private val lockedViewStates = LinkedHashMap<View, Boolean>()
-    private var interactionLockDurationMillis = DEFAULT_ENTER_ANIMATION_MILLIS
-    private var unlockRunnable: Runnable? = null
-    private var interactionLocked = false
+    // 弹窗入场动画期间暂时锁住所有可点击控件，避免动画未结束就重复触发操作。
+    private val mLayout: Int
+    private val mHandler = Handler(Looper.getMainLooper())
+    private val mLockedViewStates = LinkedHashMap<View, Boolean>()
+    private var mInteractionLockDurationMillis = DEFAULT_ENTER_ANIMATION_MILLIS
+    private var mUnlockRunnable: Runnable? = null
+    private var mInteractionLocked = false
 
     constructor(context: Context, layout: Int, style: Int, gravity: Int) : super(context, style) {
-        this.layout = layout
+        this.mLayout = layout
         setContentView(layout)
         initWindow(gravity)
     }
 
     constructor(context: Context, layout: Int, contentView: View, style: Int, gravity: Int) : super(context, style) {
-        this.layout = layout
+        this.mLayout = layout
         setContentView(contentView)
         initWindow(gravity)
     }
@@ -42,9 +43,9 @@ class MyDialog : ComponentDialog {
         window?.attributes?.windowAnimations = R.style.SlideInFromBottomDialogAnimation
         onBackPressedDispatcher.addCallback(this, object : OnBackPressedCallback(true) {
             override fun handleOnBackPressed() {
-                if (interactionLocked) return
+                if (mInteractionLocked) return
                 // 只有设置和关卡确认弹窗允许返回键直接关闭，其余弹窗维持原交互约束。
-                if (layout == R.layout.dialog_passcheck || layout == R.layout.dialog_settings) {
+                if (mLayout == R.layout.dialog_passcheck || mLayout == R.layout.dialog_settings) {
                     dismiss()
                     PlayMusic.getInstance().stopDialogShow()
                 }
@@ -53,7 +54,7 @@ class MyDialog : ComponentDialog {
     }
 
     fun setInteractionLockDuration(durationMillis: Long) {
-        interactionLockDurationMillis = durationMillis.coerceAtLeast(0L)
+        mInteractionLockDurationMillis = durationMillis.coerceAtLeast(0L)
     }
 
     override fun show() {
@@ -62,42 +63,58 @@ class MyDialog : ComponentDialog {
     }
 
     override fun cancel() {
-        Log.d(TAG, "cancel:")
-        if (interactionLocked) return
+        Log.d(TAG, "弹窗取消")
+        if (mInteractionLocked) return
         super.cancel()
         // 暂停弹窗关闭后仍要保留暂停状态，这里不主动停止弹窗音效。
-        if (layout != R.layout.dialog_pause) {
+        if (mLayout != R.layout.dialog_pause) {
             PlayMusic.getInstance().stopDialogShow()
         }
     }
 
     override fun dismiss() {
-        unlockRunnable?.let(handler::removeCallbacks)
-        unlockRunnable = null
+        mUnlockRunnable?.let(mHandler::removeCallbacks)
+        mUnlockRunnable = null
         unlockInteractions()
         super.dismiss()
     }
 
-    private fun lockInteractionsUntilEnterAnimationEnds() {
-        unlockRunnable?.let(handler::removeCallbacks)
-        lockedViewStates.clear()
-        interactionLocked = true
+    fun dismissImmediately() {
+        // 某些场景需要立刻移除弹窗，先临时关闭退出动画再恢复原动画配置。
+        val windowAttributes = window?.attributes
+        val originalAnimation = windowAttributes?.windowAnimations
+        if (windowAttributes != null) {
+            windowAttributes.windowAnimations = 0
+            window?.attributes = windowAttributes
+        }
+        dismiss()
+        if (windowAttributes != null && originalAnimation != null) {
+            windowAttributes.windowAnimations = originalAnimation
+            window?.attributes = windowAttributes
+        }
+    }
 
+    private fun lockInteractionsUntilEnterAnimationEnds() {
+        mUnlockRunnable?.let(mHandler::removeCallbacks)
+        mLockedViewStates.clear()
+        mInteractionLocked = true
+
+        // 装饰视图下递归收集所有可交互子控件，统一做短暂禁用。
         val content = window?.decorView ?: run {
-            interactionLocked = false
+            mInteractionLocked = false
             return
         }
         collectClickableViews(content)
-        lockedViewStates.forEach { (view, _) -> view.isEnabled = false }
+        mLockedViewStates.forEach { (view, _) -> view.isEnabled = false }
 
         val runnable = Runnable { unlockInteractions() }
-        unlockRunnable = runnable
-        handler.postDelayed(runnable, interactionLockDurationMillis)
+        mUnlockRunnable = runnable
+        mHandler.postDelayed(runnable, mInteractionLockDurationMillis)
     }
 
     private fun collectClickableViews(view: View) {
         if (view !is ViewGroup && (view.isClickable || view.isLongClickable)) {
-            lockedViewStates[view] = view.isEnabled
+            mLockedViewStates[view] = view.isEnabled
         }
         if (view is ViewGroup) {
             for (index in 0 until view.childCount) {
@@ -107,9 +124,9 @@ class MyDialog : ComponentDialog {
     }
 
     private fun unlockInteractions() {
-        lockedViewStates.forEach { (view, wasEnabled) -> view.isEnabled = wasEnabled }
-        lockedViewStates.clear()
-        interactionLocked = false
-        unlockRunnable = null
+        mLockedViewStates.forEach { (view, wasEnabled) -> view.isEnabled = wasEnabled }
+        mLockedViewStates.clear()
+        mInteractionLocked = false
+        mUnlockRunnable = null
     }
 }

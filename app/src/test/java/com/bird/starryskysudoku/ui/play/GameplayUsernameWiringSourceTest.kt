@@ -5,11 +5,11 @@ import org.junit.Test
 import java.io.File
 
 class GameplayUsernameWiringSourceTest {
-    private val sourceRoot = locateSourceRoot()
+    private val mSourceRoot = locateSourceRoot()
 
     @Test
     fun mapActivityPassesCurrentUsernameToEveryPlayActivityIntent() {
-        val source = sourceRoot.resolve("ui/map/MapActivity.kt").readText()
+        val source = mSourceRoot.resolve("ui/map/MapActivity.kt").readText()
 
         assertTrue(source.contains("PlayRoute.create(this@MapActivity"))
         assertTrue(source.contains("mCurrentUsername"))
@@ -17,8 +17,8 @@ class GameplayUsernameWiringSourceTest {
 
     @Test
     fun playActivityAcceptsUsernameExtraAndReadsResultUsername() {
-        val source = sourceRoot.resolve("ui/play/PlayActivity.kt").readText()
-        val recorderSource = sourceRoot.resolve("ui/play/GameResultRecorder.kt").readText()
+        val source = mSourceRoot.resolve("ui/play/PlayActivity.kt").readText()
+        val recorderSource = mSourceRoot.resolve("ui/play/GameResultRecorder.kt").readText()
 
         assertTrue(
             "PlayActivity must expose EXTRA_USERNAME",
@@ -37,7 +37,7 @@ class GameplayUsernameWiringSourceTest {
 
     @Test
     fun playActivityPassesCurrentUsernameToInternalPlayActivityIntents() {
-        val source = sourceRoot.resolve("ui/play/PlayDialogController.kt").readText()
+        val source = mSourceRoot.resolve("ui/play/PlayDialogController.kt").readText()
 
         assertTrue(
             "Expected PlayDialogController to create internal PlayActivity intents",
