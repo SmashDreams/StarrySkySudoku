@@ -27,30 +27,29 @@
 ## 架构
 
 ```
-┌─────────────────────────────────────────────────────┐
-│  Activity 层                                         │
-│  AppEntry → Guide → Map ←→ Play                     │
-│                 ↑         ↑                          │
-│             MapViewModel  PlayViewModel              │
-│                 ↑         ↑                          │
-│  ┌──────────────┴─────────┴──────────────┐           │
-│  │  Repository 层                          │           │
-│  │  MapRepository / PlayRepository /       │           │
-│  │  UserProgressRepository                 │           │
-│  └──────────────┬──────────────────────────┘           │
-│  ┌──────────────┴──────────────────────────┐           │
-│  │  Data 层 (Room DAO → SQLite)             │           │
-│  │  ProblemDao / UserMapDao / HistoryDao /  │           │
-│  │  GameResultDao                           │           │
-│  └──────────────────────────────────────────┘           │
-│                                                       │
-│  Controller 委托 (PlayActivity → 6 个 Controller)       │
-│  Board / Input / GameState / Nav / Dialog /            │
-│  CountdownCoordinator                                  │
-│                                                       │
-│  跨进程: ContentProvider → 茶苑 Launcher 读战绩          │
-│  计时:   CountdownTimerService (前台) → 广播 → UI       │
-└─────────────────────────────────────────────────────┘
+Activity 层
+  AppEntry -> Guide -> Map <-> Play
+               |          |
+          MapViewModel  PlayViewModel
+               |          |
+  +------------+----------+------------------------+
+  | Repository 层                                    |
+  | MapRepository / PlayRepository /                |
+  | UserProgressRepository                          |
+  +------------+------------------------------------+
+               |
+  +------------+------------------------------------+
+  | Data 层 (Room DAO -> SQLite)                    |
+  | ProblemDao / UserMapDao / HistoryDao /          |
+  | GameResultDao                                    |
+  +-------------------------------------------------+
+
+  Controller 委托 (PlayActivity -> 6 Controller)
+  Board / Input / GameState / Nav / Dialog /
+  CountdownCoordinator
+
+  跨进程  ContentProvider -> 茶苑 Launcher 读战绩
+  计时    CountdownTimerService (前台) -> 广播 -> UI
 ```
 
 ## 数据库
