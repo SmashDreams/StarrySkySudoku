@@ -60,10 +60,10 @@ class MyDialog : ComponentDialog {
     }
 
     override fun show() {
-        // 弹窗出现：叠加层 0→70% 前 300ms，内容由 dialog_show.xml 在 300ms 后滑入
         val w = window
         w?.setDimAmount(0f)
         super.show()
+        // 叠加层 dimAmount 0→70% 前 300ms
         ValueAnimator.ofFloat(0f, 0.7f).apply {
             duration = 300L
             interpolator = LinearInterpolator()
@@ -72,6 +72,10 @@ class MyDialog : ComponentDialog {
             }
             start()
         }
+        // 出现音效在内容滑入时触发（300ms，与 translate 同步）
+        mHandler.postDelayed({
+            PlayMusic.getInstance().playDialogShow()
+        }, 300L)
         lockInteractionsUntilEnterAnimationEnds()
     }
 

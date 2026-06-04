@@ -67,10 +67,8 @@ class PlayNavigationController(
     }
 
     private fun showPauseDialog() {
-        PlayMusic.getInstance().playDialogShow()
         PlayMusic.getInstance().stopTimesUp()
         mSetPaused(true)
-        // 暂停计时，前台服务通知保持显示
         mCountdownCoordinator.pause()
         mDialogController.showPauseDialog()
     }

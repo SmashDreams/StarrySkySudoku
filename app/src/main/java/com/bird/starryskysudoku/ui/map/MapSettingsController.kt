@@ -54,7 +54,6 @@ class MapSettingsController(
         val audioSwitch = settingsBinding.settingsAudio
 
         mSettingsButton.setOnClickListener {
-            PlayMusic.getInstance().playDialogShow()
             musicSwitch.setImageResource(
                 if (mMusicOpened) R.drawable.icon_music_on else R.drawable.icon_music_off
             )

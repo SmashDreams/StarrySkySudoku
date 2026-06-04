@@ -139,7 +139,6 @@ class PassListAdapter(
                     }
 
                     holder.mStars[i].setOnClickListener {
-                        PlayMusic.getInstance().playDialogShow()
                         mOpenListener?.onOpen(entity)
                     }
                 }
@@ -157,7 +156,6 @@ class PassListAdapter(
                     }
 
                     holder.mStars[i].setOnClickListener {
-                        PlayMusic.getInstance().playDialogShow()
                         mOpenListener?.onOpen(entity)
                     }
                 }
