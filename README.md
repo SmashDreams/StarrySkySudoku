@@ -1,132 +1,191 @@
 # 星空数独 (StarrySkySudoku)
 
-一款星空主题的数独游戏 Android 应用，包含 40 个关卡（从易到难）。
+一款星空主题的数独游戏 Android 应用，40 个关卡从易到难，支持标记、撤销、倒计时、前台通知、跨应用战绩共享和茶苑登录联动。
 
-## 当前版本
-- 版本：2.0
-- 更新内容：完成页面逻辑加注释修正，补齐地图页、棋盘页、倒计时、战绩、登录态、语言切换和背景音乐等核心链路的中文注释；同步整理当前项目结构与脚本目录说明。
+## 版本
 
-## 功能
-- 标准数独玩法：9×9 棋盘，行列宫内无重复
-- 标记模式：空格内可标记候选数字（1-9 均可）
-- 撤销功能：支持数字和标记撤销（上限 20 条）
-- 倒计时：每关 10 分钟，由后台 Service 每秒广播剩余时间
-- 前台通知：游戏中通过前台 Service 展示关卡名和剩余时间
-- 通知权限前置：进入棋盘前处理 Android 13+ 通知权限，并预热华为 Android 12 的厂商通知授权
-- 关卡地图：星空主题滚动地图，已通关关卡点亮星星
-- 战绩共享：通过 ContentProvider 对外提供 Room 存储的通关/失败记录
-- 茶苑登录联动：读取星空茶苑登录态 Provider，按当前用户保存和查询战绩
-- 背景音乐/音效：独立开关
-- 中英文切换
+**2.0** — 补全测试自动化脚本，修复倒计时跳秒、前台通知延迟、暂停时间不同步和音效音量。
 
 ## 技术栈
-- Kotlin
-- Room 数据库
-- ViewModel + LiveData
-- Android 四大组件：Activity / Service / BroadcastReceiver / ContentProvider
-- SoundPool (Builder API)
-- AndroidX AppCompat / Activity KTX
-- Gradle Version Catalog
-- 共享源码契约（`shared-contracts` + Gradle `sourceSets`）
 
-## 项目结构
+| 层面 | 技术选型 |
+|---|---|
+| 语言 | Kotlin (JVM 17) |
+| 架构 | MVVM + Controller 委托 + Repository 模式 |
+| 响应式 | LiveData + Lifecycle 感知观察者 |
+| 数据库 | Room (v6, KSP 编译), 5 次增量迁移 |
+| 跨进程通信 | ContentProvider + 共享契约源码目录 |
+| 倒计时 | 前台 Service + BroadcastReceiver + Handler/elapsedRealtime |
+| 棋盘渲染 | 自定义 View (Canvas 三层绘制) + Bitmap 状态图 |
+| 音效 | SoundPool (Builder API, 双池隔离) |
+| BGM | MediaPlayer + Service 绑定 + ActivityLifecycleCallbacks |
+| DI | 手动 ViewModelProvider.Factory (无 Hilt/Dagger) |
+| 测试 | JUnit + Robolectric + Espresso + 结构测试 |
+| 自动化脚本 | Python + OpenCV + ADB + Bash |
+| 构建 | Gradle 8.11 + Version Catalog + ProGuard |
 
-- `ui/splash/AppEntryActivity.kt`：启动页入口，负责首启引导分流和按当前语言选择启动图
-- `ui/common/BaseLocalizedActivity.kt`、`ui/common/AppLocaleContext.kt`：统一处理页面级语言上下文包装与即时刷新
-- `ui/common/ActivityTransitions.kt`：统一封装页面切换和关闭转场
-- `ui/map/MapActivity.kt`：地图页入口，负责组合控制器、列表展示、登录态刷新和生命周期分发
-- `ui/map/MapPassDialogController.kt`：关卡确认/重试弹窗、胜负返回地图后的弹窗消费和关卡跳转入口
-- `ui/map/MapSettingsController.kt`：设置弹窗、音乐音效开关、玩法页入口和语言切换
-- `ui/map/MapNotificationNavigator.kt`：进入棋盘前的通知权限申请、厂商通知预热和页面跳转
-- `ui/map/MapPathOverlayView.kt`、`ui/map/PassListAdapter.kt`：地图行内路径虚线绘制、星星状态和滚动定位辅助
-- `ui/play/PlayActivity.kt`：棋盘页入口，负责组合控制器和生命周期分发
-- `ui/play/PlayRoute.kt`、`ui/map/MapRoute.kt`：集中管理页面跳转 Intent 与 Extra Key
-- `ui/play/PlayBoardRules.kt`：纯棋盘规则，包括题面创建、选中高亮、填数冲突、完成判断和错误回滚
-- `ui/play/PlayBoardController.kt`：棋盘初始化、棋盘数据观察和格子触摸响应
-- `ui/play/PlayInputController.kt`：数字输入、候选标记和撤销交互
-- `ui/play/PlayGameStateController.kt`：倒计时 UI、胜负状态、错误输入状态和胜利动画
-- `ui/play/PlayDialogController.kt`：暂停、胜利、失败弹窗及弹窗内导航
-- `ui/play/PlayNavigationController.kt`：暂停按钮、返回键和页面恢复/暂停协调
-- `ui/play/CountdownCoordinator.kt`：倒计时前台服务启动、停止和广播接收
-- `ui/play/GameResultRecordGate.kt`、`ui/play/GameResultRecorder.kt`：终局战绩去重闸门与 Provider 落库校验
-- `timer/CountdownTimerService.kt`、`timer/CountdownTimerContract.kt`：前台倒计时 service 与广播/通知协议
-- `media/AppForegroundBgmController.kt`、`media/BgmMusicService.kt`、`media/BgmMusicController.kt`：应用前后台背景音乐 service 生命周期管理
-- `media/PlayMusic.kt`：页面短音效、提示音与流编号管理
-- `notification/NotificationPermissionPolicy.kt`：通知权限与厂商预热策略判定
-- `account/LauncherSessionReader.kt`、`account/LauncherSessionContract.kt`：茶苑登录态读取与共享契约适配
-- `data/provider/GameResultProvider.kt`、`data/provider/GameResultContract.kt`：战绩共享 Provider 与跨应用契约
-- `data/repository/MapRepository.kt`、`data/repository/PlayRepository.kt`、`data/repository/UserProgressRepository.kt`：地图、棋盘、用户进度仓储
-- `data/database/DatabaseInitializer.kt`：Room 初始化与数据库迁移
-- `shared-contracts/`：与星空茶苑共用的跨应用契约源码，避免 Provider 字段和 URI 两边漂移
-- `scripts/monkey_run.sh`、`scripts/issue/`：真机 monkey 压测脚本与问题记录文档
+## 架构
+
+```
+┌─────────────────────────────────────────────────────┐
+│  Activity 层                                         │
+│  AppEntry → Guide → Map ←→ Play                     │
+│                 ↑         ↑                          │
+│             MapViewModel  PlayViewModel              │
+│                 ↑         ↑                          │
+│  ┌──────────────┴─────────┴──────────────┐           │
+│  │  Repository 层                          │           │
+│  │  MapRepository / PlayRepository /       │           │
+│  │  UserProgressRepository                 │           │
+│  └──────────────┬──────────────────────────┘           │
+│  ┌──────────────┴──────────────────────────┐           │
+│  │  Data 层 (Room DAO → SQLite)             │           │
+│  │  ProblemDao / UserMapDao / HistoryDao /  │           │
+│  │  GameResultDao                           │           │
+│  └──────────────────────────────────────────┘           │
+│                                                       │
+│  Controller 委托 (PlayActivity → 6 个 Controller)       │
+│  Board / Input / GameState / Nav / Dialog /            │
+│  CountdownCoordinator                                  │
+│                                                       │
+│  跨进程: ContentProvider → 茶苑 Launcher 读战绩          │
+│  计时:   CountdownTimerService (前台) → 广播 → UI       │
+└─────────────────────────────────────────────────────┘
+```
+
+## 数据库
+
+Room 数据库 `AppDatabase` (版本 6)，4 张表：
+
+| 表 | 用途 | 关键字段 |
+|---|---|---|
+| `problem` | 40 关题目数据 | `pass_num`, `value` (81 个/关) |
+| `user_map` | 每用户关卡进度 | `username`+`pass_num` (复合主键), `status`, `play_time` |
+| `history` | 撤销/重做历史 | `row`, `col`, `type`, `value`, `pass_num`, `game_session` |
+| `game_result` | 通关/失败战绩 | `level`, `elapsed_seconds`, `completed`, `username` |
+
+`DatabaseInitializer` 在首次启动时从 `assets/sudoku.db` 预填充题目数据并执行增量迁移 (v1→v6)。
+
+## 模块说明
+
+### `ui/play/` — 棋盘页
+
+核心技术：Canvas 自定义绘制 + 触摸坐标解析 + 6 控制器委托。
+
+- **BroadView** — 核心棋盘 View，继承 `AppCompatImageView`，三层绘制：
+  1. `onDraw`: 81 个格子的 7 种状态 Bitmap (given/empty/selected/error × 不同组合)
+  2. `dispatchDraw`: 候选标记 (3×3 子网格)
+  3. `onDrawForeground`: 数字文本 (80sp)、1px 格线、9px 宫线、2px 白色外框
+- **SudokuBoardGeometry** — 几何计算：`cellSize=(viewWidth-54)/9`, `CELL_INSET=28`, `BORDER_INSET=24`
+- **PlayBoardRules** — 纯规则逻辑：创建题面、选中高亮同行/列/宫/同数、填数冲突检测、完成判定、错误回滚
+- **6 个 Controller** — 棋盘、输入、游戏状态、导航、弹窗、倒计时协调器，各自独立注入 `PlayActivity`
+
+### `timer/` — 倒计时模块
+
+- **CountdownTimerService** — 前台 Service (`foregroundServiceType="specialUse"`)，`Handler` + `SystemClock.elapsedRealtime()` 锚定结束时间反算剩余秒数，支持 `ACTION_PAUSE_TIMER`/`ACTION_RESUME_TIMER` 暂停恢复，每秒系统广播 `ACTION_COUNTDOWN_TICK`
+- **CountdownTimerContract** — 常量与格式化，默认 600s (10 分钟)
+- **CountdownCoordinator** — 桥接 Service 与 Activity，管理启动/停止/暂停/恢复，注册/解注册 BroadcastReceiver
+
+### `ui/map/` — 地图页
+
+- **MapActivity** — RecyclerView 倒序渲染 10 行×4 列星星节点，header 行 + MapPathOverlayView 虚线连接 + 流星动画
+- **MapNotificationNavigator** — Android 13+ 通知权限前置处理 + 华为设备厂商通知预热 (同 ID 覆盖，避免取消重建延迟)
+- **MapPassDialogController** — 关卡确认弹窗，按钮点击播放音效→关闭弹窗→跳转 PlayActivity
+- **MapSettingsController** — 音乐/音效开关、语言切换 (zh/en)、玩法说明入口
+
+### `media/` — 音频模块
+
+- **PlayMusic** — 单例 SoundPool，8 种短音效，双池隔离 (超时提示音独立池避免流争抢)
+- **BgmMusicService** — MediaPlayer 循环 BGM，50% 音量，Service 绑定模式
+- **AppForegroundBgmController** — `ActivityLifecycleCallbacks` 追踪前后台，自动 bind/pause/unbind BGM
+
+### `data/` — 数据层
+
+- **Repository 模式** — `PlayRepository` (棋盘+历史)、`MapRepository` (地图+进度)、`UserProgressRepository` (关卡解锁链)
+- **GameResultProvider** — ContentProvider 对外提供战绩，签名级权限保护，支持 query/insert/delete
+- **Manual DI** — ViewModelFactory 手动构建 Repository → DAO → Database 依赖链
+
+### `account/` — 登录态
+
+- **LauncherSessionReader** — ContentResolver 读取茶苑 Session Provider，fallback `"guest"`
+- **共享契约** — `shared-contracts/` 目录供两端项目通过 Gradle `sourceSets` 共同引用
+
+### `ui/guide/` — 新手引导
+
+- **GuideActivity** — 6 步交互教程，GuideSpotlightView 高亮区域 + 演示棋盘 + 步骤说明文字
+- **GuideBoardFactory** — 为教程生成预配置的演示棋盘
+
+## 自动化测试脚本
+
+位于 `scripts/` 目录，详见 [scripts/README.md](scripts/README.md)。
+
+```
+scripts/
+├── start.sh                    # 交互式启动：选择设备 → Monkey 压测 / 全量通关
+├── monkey/                     # Android Monkey 随机点击压测
+│   ├── monkey_run.sh           # 分批压测 + 崩溃/ANR 诊断采集
+│   └── README.md
+└── full_playthrough/           # 全量 40 关真人式通关
+    ├── runner.py               # 入口：安装→引导→逐关填答案→通关弹窗处理
+    ├── generate_level_solutions.py  # 离线回溯求解全部 40 关
+    ├── geometry.py             # 棋盘/键盘坐标计算 (BroadView 几何参数)
+    ├── detector.py             # 页面识别 (梯度/网格线/星点/对话框)
+    ├── vision.py               # OpenCV 底层图像处理
+    ├── data/                   # 预生成答案 JSON
+    ├── tests/                  # 19 个单元测试
+    └── README.md
+```
 
 ## 跨应用契约
 
-2.0 起，跨应用常量集中在 `shared-contracts/src/main/java/com/bird/starrysky/contracts/` 下维护。星空茶苑通过相邻目录引用这份源码，避免两端分别复制 Provider 字段、URI 和权限字符串。
+2.0 起集中在 `shared-contracts/` 下维护，茶苑通过相邻目录引用。
 
-星空数独会读取星空茶苑提供的登录态：
+**星空数独读取茶苑登录态：**
 
-- Authority：`com.bird.starryskyteahouse.provider`
-- URI：`content://com.bird.starryskyteahouse.provider/session`
-- 权限：`com.bird.starryskyteahouse.permission.READ_SESSION`
-- 字段：`username`、`logged_in`
+| 项 | 值 |
+|---|---|
+| Authority | `com.bird.starryskyteahouse.provider` |
+| URI | `content://com.bird.starryskyteahouse.provider/session` |
+| 权限 | `com.bird.starryskyteahouse.permission.READ_SESSION` |
+| 字段 | `username`, `logged_in` |
 
-星空数独对外提供战绩数据：
+**星空数独对外提供战绩：**
 
-- Authority：`com.bird.starryskysudoku.provider`
-- URI：`content://com.bird.starryskysudoku.provider/results`
-- 读取权限：`com.bird.starryskysudoku.permission.READ_RESULTS`
-- 写入权限：`com.bird.starryskysudoku.permission.WRITE_RESULTS`
-- 常用筛选：`username=?`
-- 默认排序：`created_at DESC`
-
-## 与星空茶苑一起开发
-
-如果需要同时构建星空茶苑，请保持两个仓库为同级目录：
-
-```text
-projects/
-  StarrySkySudoku/
-  StarrySkyTeaHouse/
-```
-
-星空茶苑会引用 `../StarrySkySudoku/shared-contracts/` 中的共享契约，并可在 `StarrySkyTeaHouse` 目录下执行 `./gradlew syncBundledSudokuApk`，重新内置当前星空数独 Release APK。
+| 项 | 值 |
+|---|---|
+| Authority | `com.bird.starryskysudoku.provider` |
+| URI | `content://com.bird.starryskysudoku.provider/results` |
+| 读权限 | `com.bird.starryskysudoku.permission.READ_RESULTS` |
+| 写权限 | `com.bird.starryskysudoku.permission.WRITE_RESULTS` |
+| 排序 | `created_at DESC` |
 
 ## 构建
-项目使用 Gradle Wrapper 构建：
 
 ```bash
+# Debug
+./gradlew assembleDebug
+
+# Release (需 local.properties 配置签名)
 ./gradlew assembleRelease
-```
 
-运行本地单元测试：
-
-```bash
+# 单元测试
 ./gradlew test
-```
 
-如需运行 lint：
-
-```bash
+# Lint
 ./gradlew lintDebug
 ```
 
-如需分别校验主工程和单元测试 Kotlin 编译：
-
-```bash
-./gradlew :app:compileDebugKotlin
-./gradlew :app:compileDebugUnitTestKotlin
-```
-
 ## 版本记录
-- 2.0：拆分地图页关卡弹窗、设置弹窗和通知权限导航职责；新增 `shared-contracts` 共享跨应用契约；同步茶苑内置 APK 构建说明与 Provider 契约维护方式。
-- 1.5 维护更新：拆分棋盘页路由、输入、棋盘、倒计时、弹窗、导航和战绩记录职责；抽出 `PlayBoardRules` 并补充规则测试；同步茶苑小写包名后的登录 Provider 契约。
-- 1.5：新增倒计时前台通知，通知内容包含图标、关卡名和剩余时间；进入棋盘前处理通知权限，避免权限弹窗打断棋盘并触发暂停，同时兼容华为 Android 12 厂商通知授权。
-- 1.4：补全 Android 四大组件业务闭环；新增 Service 倒计时广播、Activity 动态 Receiver、Room + ContentProvider 战绩共享，以及对应契约单元测试。
-- 1.3：重构导航界面，统一棋盘绘制与教程高亮坐标计算，并移除不再使用的旧 onboarding 图片素材。
-- 1.2：调整导航界面，使用真实棋盘展示新手教程，并加入遮罩、高亮和第 1 关题面演示。
-- 1.1：迁移废弃 API，现代化 Activity 转场、返回处理、应用内语言切换和 Kotlin Gradle 配置。
-- 1.0：完成星空主题数独基础玩法、关卡地图、音效和中英文切换。
+
+- **2.0** — 修复倒计时跳秒 (Handler 替代 CountDownTimer)、前台通知 HarmonyOS 6s 延迟、暂停时间不同步、后台暂停通知保持；新增全量真人式通关和 Monkey 压测自动化脚本；增大背景音乐和点击音效音量
+- **1.5 维护更新** — 拆分棋盘页控制器职责，抽出 PlayBoardRules 并补充规则测试
+- **1.5** — 新增倒计时前台通知；Android 13+ 通知权限前置 + 华为厂商通知预热
+- **1.4** — 补全四大组件：Service 倒计时广播、Activity 动态 Receiver、Room + ContentProvider 战绩共享
+- **1.3** — 重构导航界面，统一棋盘绘制与教程高亮坐标计算
+- **1.2** — 使用真实棋盘展示新手教程，加入遮罩、高亮和第 1 关题面演示
+- **1.1** — 迁移废弃 API，现代化 Activity 转场、语言切换和 Kotlin Gradle 配置
+- **1.0** — 星空主题数独基础玩法、关卡地图、音效和中英文切换
 
 ## 作者
+
 SmashDreams
