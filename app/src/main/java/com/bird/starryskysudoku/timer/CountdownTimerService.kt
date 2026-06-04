@@ -7,34 +7,65 @@ import android.app.NotificationManager
 import android.app.PendingIntent
 import android.app.Service
 import android.content.Intent
-import android.os.Build
-import android.os.CountDownTimer
-import android.os.IBinder
 import android.content.pm.PackageManager
+import android.os.Build
+import android.os.Handler
+import android.os.IBinder
+import android.os.Looper
+import android.os.SystemClock
 import androidx.core.app.NotificationCompat
-import androidx.core.content.ContextCompat
 import androidx.core.app.NotificationManagerCompat
+import androidx.core.content.ContextCompat
 import com.bird.starryskysudoku.R
 import com.bird.starryskysudoku.account.LauncherSessionReader
 import com.bird.starryskysudoku.ui.play.PlayRoute
 
 class CountdownTimerService : Service() {
 
-    /*
-     * 后台服务只负责维护倒计时，不直接接触界面控件。
-     * 页面通过动态注册的广播接收器接收剩余时间，避免页面和计时逻辑强耦合。
-     */
-    private var mTimer: CountDownTimer? = null
+    private val mHandler = Handler(Looper.getMainLooper())
     private var mLevelNumber = CountdownTimerContract.MIN_LEVEL_NUMBER
     private var mUsername = LauncherSessionReader.GUEST_USERNAME
+    private var mEndTimeMs = 0L
+    private var mPausedRemaining = 0
+    private var mIsPaused = false
+
+    private val mTickRunnable = object : Runnable {
+        override fun run() {
+            if (mIsPaused) return
+            val remaining = computeRemainingSeconds()
+            if (remaining <= 0) {
+                sendCountdownBroadcast(0)
+                updateNotification(0)
+                stopSelf()
+                return
+            }
+            sendCountdownBroadcast(remaining)
+            updateNotification(remaining)
+            val nextTickMs = mEndTimeMs - (remaining - 1L) * 1000L
+            val delay = nextTickMs - SystemClock.elapsedRealtime()
+            mHandler.postDelayed(this, delay.coerceIn(500L, 1050L))
+        }
+    }
 
     override fun onBind(intent: Intent?): IBinder? = null
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
-        /*
-         * 每次启动服务都使用最新剩余时间重新计时；
-         * 参数会被限制在一局游戏的有效范围内，避免异常调用拖长服务生命周期。
-         */
+        when (intent?.action) {
+            CountdownTimerContract.ACTION_PAUSE_TIMER -> {
+                pauseTimer()
+                return START_NOT_STICKY
+            }
+            CountdownTimerContract.ACTION_RESUME_TIMER -> {
+                resumeTimer()
+                return START_NOT_STICKY
+            }
+            else -> {
+                return handleStart(intent)
+            }
+        }
+    }
+
+    private fun handleStart(intent: Intent?): Int {
         val initialSeconds = intent
             ?.getIntExtra(CountdownTimerContract.EXTRA_INITIAL_SECONDS, CountdownTimerContract.DEFAULT_TOTAL_SECONDS)
             ?.let(CountdownTimerContract::normalizeInitialSeconds)
@@ -43,25 +74,43 @@ class CountdownTimerService : Service() {
             ?.getIntExtra(CountdownTimerContract.EXTRA_LEVEL_NUMBER, CountdownTimerContract.MIN_LEVEL_NUMBER)
             ?.let(CountdownTimerContract::normalizeLevelNumber)
             ?: CountdownTimerContract.MIN_LEVEL_NUMBER
-        // 通知点击需要带回当前玩家身份，避免游客和已登录用户串用关卡结果。
         mUsername = intent
             ?.getStringExtra(CountdownTimerContract.EXTRA_USERNAME)
             ?.trim()
             ?.takeIf { it.isNotEmpty() }
             ?: LauncherSessionReader.GUEST_USERNAME
+        mIsPaused = false
         startForegroundCountdown(initialSeconds)
         startCountdown(initialSeconds)
         return START_NOT_STICKY
     }
 
+    private fun pauseTimer() {
+        if (mIsPaused) return
+        mPausedRemaining = computeRemainingSeconds()
+        mIsPaused = true
+        mHandler.removeCallbacks(mTickRunnable)
+        // 广播当前剩余时间，让游戏 UI 和通知显示同步
+        sendCountdownBroadcast(mPausedRemaining)
+        updateNotification(mPausedRemaining)
+    }
+
+    private fun resumeTimer() {
+        if (!mIsPaused) return
+        mIsPaused = false
+        mEndTimeMs = SystemClock.elapsedRealtime() + mPausedRemaining * 1000L
+        // 恢复时也广播一次，让 UI 立刻拿到最新时间
+        sendCountdownBroadcast(mPausedRemaining)
+        mHandler.post(mTickRunnable)
+    }
+
     override fun onDestroy() {
-        mTimer?.cancel()
-        mTimer = null
+        mHandler.removeCallbacks(mTickRunnable)
         super.onDestroy()
     }
 
     private fun startForegroundCountdown(initialSeconds: Int) {
-        createNotificationChannel()
+        ensureNotificationChannel()
         startForeground(
             CountdownTimerContract.NOTIFICATION_ID,
             buildNotification(initialSeconds)
@@ -69,46 +118,35 @@ class CountdownTimerService : Service() {
     }
 
     private fun startCountdown(initialSeconds: Int) {
-        mTimer?.cancel()
+        mHandler.removeCallbacks(mTickRunnable)
         if (initialSeconds <= 0) {
             sendCountdownBroadcast(0)
             updateNotification(0)
             stopSelf()
             return
         }
+        mEndTimeMs = SystemClock.elapsedRealtime() + initialSeconds * 1000L
+        mHandler.post(mTickRunnable)
+    }
 
-        /*
-         * 后台服务负责游戏倒计时，页面不直接持有计时器；
-         * 每秒通过系统广播把剩余时间发送给前台动态接收器。
-         */
-        mTimer = object : CountDownTimer(initialSeconds * 1000L, 1000L) {
-            override fun onTick(millisUntilFinished: Long) {
-                val remainingSeconds = (millisUntilFinished / 1000L).toInt()
-                sendCountdownBroadcast(remainingSeconds)
-                updateNotification(remainingSeconds)
-            }
-
-            override fun onFinish() {
-                sendCountdownBroadcast(0)
-                updateNotification(0)
-                stopSelf()
-            }
-        }.start()
+    private fun computeRemainingSeconds(): Int {
+        if (mIsPaused) return mPausedRemaining
+        val remaining = (mEndTimeMs - SystemClock.elapsedRealtime() + 500L) / 1000L
+        return remaining.coerceAtLeast(0).toInt()
     }
 
     private fun sendCountdownBroadcast(remainingSeconds: Int) {
         val tickIntent = Intent(CountdownTimerContract.ACTION_COUNTDOWN_TICK).apply {
-            /*
-             * 广播只投递给本应用包名，避免把实时游戏状态泄露给其他应用。
-             */
             setPackage(packageName)
             putExtra(CountdownTimerContract.EXTRA_REMAINING_SECONDS, remainingSeconds)
         }
         sendBroadcast(tickIntent)
     }
 
-    private fun createNotificationChannel() {
+    private fun ensureNotificationChannel() {
         if (Build.VERSION.SDK_INT < Build.VERSION_CODES.O) return
+        val manager = getSystemService(NotificationManager::class.java)
+        if (manager.getNotificationChannel(CountdownTimerContract.NOTIFICATION_CHANNEL_ID) != null) return
         val channel = NotificationChannel(
             CountdownTimerContract.NOTIFICATION_CHANNEL_ID,
             getString(R.string.countdown_notification_channel_name),
@@ -117,11 +155,10 @@ class CountdownTimerService : Service() {
             setShowBadge(false)
             description = getString(R.string.countdown_notification_channel_description)
         }
-        getSystemService(NotificationManager::class.java).createNotificationChannel(channel)
+        manager.createNotificationChannel(channel)
     }
 
     private fun buildNotification(remainingSeconds: Int): Notification {
-        // 前台通知点击后直接回到对应关卡，并保留当前用户上下文。
         val contentIntent = PendingIntent.getActivity(
             this,
             0,
@@ -130,10 +167,16 @@ class CountdownTimerService : Service() {
             },
             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
         )
+        val displaySeconds = if (mIsPaused) mPausedRemaining else remainingSeconds
+        val contentText = if (mIsPaused) {
+            getString(R.string.countdown_notification_remaining, CountdownTimerContract.formatRemainingTime(displaySeconds)) + " · 暂停"
+        } else {
+            getString(R.string.countdown_notification_remaining, CountdownTimerContract.formatRemainingTime(displaySeconds))
+        }
         return NotificationCompat.Builder(this, CountdownTimerContract.NOTIFICATION_CHANNEL_ID)
             .setSmallIcon(R.drawable.ic_timer_notification)
             .setContentTitle(CountdownTimerContract.formatLevelTitle(mLevelNumber))
-            .setContentText(getString(R.string.countdown_notification_remaining, CountdownTimerContract.formatRemainingTime(remainingSeconds)))
+            .setContentText(contentText)
             .setContentIntent(contentIntent)
             .setOngoing(true)
             .setOnlyAlertOnce(true)
@@ -154,9 +197,7 @@ class CountdownTimerService : Service() {
                 buildNotification(remainingSeconds)
             )
         } catch (exception: SecurityException) {
-            /*
-             * 13 及以上系统允许用户撤销通知权限；倒计时广播仍继续驱动游戏界面。
-             */
+            /* 用户可能撤销了通知权限 */
         }
     }
 }

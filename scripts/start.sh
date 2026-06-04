@@ -3,7 +3,7 @@ set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 PROJECT_DIR="$(cd "$SCRIPT_DIR/.." && pwd)"
-APK="$PROJECT_DIR/app/build/outputs/apk/debug/app-debug.apk"
+APK="$PROJECT_DIR/app/build/outputs/apk/release/app-release.apk"
 PKG="com.bird.starryskysudoku"
 
 RED='\033[0;31m'

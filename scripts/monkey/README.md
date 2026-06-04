@@ -5,7 +5,7 @@
 ## 默认值
 
 - 包名：`com.bird.starryskysudoku`
-- 默认 APK：`app/build/outputs/apk/release/app-release-unsigned.apk`
+- 默认 APK：`app/build/outputs/apk/release/app-release.apk`
 - 默认输出：`artifacts/monkey`
 
 ## 能力概览
@@ -50,7 +50,7 @@ scripts/monkey/monkey_run.sh \
 | `--batch-size COUNT` | 每批次事件数 | `100` |
 | `--seed VALUE` | 随机种子 | 当前时间戳 |
 | `--fresh-grant` | 卸载→安装→授权→压测 | 关闭 |
-| `--apk PATH` | APK 路径 | `app/build/outputs/apk/release/app-release-unsigned.apk` |
+| `--apk PATH` | APK 路径 | `app/build/outputs/apk/release/app-release.apk` |
 | `--no-bugreport` | 不抓取 bugreport | 关闭 |
 | `--no-launch` | 不主动拉起应用 | 关闭 |
 | `--output-root DIR` | 输出根目录 | `artifacts/monkey` |

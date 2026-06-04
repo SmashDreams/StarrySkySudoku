@@ -447,7 +447,7 @@ def main():
     global DEVICE, SCREEN_W, SCREEN_H, DENSITY
     parser = argparse.ArgumentParser(description="Full StarrySkySudoku playthrough")
     parser.add_argument("--device", default=DEVICE)
-    parser.add_argument("--apk", default=str(ROOT_DIR / "app/build/outputs/apk/debug/app-debug.apk"))
+    parser.add_argument("--apk", default=str(ROOT_DIR / "app/build/outputs/apk/release/app-release.apk"))
     parser.add_argument("--start-level", type=int, default=1)
     parser.add_argument("--end-level", type=int, default=40)
     parser.add_argument("--skip-install", action="store_true")

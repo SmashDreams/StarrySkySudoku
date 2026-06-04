@@ -89,7 +89,7 @@ class PlayActivity : BaseLocalizedActivity() {
             mGetUsername = { mCurrentUsername },
             mRunAfterClearingHistory = { action -> clearHistoryAndRun(action) },
             mSetPaused = { paused -> mIsPaused = paused },
-            mStartCountdownService = { mCountdownCoordinator.start() },
+            mStartCountdownService = { mCountdownCoordinator.resume() },
             mPrepareForReplacementPlayActivity = {
                 mShouldStopCountdownOnDestroy = false
             }

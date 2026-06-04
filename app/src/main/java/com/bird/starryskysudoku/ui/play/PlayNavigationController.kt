@@ -26,6 +26,7 @@ class PlayNavigationController(
         if (mViewModel.mHasWon.value == true) {
             PlayMusic.getInstance().stopWinning()
         }
+        pauseActiveGameForBackground()
     }
 
     fun onResume() {
@@ -37,6 +38,15 @@ class PlayNavigationController(
         } else if (mIsPaused() && !mDialogController.isPauseDialogShowing()) {
             mDialogController.showPauseDialog()
         }
+    }
+
+    private fun pauseActiveGameForBackground() {
+        if (mViewModel.mHasWon.value == true) return
+        if (mViewModel.mTimerFinished.value == true) return
+        if (mIsPaused()) return
+        mSetPaused(true)
+        // 回到后台时暂停计时但保留前台服务通知
+        mCountdownCoordinator.pause()
     }
 
     private fun initPauseButton() {
@@ -57,11 +67,11 @@ class PlayNavigationController(
     }
 
     private fun showPauseDialog() {
-        // 返回键和暂停按钮共用同一套暂停入口，确保倒计时停止逻辑一致。
         PlayMusic.getInstance().playDialogShow()
         PlayMusic.getInstance().stopTimesUp()
         mSetPaused(true)
-        mCountdownCoordinator.stop()
+        // 暂停计时，前台服务通知保持显示
+        mCountdownCoordinator.pause()
         mDialogController.showPauseDialog()
     }
 }

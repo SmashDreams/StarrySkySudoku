@@ -92,7 +92,10 @@ class MapNotificationNavigator(
 
     fun onDestroy() {
         mHandler.removeCallbacksAndMessages(null)
-        NotificationManagerCompat.from(mActivity).cancel(VENDOR_WARMUP_NOTIFICATION_ID)
+        // 仅在预热未完成时清理，避免误删已启动的正式前台服务通知
+        if (mWaitingVendorNotificationWarmup) {
+            NotificationManagerCompat.from(mActivity).cancel(VENDOR_WARMUP_NOTIFICATION_ID)
+        }
     }
 
     private fun warmUpVendorNotificationsBeforePlay(playIntent: Intent, finishMapAfterStart: Boolean) {
@@ -115,7 +118,8 @@ class MapNotificationNavigator(
          */
         if (!mCanCompleteVendorNotificationWarmup || !mMapResumed || !mMapHasWindowFocus) return
 
-        NotificationManagerCompat.from(mActivity).cancel(VENDOR_WARMUP_NOTIFICATION_ID)
+        // 不主动取消预热通知 — Service 启动时 startForeground(同 ID)
+        // 会自动覆盖，避免 HarmonyOS 将"取消+重建"视为通知滥用而延迟
         sVendorNotificationWarmupCompleted = true
         mWaitingVendorNotificationWarmup = false
         mCanCompleteVendorNotificationWarmup = false
@@ -179,7 +183,8 @@ class MapNotificationNavigator(
     private companion object {
         // 厂商通知预热只需在当前进程做一次，避免每次进棋盘都额外等待。
         private var sVendorNotificationWarmupCompleted = false
-        private const val VENDOR_WARMUP_NOTIFICATION_ID = 1002
+        // 预热通知与正式倒计时通知共用同一 ID，避免 HarmonyOS 取消再创建导致延迟
+        private const val VENDOR_WARMUP_NOTIFICATION_ID = CountdownTimerContract.NOTIFICATION_ID
         private const val VENDOR_WARMUP_DELAY_MS = 700L
     }
 }

@@ -52,7 +52,7 @@ scripts/monkey/monkey_run.sh \
 
 - Python 3.8+，已安装 `opencv-python`
 - 真机已连接 `adb devices`
-- APK 已构建：`app/build/outputs/apk/debug/app-debug.apk`
+- APK 已构建：`app/build/outputs/apk/release/app-release.apk`
 
 ### 快速开始
 
@@ -78,7 +78,7 @@ python3 scripts/full_playthrough/runner.py --dry-run
 | 参数 | 说明 | 默认值 |
 |---|---|---|
 | `--device` | 设备序列号 | `2FD0221410003338` |
-| `--apk` | APK 路径 | `app/build/outputs/apk/debug/app-debug.apk` |
+| `--apk` | APK 路径 | `app/build/outputs/apk/release/app-release.apk` |
 | `--start-level` | 起始关卡 | `1` |
 | `--end-level` | 结束关卡 | `40` |
 | `--skip-install` | 跳过卸载/安装 | 关闭 |

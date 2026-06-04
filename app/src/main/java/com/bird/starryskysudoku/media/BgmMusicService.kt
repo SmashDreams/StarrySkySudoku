@@ -70,6 +70,6 @@ class BgmMusicService : Service() {
     }
 
     private companion object {
-        private const val BGM_VOLUME = 0.2f
+        private const val BGM_VOLUME = 0.5f
     }
 }

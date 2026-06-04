@@ -32,9 +32,16 @@ class PlayNavigationControllerStructureTest {
         assertTrue(controller.contains("setOnClickListener"))
         assertTrue(controller.contains("showPauseDialog"))
         assertTrue(controller.contains("isPauseDialogShowing"))
-        assertTrue(controller.contains("mCountdownCoordinator.stop()"))
-        assertFalse(controller.substringAfter("fun onPause()").substringBefore("fun onResume()").contains("mCountdownCoordinator.stop()"))
-        assertFalse(controller.substringAfter("fun onResume()").substringBefore("private fun initPauseButton").contains("mCountdownCoordinator.start()"))
+        assertTrue(controller.contains("mCountdownCoordinator.pause()"))
+        assertTrue(controller.contains("pauseActiveGameForBackground"))
+        val backgroundPauseBody = controller
+            .substringAfter("private fun pauseActiveGameForBackground()")
+            .substringBefore("private fun initPauseButton")
+        assertTrue(backgroundPauseBody.contains("mSetPaused(true)"))
+        assertTrue(backgroundPauseBody.contains("mCountdownCoordinator.pause()"))
+        assertTrue(backgroundPauseBody.contains("mViewModel.mHasWon.value == true"))
+        assertTrue(backgroundPauseBody.contains("mViewModel.mTimerFinished.value == true"))
+        assertFalse(controller.substringAfter("fun onResume()").substringBefore("private fun pauseActiveGameForBackground").contains("mCountdownCoordinator.start()"))
     }
 
     private fun locateSourceRoot(): File {

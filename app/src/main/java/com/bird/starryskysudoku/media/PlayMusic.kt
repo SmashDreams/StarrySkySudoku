@@ -95,7 +95,7 @@ class PlayMusic private constructor() {
 
     fun playButtonTap() {
         if (mInitialized && isOpened(AppSettings.KEY_AUDIO)) {
-            mSoundPool.play(mSoundIdMap[MusicType.BUTTONTAP] ?: return, 0.4f, 0.4f, 1, 0, 1f)
+            mSoundPool.play(mSoundIdMap[MusicType.BUTTONTAP] ?: return, 0.7f, 0.7f, 1, 0, 1f)
         }
     }
 
@@ -123,7 +123,7 @@ class PlayMusic private constructor() {
 
     fun playInputWrong() {
         if (mInitialized && isOpened(AppSettings.KEY_AUDIO)) {
-            mSoundPool.play(mSoundIdMap[MusicType.WRONG] ?: return, 0.6f, 0.6f, 1, 0, 1f)
+            mSoundPool.play(mSoundIdMap[MusicType.WRONG] ?: return, 0.9f, 0.9f, 1, 0, 1f)
         }
     }
 

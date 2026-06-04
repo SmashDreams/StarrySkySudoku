@@ -3,6 +3,23 @@ plugins {
     alias(libs.plugins.kotlin.android)
     alias(libs.plugins.kotlin.ksp)
 }
+def releaseSigningProperties = new Properties()
+def releaseSigningPropertiesFile = rootProject.file('local.properties')
+if (releaseSigningPropertiesFile.exists()) {
+    releaseSigningPropertiesFile.withInputStream { releaseSigningProperties.load(it) }
+}
+def requiredReleaseSigningProperties = [
+    'RELEASE_STORE_FILE',
+    'RELEASE_STORE_PASSWORD',
+    'RELEASE_KEY_ALIAS',
+    'RELEASE_KEY_PASSWORD'
+]
+def hasReleaseSigningProperties = requiredReleaseSigningProperties.every {
+    releaseSigningProperties.getProperty(it)
+}
+def requestedReleaseBuild = gradle.startParameter.taskNames.any {
+    it.toLowerCase(Locale.ROOT).contains('release')
+}
 
 android {
     namespace 'com.bird.starryskysudoku'
@@ -34,8 +51,25 @@ android {
         }
     }
 
+
+    signingConfigs {
+        release {
+            if (hasReleaseSigningProperties) {
+                storeFile file(releaseSigningProperties.getProperty('RELEASE_STORE_FILE'))
+                storePassword releaseSigningProperties.getProperty('RELEASE_STORE_PASSWORD')
+                keyAlias releaseSigningProperties.getProperty('RELEASE_KEY_ALIAS')
+                keyPassword releaseSigningProperties.getProperty('RELEASE_KEY_PASSWORD')
+            }
+        }
+    }
+
     buildTypes {
         release {
+            if (hasReleaseSigningProperties) {
+                signingConfig signingConfigs.release
+            } else if (requestedReleaseBuild) {
+                throw new GradleException('Release signing properties are missing from local.properties')
+            }
             minifyEnabled true
             shrinkResources true
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'

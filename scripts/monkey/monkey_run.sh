@@ -14,7 +14,7 @@ DEVICE=""
 CAPTURE_BUGREPORT=1
 AUTO_LAUNCH=1
 OUTPUT_ROOT="$PROJECT_DIR/artifacts/monkey"
-APK_PATH="$PROJECT_DIR/app/build/outputs/apk/debug/app-debug.apk"
+APK_PATH="$PROJECT_DIR/app/build/outputs/apk/release/app-release.apk"
 FRESH_GRANT_MODE=0
 
 usage() {
@@ -28,7 +28,7 @@ Options:
   --throttle MS             Delay between events in milliseconds. Default: 200
   --batch-size COUNT        Monkey batch size before each safety check. Default: 100
   --seed VALUE              Monkey random seed. Default: current timestamp
-  --apk PATH                APK path used for fresh install mode. Default: app/build/outputs/apk/debug/app-debug.apk
+  --apk PATH                APK path used for fresh install mode. Default: app/build/outputs/apk/release/app-release.apk
   --fresh-grant             Reinstall the APK, grant POST_NOTIFICATIONS, then start monkey
   --no-bugreport            Skip adb bugreport collection
   --no-launch               Do not force launch the app before monkey starts

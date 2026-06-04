@@ -4,6 +4,7 @@ import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
+import android.os.Build
 import android.util.Log
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
@@ -19,10 +20,10 @@ class CountdownCoordinator(
     private val mOnTick: (Int) -> Unit
 ) {
     private var mReceiverRegistered = false
+    private var mServiceStarted = false
     private val mCountdownReceiver = object : BroadcastReceiver() {
         override fun onReceive(context: Context?, intent: Intent?) {
             if (intent?.action != CountdownTimerContract.ACTION_COUNTDOWN_TICK) return
-            // 页面不自己持有计时器，只接收服务广播回来的剩余秒数。
             val remainingSeconds = intent.getIntExtra(
                 CountdownTimerContract.EXTRA_REMAINING_SECONDS,
                 CountdownTimerContract.DEFAULT_TOTAL_SECONDS
@@ -33,7 +34,6 @@ class CountdownCoordinator(
 
     fun onStart() {
         if (mReceiverRegistered) return
-        // 只在页面可见时注册接收器，避免后台页面继续消费倒计时广播。
         ContextCompat.registerReceiver(
             mActivity,
             mCountdownReceiver,
@@ -51,21 +51,52 @@ class CountdownCoordinator(
 
     fun start() {
         if (!mCanStart()) return
-        // 页面恢复或重新进入时把关卡、用户名和剩余秒数一并交给服务，保证倒计时可无缝续跑。
+        mServiceStarted = true
         val serviceIntent = Intent(mActivity, CountdownTimerService::class.java)
             .putExtra(CountdownTimerContract.EXTRA_INITIAL_SECONDS, mGetRemainingSeconds())
             .putExtra(CountdownTimerContract.EXTRA_LEVEL_NUMBER, mGetLevel())
             .putExtra(CountdownTimerContract.EXTRA_USERNAME, mGetUsername())
         try {
-            mActivity.startService(serviceIntent)
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                mActivity.startForegroundService(serviceIntent)
+            } else {
+                mActivity.startService(serviceIntent)
+            }
         } catch (exception: RuntimeException) {
-            // 页面正在切换前后台或销毁时，启动服务可能短暂失败，这里只做保护性兜底。
             Log.w(TAG, "app 状态切换期间无法启动倒计时 service", exception)
         }
     }
 
     fun stop() {
+        if (!mServiceStarted) return
+        mServiceStarted = false
         mActivity.stopService(Intent(mActivity, CountdownTimerService::class.java))
+    }
+
+    fun pause() {
+        // 暂停计时但保留前台服务和通知显示
+        if (!mServiceStarted) return
+        val intent = Intent(mActivity, CountdownTimerService::class.java).apply {
+            action = CountdownTimerContract.ACTION_PAUSE_TIMER
+        }
+        try {
+            mActivity.startService(intent)
+        } catch (exception: RuntimeException) {
+            Log.w(TAG, "暂停倒计时 service 失败", exception)
+        }
+    }
+
+    fun resume() {
+        // 从暂停状态恢复计时
+        if (!mServiceStarted) return
+        val intent = Intent(mActivity, CountdownTimerService::class.java).apply {
+            action = CountdownTimerContract.ACTION_RESUME_TIMER
+        }
+        try {
+            mActivity.startService(intent)
+        } catch (exception: RuntimeException) {
+            Log.w(TAG, "恢复倒计时 service 失败", exception)
+        }
     }
 
     private companion object {
