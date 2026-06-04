@@ -12,6 +12,8 @@ class StarrySkySudokuApp : Application() {
         PlayMusic.getInstance().init(this)
         // 由应用级生命周期统一接管背景音乐，避免每个页面重复维护播放状态。
         registerActivityLifecycleCallbacks(AppForegroundBgmController(this))
-        DatabaseInitializer.getDatabase(this)
+        val db = DatabaseInitializer.getDatabase(this)
+        // release 版本前两关仅保留 2~3 个空格，方便演示
+        DatabaseInitializer.applyReleaseDemoPatches(db)
     }
 }

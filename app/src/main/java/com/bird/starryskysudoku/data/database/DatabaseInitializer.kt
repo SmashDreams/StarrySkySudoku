@@ -2,6 +2,7 @@ package com.bird.starryskysudoku.data.database
 
 import android.content.Context
 import androidx.room.Room
+import androidx.room.RoomDatabase
 import androidx.room.migration.Migration
 import androidx.sqlite.db.SupportSQLiteDatabase
 
@@ -121,13 +122,61 @@ object DatabaseInitializer {
     }
 
     private fun buildDatabase(context: Context): AppDatabase {
-        /*
-         * 初始题库仍从内置资源创建，后续版本只通过迁移补齐新增表结构。
-         * 这样既保留已有题库数据，也能让旧用户平滑升级。
-         */
         return Room.databaseBuilder(context.applicationContext, AppDatabase::class.java, DB_NAME)
             .createFromAsset(DB_NAME)
             .addMigrations(sMigration1To2, sMigration2To3, sMigration3To4, sMigration4To5, sMigration5To6)
             .build()
+    }
+
+    /** 仅在 release 版本中对第 1、2 关做演示简化：将大部分空格填入正确答案，仅保留 2~3 个空。 */
+    fun applyReleaseDemoPatches(db: AppDatabase) {
+        if (com.bird.starryskysudoku.BuildConfig.DEBUG) return
+        val sdb = db.openHelper.writableDatabase
+        val done = sdb.query("SELECT value FROM problem WHERE pass_num=1 ORDER BY id LIMIT 1").use {
+            it.moveToFirst() && it.getInt(0) != 0
+        }
+        if (done) return
+
+        val levels = mapOf(
+            1 to charArrayOf(
+                '2','3','5','6','4','7','9','8','1',
+                '7','4','9','8','1','5','2','3','6',
+                '6','1','8','9','2','3','7','4','5',
+                '3','5','1','2','7','6','8','9','4',
+                '8','7','6','3','0','4','5','1','2',
+                '4','9','2','1','5','8','6','7','3',
+                '9','8','4','5','6','1','3','2','7',
+                '1','6','3','7','8','2','4','5','9',
+                '5','2','7','4','3','9','1','6','0'
+            ),
+            2 to charArrayOf(
+                '0','2','1','8','4','5','6','0','9',
+                '7','9','4','1','6','2','5','3','8',
+                '5','6','8','3','7','9','1','4','2',
+                '1','4','9','7','2','6','3','8','5',
+                '6','3','2','4','0','8','7','9','1',
+                '8','5','7','9','3','1','2','6','4',
+                '2','7','6','5','8','4','9','1','3',
+                '9','8','5','6','1','3','4','2','7',
+                '4','1','3','2','9','7','8','5','6'
+            )
+        )
+
+        sdb.beginTransaction()
+        try {
+            for ((passNum, cells) in levels) {
+                val ids = sdb.query("SELECT id FROM problem WHERE pass_num=$passNum ORDER BY id").use { cursor ->
+                    val list = mutableListOf<Long>()
+                    while (cursor.moveToNext()) list.add(cursor.getLong(0))
+                    list
+                }
+                for (i in cells.indices) {
+                    sdb.execSQL("UPDATE problem SET value=${cells[i]} WHERE id=${ids[i]}")
+                }
+            }
+            sdb.setTransactionSuccessful()
+        } finally {
+            sdb.endTransaction()
+        }
     }
 }
