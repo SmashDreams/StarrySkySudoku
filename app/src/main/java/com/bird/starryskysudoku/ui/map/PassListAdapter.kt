@@ -3,6 +3,7 @@ package com.bird.starryskysudoku.ui.map
 import android.animation.ObjectAnimator
 import android.animation.ValueAnimator
 import android.view.LayoutInflater
+import android.view.animation.AccelerateDecelerateInterpolator
 import android.view.animation.DecelerateInterpolator
 import android.view.View
 import android.view.ViewGroup
@@ -149,7 +150,7 @@ class PassListAdapter(
                         duration = 1500
                         repeatCount = ObjectAnimator.INFINITE
                         repeatMode = ValueAnimator.REVERSE
-                        interpolator = DecelerateInterpolator()
+                        interpolator = AccelerateDecelerateInterpolator()
                         addUpdateListener { holder.mLights[idx].alpha = it.animatedValue as Float }
                         start()
                         holder.setLightAnimator(idx, this)

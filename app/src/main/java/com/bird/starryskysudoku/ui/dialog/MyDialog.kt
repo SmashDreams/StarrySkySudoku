@@ -1,11 +1,13 @@
 package com.bird.starryskysudoku.ui.dialog
 
+import android.animation.ValueAnimator
 import android.content.Context
 import android.os.Handler
 import android.os.Looper
 import android.util.Log
 import android.view.View
 import android.view.ViewGroup
+import android.view.animation.LinearInterpolator
 import androidx.activity.ComponentDialog
 import androidx.activity.OnBackPressedCallback
 import com.bird.starryskysudoku.R
@@ -58,7 +60,18 @@ class MyDialog : ComponentDialog {
     }
 
     override fun show() {
+        // 弹窗出现：叠加层 0→70% 前 300ms，内容由 dialog_show.xml 在 300ms 后滑入
+        val w = window
+        w?.setDimAmount(0f)
         super.show()
+        ValueAnimator.ofFloat(0f, 0.7f).apply {
+            duration = 300L
+            interpolator = LinearInterpolator()
+            addUpdateListener {
+                w?.setDimAmount(it.animatedValue as Float)
+            }
+            start()
+        }
         lockInteractionsUntilEnterAnimationEnds()
     }
 
@@ -66,7 +79,6 @@ class MyDialog : ComponentDialog {
         Log.d(TAG, "弹窗取消")
         if (mInteractionLocked) return
         super.cancel()
-        // 暂停弹窗关闭后仍要保留暂停状态，这里不主动停止弹窗音效。
         if (mLayout != R.layout.dialog_pause) {
             PlayMusic.getInstance().stopDialogShow()
         }

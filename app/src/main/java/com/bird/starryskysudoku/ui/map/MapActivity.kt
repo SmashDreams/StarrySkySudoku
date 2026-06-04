@@ -17,6 +17,7 @@ import com.bird.starryskysudoku.ui.common.BaseLocalizedActivity
 import androidx.lifecycle.ViewModelProvider
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.core.view.doOnPreDraw
+import android.widget.EdgeEffect
 import androidx.recyclerview.widget.RecyclerView
 import com.bird.starryskysudoku.R
 import com.bird.starryskysudoku.account.LauncherSessionReader
@@ -79,6 +80,8 @@ class MapActivity : BaseLocalizedActivity() {
 
         mRecyclerView = mBinding.passList
         mRecyclerView.visibility = View.INVISIBLE
+        mRecyclerView.overScrollMode = View.OVER_SCROLL_ALWAYS
+        configureOverscrollLimit(mRecyclerView, 150)
         mBigShootingStar = mBinding.sstarBig
         mSmallShootingStar = mBinding.sstarSmall
         mBackgroundStars = mBinding.mapBgstar
@@ -376,5 +379,21 @@ class MapActivity : BaseLocalizedActivity() {
 
     private fun parseLevel(raw: String?): Int? {
         return raw?.toIntOrNull()?.takeIf { it in 1..MAX_LEVEL }
+    }
+
+    private fun configureOverscrollLimit(recyclerView: RecyclerView, limitDp: Int) {
+        val maxPx = dpToPx(limitDp).toFloat()
+        recyclerView.edgeEffectFactory = object : RecyclerView.EdgeEffectFactory() {
+            override fun createEdgeEffect(view: RecyclerView, direction: Int): EdgeEffect {
+                return object : EdgeEffect(view.context) {
+                    override fun onPull(deltaDistance: Float) {
+                        super.onPull(deltaDistance.coerceIn(-maxPx, maxPx))
+                    }
+                    override fun onPull(deltaDistance: Float, displacement: Float) {
+                        super.onPull(deltaDistance.coerceIn(-maxPx, maxPx), displacement)
+                    }
+                }
+            }
+        }
     }
 }

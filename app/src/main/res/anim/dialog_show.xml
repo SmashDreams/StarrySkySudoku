@@ -1,9 +1,12 @@
 <?xml version="1.0" encoding="utf-8"?>
 <set xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- 叠加层 dimAmount 0→70% 在 MyDialog.show() 中独立动画 0-300ms -->
+    <!-- 弹窗内容：300ms 后开始淡入并上滑 -->
     <alpha
         android:fromAlpha="0.0"
         android:toAlpha="1.0"
-        android:duration="800"
+        android:startOffset="300"
+        android:duration="500"
         android:interpolator="@android:anim/linear_interpolator" />
     <translate
         android:fromYDelta="80dp"
