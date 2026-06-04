@@ -44,6 +44,17 @@ class PlayInputControllerStructureTest {
     }
 
     @Test
+    fun inputControllerRefreshesTagButtonAfterRepeatedNumberClearsCell() {
+        val controller = mSourceRoot.resolve("ui/play/PlayInputController.kt").readText()
+        val viewModel = mSourceRoot.resolve("ui/play/PlayViewModel.kt").readText()
+
+        assertTrue(controller.contains("refreshTagActionAfterNumberInput()"))
+        assertTrue(controller.contains("mViewModel.currentCellIsEmpty()"))
+        assertTrue(controller.contains("mTag.isEnabled = canUseTag"))
+        assertTrue(viewModel.contains("fun currentCellIsEmpty(): Boolean"))
+    }
+
+    @Test
     fun playActivityHasDebugCompleteButtonForManualTesting() {
         val activity = mSourceRoot.resolve("ui/play/PlayActivity.kt").readText()
         val viewModel = mSourceRoot.resolve("ui/play/PlayViewModel.kt").readText()

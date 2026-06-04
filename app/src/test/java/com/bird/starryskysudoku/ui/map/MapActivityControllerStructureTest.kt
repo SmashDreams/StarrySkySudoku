@@ -86,4 +86,39 @@ class MapActivityControllerStructureTest {
         assertTrue(passDialog.contains("if (mInteractionLocked) return"))
         assertTrue(passDialog.contains("setMapInteractionEnabled(true)"))
     }
+
+    @Test
+    fun mapActivityUsesEdgeToEdgeStatusBarWithSafeSystemInsets() {
+        val mapActivity = mSourceRoot.resolve("MapActivity.kt").readText()
+        val layout = locateProjectRoot().resolve("app/src/main/res/layout/activity_mappage.xml").readText()
+
+        assertTrue(mapActivity.contains("configureImmersiveMapWindow()"))
+        assertTrue(mapActivity.contains("WindowCompat.setDecorFitsSystemWindows(window, false)"))
+        assertTrue(mapActivity.contains("window.statusBarColor = Color.TRANSPARENT"))
+        assertTrue(mapActivity.contains("applyMapSystemBarInsets()"))
+        assertTrue(mapActivity.contains("WindowInsetsCompat.Type.systemBars()"))
+        assertTrue(mapActivity.contains("setPadding(0, systemBars.top, 0, systemBars.bottom)"))
+        assertTrue(layout.contains("android:layout_height=\"72dp\""))
+        assertFalse(layout.contains("android:layout_height=\"100dp\""))
+    }
+
+    @Test
+    fun mapLoginStatusDoesNotAddExtraDarkBackgroundOverStarField() {
+        val layout = locateProjectRoot().resolve("app/src/main/res/layout/activity_mappage.xml").readText()
+        val loginStatusBlock = layout.substringAfter("android:id=\"@+id/login_status\"")
+            .substringBefore("<ImageView")
+
+        assertFalse(loginStatusBlock.contains("android:background="))
+        assertFalse(layout.contains("#66000000"))
+    }
+
+    private fun locateProjectRoot(): File {
+        var dir = File(requireNotNull(System.getProperty("user.dir"))).absoluteFile
+        while (true) {
+            if (dir.resolve("app/src/main/res/layout/activity_mappage.xml").isFile) return dir
+            if (dir.resolve("src/main/res/layout/activity_mappage.xml").isFile) return dir.parentFile ?: dir
+            dir = dir.parentFile ?: break
+        }
+        error("Unable to locate project root")
+    }
 }

@@ -1,8 +1,10 @@
 <resources xmlns:tools="http://schemas.android.com/tools">
     <!-- 应用基础主题。 -->
     <style name="Base.Theme.StarrySkySudoku" parent="Theme.Material3.DayNight.NoActionBar">
-
-        <!-- 在这里扩展通用主题配置。 -->
+        <item name="android:statusBarColor">@color/system_bar_night_sky</item>
+        <item name="android:navigationBarColor">@color/system_bar_night_sky</item>
+        <item name="android:windowLightStatusBar">false</item>
+        <item name="android:windowLightNavigationBar">false</item>
     </style>
 
     <style name="Theme.StarrySkySudoku" parent="Base.Theme.StarrySkySudoku" >

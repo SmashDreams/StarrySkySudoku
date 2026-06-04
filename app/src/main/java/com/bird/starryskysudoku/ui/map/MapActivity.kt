@@ -3,6 +3,7 @@ package com.bird.starryskysudoku.ui.map
 import android.animation.AnimatorSet
 import android.animation.ObjectAnimator
 import android.content.Intent
+import android.graphics.Color
 import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
@@ -13,11 +14,14 @@ import android.widget.TextView
 import android.widget.Toast
 import androidx.activity.OnBackPressedCallback
 import androidx.activity.result.contract.ActivityResultContracts
-import com.bird.starryskysudoku.ui.common.BaseLocalizedActivity
+import android.widget.EdgeEffect
+import androidx.core.content.ContextCompat
+import androidx.core.view.ViewCompat
+import androidx.core.view.WindowCompat
+import androidx.core.view.WindowInsetsCompat
+import androidx.core.view.doOnPreDraw
 import androidx.lifecycle.ViewModelProvider
 import androidx.recyclerview.widget.LinearLayoutManager
-import androidx.core.view.doOnPreDraw
-import android.widget.EdgeEffect
 import androidx.recyclerview.widget.RecyclerView
 import com.bird.starryskysudoku.R
 import com.bird.starryskysudoku.account.LauncherSessionReader
@@ -25,6 +29,7 @@ import com.bird.starryskysudoku.data.database.DatabaseInitializer
 import com.bird.starryskysudoku.data.entity.MapEntity
 import com.bird.starryskysudoku.databinding.ActivityMappageBinding
 import com.bird.starryskysudoku.media.PlayMusic
+import com.bird.starryskysudoku.ui.common.BaseLocalizedActivity
 import com.bird.starryskysudoku.ui.play.PlayRoute
 
 class MapActivity : BaseLocalizedActivity() {
@@ -65,8 +70,10 @@ class MapActivity : BaseLocalizedActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        configureImmersiveMapWindow()
         mBinding = ActivityMappageBinding.inflate(layoutInflater)
         setContentView(mBinding.root)
+        applyMapSystemBarInsets()
 
         val db = DatabaseInitializer.getDatabase(this)
         mViewModel = ViewModelProvider(this, MapViewModelFactory(db))[MapViewModel::class.java]
@@ -127,6 +134,25 @@ class MapActivity : BaseLocalizedActivity() {
         refreshLoginState()
         initMapData()
         initBackHandler()
+    }
+
+    @Suppress("DEPRECATION")
+    private fun configureImmersiveMapWindow() {
+        WindowCompat.setDecorFitsSystemWindows(window, false)
+        window.statusBarColor = Color.TRANSPARENT
+        window.navigationBarColor = ContextCompat.getColor(this, R.color.system_bar_night_sky)
+        WindowCompat.getInsetsController(window, window.decorView).apply {
+            isAppearanceLightStatusBars = false
+            isAppearanceLightNavigationBars = false
+        }
+    }
+
+    private fun applyMapSystemBarInsets() {
+        ViewCompat.setOnApplyWindowInsetsListener(mBinding.root) { view, insets ->
+            val systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
+            view.setPadding(0, systemBars.top, 0, systemBars.bottom)
+            insets
+        }
     }
 
     private fun initMapData() {

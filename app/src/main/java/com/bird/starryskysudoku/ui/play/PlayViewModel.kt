@@ -102,6 +102,10 @@ class PlayViewModel(private val mPlayRepository: PlayRepository) : ViewModel() {
         return mBoardSource.value?.get(getCurrentRow())?.get(getCurrentCol())
     }
 
+    fun currentCellIsEmpty(): Boolean {
+        return currentCell()?.mValue == "0"
+    }
+
     fun selectCell(row: Int, col: Int) {
         val board = mBoardSource.value ?: return
         // 最近一次选中值会被缓存下来，供重复输入清空和错误恢复逻辑复用。

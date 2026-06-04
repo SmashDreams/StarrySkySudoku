@@ -7,6 +7,7 @@
     <color name="teal_700">#FF018786</color>
     <color name="black">#FF000000</color>
     <color name="white">#FFFFFFFF</color>
+    <color name="system_bar_night_sky">#FF020812</color>
     <color name="map_pass">#FFF9D92F</color>
     <color name="red">#F20707</color>
 </resources>

@@ -117,10 +117,9 @@ class PlayInputController(
         mScope.launch {
             mViewModel.insertNumber(mViewModel.getCurrentRow(), mViewModel.getCurrentCol(), number)
             mRevoke.alpha = 1f
-            mTag.alpha = 0.55f
             mViewModel.mBoard.value?.let { mBroadView.initData(it) }
             mBroadView.invalidate()
-            mTag.isEnabled = false
+            refreshTagActionAfterNumberInput()
 
             if (mViewModel.mHasWon.value == true) {
                 val level = mGetLevel()
@@ -129,6 +128,13 @@ class PlayInputController(
                 mOnPuzzleCompleted(level)
             }
         }
+    }
+
+    private fun refreshTagActionAfterNumberInput() {
+        // 重复输入相同数字会清空当前格，清空后笔记按钮需要立即恢复可用。
+        val canUseTag = mViewModel.currentCellIsEmpty()
+        mTag.isEnabled = canUseTag
+        mTag.alpha = if (canUseTag) 1f else 0.55f
     }
 
     private fun insertOrRemoveTag(
