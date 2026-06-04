@@ -26,30 +26,59 @@
 
 ## 架构
 
-```
-Activity 层
-  AppEntry -> Guide -> Map <-> Play
-               |          |
-          MapViewModel  PlayViewModel
-               |          |
-  +------------+----------+------------------------+
-  | Repository 层                                    |
-  | MapRepository / PlayRepository /                |
-  | UserProgressRepository                          |
-  +------------+------------------------------------+
-               |
-  +------------+------------------------------------+
-  | Data 层 (Room DAO -> SQLite)                    |
-  | ProblemDao / UserMapDao / HistoryDao /          |
-  | GameResultDao                                    |
-  +-------------------------------------------------+
+```mermaid
+flowchart TB
+    subgraph Activity["Activity 层"]
+        Splash["AppEntryActivity"]
+        Guide["GuideActivity"]
+        Map["MapActivity"]
+        Play["PlayActivity"]
+    end
 
-  Controller 委托 (PlayActivity -> 6 Controller)
-  Board / Input / GameState / Nav / Dialog /
-  CountdownCoordinator
+    subgraph ViewModel["ViewModel 层"]
+        MapVM["MapViewModel"]
+        PlayVM["PlayViewModel"]
+    end
 
-  跨进程  ContentProvider -> 茶苑 Launcher 读战绩
-  计时    CountdownTimerService (前台) -> 广播 -> UI
+    subgraph Repository["Repository 层"]
+        MapRepo["MapRepository"]
+        PlayRepo["PlayRepository"]
+        UserRepo["UserProgressRepository"]
+    end
+
+    subgraph Data["Data 层 (Room)"]
+        PDAO["ProblemDao"]
+        UDAO["UserMapDao"]
+        HDAO["HistoryDao"]
+        GDAO["GameResultDao"]
+    end
+
+    subgraph Controllers["Controller 委托"]
+        Board["PlayBoardController"]
+        Input["PlayInputController"]
+        State["PlayGameStateController"]
+        Nav["PlayNavigationController"]
+        Dialog["PlayDialogController"]
+        CD["CountdownCoordinator"]
+    end
+
+    subgraph External["跨进程 / 计时"]
+        CP["ContentProvider → 茶苑"]
+        Timer["CountdownTimerService (前台)"]
+    end
+
+    Splash --> Guide --> Map <--> Play
+    Map --> MapVM --> MapRepo
+    Play --> PlayVM --> PlayRepo
+    PlayRepo --> UserRepo
+    MapRepo --> PDAO
+    MapRepo --> UDAO
+    PlayRepo --> HDAO
+    UserRepo --> UDAO
+    GDAO --> CP
+    Play --> Board & Input & State & Nav & Dialog & CD
+    CD --> Timer
+    Timer --> CP
 ```
 
 ## 数据库
