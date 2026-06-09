@@ -47,8 +47,8 @@ object SudokuBoardGeometry {
         return BoardRect(
             mLeft = left + CELL_INSET + col * size - padding,
             mTop = top + CELL_INSET + row * size - padding,
-            mRight = left + CELL_INSET + (col + 1) * size - rightBottomAdjust + padding,
-            mBottom = top + CELL_INSET + (row + 1) * size - rightBottomAdjust + padding
+            mRight = left + CELL_INSET + col * size - rightBottomAdjust + padding,
+            mBottom = top + CELL_INSET + row * size - rightBottomAdjust + padding
         )
     }
 
@@ -64,8 +64,8 @@ object SudokuBoardGeometry {
         return BoardRect(
             mLeft = left + BORDER_INSET + blockCol * blockSize - padding,
             mTop = top + BORDER_INSET + blockRow * blockSize - padding,
-            mRight = left + BORDER_INSET + (blockCol + 1) * blockSize + padding,
-            mBottom = top + BORDER_INSET + (blockRow + 1) * blockSize + padding
+            mRight = left + BORDER_INSET + blockCol * blockSize + padding,
+            mBottom = top + BORDER_INSET + blockRow * blockSize + padding
         )
     }
 

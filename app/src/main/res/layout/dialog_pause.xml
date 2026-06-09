@@ -25,12 +25,12 @@
             android:orientation="horizontal">
 
             <TextView
-                android:id="@+id/textview24"
+                android:id="@+id/pause_spacer_left"
                 android:layout_width="15dp"
                 android:layout_height="wrap_content"/>
 
             <TextView
-                android:id="@+id/textview44"
+                android:id="@+id/pause_title"
                 android:layout_width="wrap_content"
                 android:layout_height="60dp"
                 android:layout_weight="1"
@@ -48,7 +48,7 @@
                 app:srcCompat="@drawable/icon_close"/>
 
             <TextView
-                android:id="@+id/textview27"
+                android:id="@+id/pause_spacer_right"
                 android:layout_width="15dp"
                 android:layout_height="wrap_content" />
         </LinearLayout>
@@ -96,7 +96,7 @@
         </LinearLayout>
 
         <TextView
-            android:id="@+id/textview51"
+            android:id="@+id/pause_spacer_bottom"
             android:layout_width="match_parent"
             android:layout_height="16dp" />
     </LinearLayout>

@@ -41,9 +41,10 @@ class CountdownTimerService : Service() {
             }
             sendCountdownBroadcast(remaining)
             updateNotification(remaining)
+            // 计算距离下一个整秒边界的毫秒数，钳制范围防止系统休眠导致大幅漂移。
             val nextTickMs = mEndTimeMs - (remaining - 1L) * 1000L
             val delay = nextTickMs - SystemClock.elapsedRealtime()
-            mHandler.postDelayed(this, delay.coerceIn(500L, 1050L))
+            mHandler.postDelayed(this, delay.coerceIn(MIN_TICK_DELAY_MS, MAX_TICK_DELAY_MS))
         }
     }
 
@@ -66,19 +67,25 @@ class CountdownTimerService : Service() {
     }
 
     private fun handleStart(intent: Intent?): Int {
-        val initialSeconds = intent
-            ?.getIntExtra(CountdownTimerContract.EXTRA_INITIAL_SECONDS, CountdownTimerContract.DEFAULT_TOTAL_SECONDS)
-            ?.let(CountdownTimerContract::normalizeInitialSeconds)
-            ?: CountdownTimerContract.DEFAULT_TOTAL_SECONDS
-        mLevelNumber = intent
-            ?.getIntExtra(CountdownTimerContract.EXTRA_LEVEL_NUMBER, CountdownTimerContract.MIN_LEVEL_NUMBER)
-            ?.let(CountdownTimerContract::normalizeLevelNumber)
-            ?: CountdownTimerContract.MIN_LEVEL_NUMBER
-        mUsername = intent
-            ?.getStringExtra(CountdownTimerContract.EXTRA_USERNAME)
-            ?.trim()
-            ?.takeIf { it.isNotEmpty() }
-            ?: LauncherSessionReader.GUEST_USERNAME
+        val rawSeconds = intent?.getIntExtra(
+            CountdownTimerContract.EXTRA_INITIAL_SECONDS,
+            CountdownTimerContract.DEFAULT_TOTAL_SECONDS
+        ) ?: CountdownTimerContract.DEFAULT_TOTAL_SECONDS
+        val initialSeconds = CountdownTimerContract.normalizeInitialSeconds(rawSeconds)
+
+        val rawLevel = intent?.getIntExtra(
+            CountdownTimerContract.EXTRA_LEVEL_NUMBER,
+            CountdownTimerContract.MIN_LEVEL_NUMBER
+        ) ?: CountdownTimerContract.MIN_LEVEL_NUMBER
+        mLevelNumber = CountdownTimerContract.normalizeLevelNumber(rawLevel)
+
+        val rawUsername = intent?.getStringExtra(CountdownTimerContract.EXTRA_USERNAME)?.trim()
+        mUsername = if (rawUsername != null && rawUsername.isNotEmpty()) {
+            rawUsername
+        } else {
+            LauncherSessionReader.GUEST_USERNAME
+        }
+
         mIsPaused = false
         startForegroundCountdown(initialSeconds)
         startCountdown(initialSeconds)
@@ -107,6 +114,11 @@ class CountdownTimerService : Service() {
     override fun onDestroy() {
         mHandler.removeCallbacks(mTickRunnable)
         super.onDestroy()
+    }
+
+    private companion object {
+        private const val MIN_TICK_DELAY_MS = 500L
+        private const val MAX_TICK_DELAY_MS = 1050L
     }
 
     private fun startForegroundCountdown(initialSeconds: Int) {
@@ -167,11 +179,14 @@ class CountdownTimerService : Service() {
             },
             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
         )
-        val displaySeconds = if (mIsPaused) mPausedRemaining else remainingSeconds
-        val contentText = if (mIsPaused) {
-            getString(R.string.countdown_notification_remaining, CountdownTimerContract.formatRemainingTime(displaySeconds)) + " · 暂停"
+        val displaySeconds: Int
+        val contentText: String
+        if (mIsPaused) {
+            displaySeconds = mPausedRemaining
+            contentText = getString(R.string.countdown_notification_remaining, CountdownTimerContract.formatRemainingTime(displaySeconds)) + " · 暂停"
         } else {
-            getString(R.string.countdown_notification_remaining, CountdownTimerContract.formatRemainingTime(displaySeconds))
+            displaySeconds = remainingSeconds
+            contentText = getString(R.string.countdown_notification_remaining, CountdownTimerContract.formatRemainingTime(displaySeconds))
         }
         return NotificationCompat.Builder(this, CountdownTimerContract.NOTIFICATION_CHANNEL_ID)
             .setSmallIcon(R.drawable.ic_timer_notification)

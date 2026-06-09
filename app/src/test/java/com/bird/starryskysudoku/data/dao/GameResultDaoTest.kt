@@ -27,13 +27,13 @@ class GameResultDaoTest {
     fun queryByIdIncludesPersistedUsernameColumn() {
         val dao = mDb.gameResultDao()
         val id = dao.insert(
-            GameResultEntity.fromFields(
-                level = 5,
-                elapsedSeconds = 120,
-                remainingSeconds = 480,
-                completed = true,
-                createdAt = 1_800_000_000_000L,
-                username = "alice"
+            GameResultEntity(
+                mLevel = 5,
+                mElapsedSeconds = 120,
+                mRemainingSeconds = 480,
+                mCompleted = 1,
+                mCreatedAt = 1_800_000_000_000L,
+                mUsername = "alice"
             )
         )
 
@@ -47,23 +47,23 @@ class GameResultDaoTest {
     fun queryByUsernameReturnsOnlyMatchingUsername() {
         val dao = mDb.gameResultDao()
         dao.insert(
-            GameResultEntity.fromFields(
-                level = 1,
-                elapsedSeconds = 60,
-                remainingSeconds = 540,
-                completed = false,
-                createdAt = 1_800_000_000_000L,
-                username = "guest"
+            GameResultEntity(
+                mLevel = 1,
+                mElapsedSeconds = 60,
+                mRemainingSeconds = 540,
+                mCompleted = 0,
+                mCreatedAt = 1_800_000_000_000L,
+                mUsername = "guest"
             )
         )
         dao.insert(
-            GameResultEntity.fromFields(
-                level = 2,
-                elapsedSeconds = 120,
-                remainingSeconds = 480,
-                completed = true,
-                createdAt = 1_800_000_000_001L,
-                username = "alice"
+            GameResultEntity(
+                mLevel = 2,
+                mElapsedSeconds = 120,
+                mRemainingSeconds = 480,
+                mCompleted = 1,
+                mCreatedAt = 1_800_000_000_001L,
+                mUsername = "alice"
             )
         )
 

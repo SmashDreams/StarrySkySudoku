@@ -10,28 +10,27 @@ class PlayRepository(private val mDb: AppDatabase) {
     private val mUserProgressRepository = UserProgressRepository(mDb)
 
     suspend fun loadBoard(levelNum: Int): Array<Array<BoardCell>>? {
-        // 新开一局前先清掉该关卡遗留的历史记录，避免撤销读到旧局数据。
-        mDb.historyDao().deleteForPass(levelNum)
+        // 新开一局前清掉上一局撤销栈。
+        mDb.historyDao().clear()
         val values = mDb.problemDao().getValuesForLevel(levelNum)
         return PlayBoardRules.createBoard(values)
     }
 
-    suspend fun recordHistory(history: HistoryEntity, passNum: Int, gameSession: String) {
+    suspend fun recordHistory(history: HistoryEntity) {
         mDb.historyDao().insert(history)
         // 撤销历史只保留最近一段操作，避免单局记录无限增长。
-        mDb.historyDao().trimToLimit(passNum, gameSession)
+        mDb.historyDao().trimToLimit()
     }
 
-    suspend fun undo(passNum: Int, gameSession: String): HistoryEntity? {
+    suspend fun undo(): HistoryEntity? {
         // 撤销采用“取最新一条再删除”的方式，确保历史栈语义始终是后进先出。
-        val history = mDb.historyDao().getLatest(passNum, gameSession) ?: return null
+        val history = mDb.historyDao().getLatest() ?: return null
         mDb.historyDao().deleteById(history.mId)
         return history
     }
 
-    suspend fun clearHistory(passNum: Int, gameSession: String) {
-        // 重新开始或离开当前局时，只清这一局的历史，避免误删同关卡其它对局记录。
-        mDb.historyDao().deleteForSession(passNum, gameSession)
+    suspend fun clearHistory() {
+        mDb.historyDao().clear()
     }
 
     suspend fun completePass(username: String, passNum: Int, nextPassNum: Int) {

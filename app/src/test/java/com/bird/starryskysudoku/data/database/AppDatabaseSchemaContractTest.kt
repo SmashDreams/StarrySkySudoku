@@ -6,11 +6,11 @@ import java.io.File
 
 class AppDatabaseSchemaContractTest {
     @Test
-    fun roomSchemaExportIsEnabledAndVersionSixSchemaIsCheckedIn() {
+    fun roomSchemaExportIsEnabledAndVersionSevenSchemaIsCheckedIn() {
         val databaseSource = File("src/main/java/com/bird/starryskysudoku/data/database/AppDatabase.kt").readText()
         val buildSource = File("build.gradle").readText()
 
-        assertTrue(databaseSource.contains("version = 6"))
+        assertTrue(databaseSource.contains("version = 7"))
         assertTrue(databaseSource.contains("exportSchema = true"))
         assertTrue(buildSource.contains("room.schemaLocation"))
     }

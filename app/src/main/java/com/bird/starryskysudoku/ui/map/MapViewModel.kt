@@ -3,8 +3,10 @@ package com.bird.starryskysudoku.ui.map
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
 import com.bird.starryskysudoku.account.LauncherSessionReader
+import com.bird.starryskysudoku.data.database.AppDatabase
 import com.bird.starryskysudoku.data.entity.MapEntity
 import com.bird.starryskysudoku.data.repository.MapRepository
 import kotlinx.coroutines.launch
@@ -76,5 +78,18 @@ class MapViewModel(private val mMapRepository: MapRepository) : ViewModel() {
 
     fun updateCompleteNum(passNum: Int) {
         updateCompleteNum(LauncherSessionReader.GUEST_USERNAME, passNum)
+    }
+}
+
+// 这里手动注入仓储，保持本项目不引入额外依赖注入框架。
+class MapViewModelFactory(
+    private val mDb: AppDatabase
+) : ViewModelProvider.Factory {
+    @Suppress("UNCHECKED_CAST")
+    override fun <T : ViewModel> create(modelClass: Class<T>): T {
+        if (modelClass.isAssignableFrom(MapViewModel::class.java)) {
+            return MapViewModel(MapRepository(mDb)) as T
+        }
+        throw IllegalArgumentException("未知的 ViewModel 类型")
     }
 }

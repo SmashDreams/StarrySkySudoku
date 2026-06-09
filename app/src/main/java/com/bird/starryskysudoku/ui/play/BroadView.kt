@@ -11,12 +11,12 @@ import com.bird.starryskysudoku.R
 class BroadView : AppCompatImageView {
 
     companion object {
-        const val SELECT_NONE = 0
-        const val SELECT_ON = 1
-        const val BE_SELECTED = -1
-        const val WRONG = 2
-        const val PROBLEM = 1
-        const val EMPTY = 0
+        const val SELECT_NONE = BoardCell.SELECT_NONE
+        const val SELECT_ON = BoardCell.SELECT_ON
+        const val BE_SELECTED = BoardCell.BE_SELECTED
+        const val WRONG = BoardCell.WRONG
+        const val PROBLEM = BoardCell.PROBLEM
+        const val EMPTY = BoardCell.EMPTY
     }
 
     // 棋盘本体数据和候选数数据分开保存，便于分别重绘格子底图与九宫笔记。
@@ -156,17 +156,15 @@ class BroadView : AppCompatImageView {
                     // 只有空格才绘制九宫笔记，已填数字不会叠加候选数。
                     val cellLeft = SudokuBoardGeometry.CELL_INSET + mWidth * j
                     val cellTop = SudokuBoardGeometry.CELL_INSET + mWidth * i
-                    var position = 0
                     for (m in 0 until 3) {
                         for (n in 0 until 3) {
-                            val tagText = mTagData[i][j]?.mTags?.getOrNull(position) ?: "0"
+                            val tagText = mTagData[i][j]?.mTags?.getOrNull(m * 3 + n) ?: "0"
                             if (tagText != "0") {
                                 val subCenterX = cellLeft + n * subWidth + subWidth / 2
                                 val subCenterY = cellTop + m * subHeight + subHeight / 2
                                 val baseline = subCenterY - (mTagPaint.ascent() + mTagPaint.descent()) / 2
                                 canvas.drawText(tagText, subCenterX, baseline, mTagPaint)
                             }
-                            position++
                         }
                     }
                 }

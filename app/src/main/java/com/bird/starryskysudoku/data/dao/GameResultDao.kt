@@ -28,14 +28,8 @@ interface GameResultDao {
     fun queryById(id: Long): Cursor
 
     /*
-     * 插入操作由内容提供器统一入口调用，权限和字段校验都在进入这里前完成。
+     * 游戏内战绩保存直接走本地数据库入口；对外共享的 Provider 只负责查询。
      */
     @Insert
     fun insert(result: GameResultEntity): Long
-
-    /*
-     * 删除仅支持按主键删除，避免外部调用方通过条件语句误删大量数据。
-     */
-    @Query("DELETE FROM game_result WHERE _id = :id")
-    fun deleteById(id: Long): Int
 }

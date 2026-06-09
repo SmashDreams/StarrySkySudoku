@@ -66,3 +66,14 @@ object MapRoute {
 
     private const val RECYCLER_VIEW_NO_POSITION = -1
 }
+
+// 根据已通关关卡数计算地图列表所需的滚动偏移量。
+object MapScrollPolicy {
+    fun offsetDpAfterCompletedLevel(completedLevel: Int): Int {
+        return when (completedLevel) {
+            in 3..5 -> 102
+            in 6..40 -> 84
+            else -> 0
+        }
+    }
+}

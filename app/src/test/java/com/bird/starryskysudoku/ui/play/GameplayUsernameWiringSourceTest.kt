@@ -30,8 +30,9 @@ class GameplayUsernameWiringSourceTest {
                 source.contains("""?: LauncherSessionReader.readUsername(contentResolver)""")
         )
         assertTrue(
-            "PlayActivity must read inserted result username from provider cursor",
-            recorderSource.contains("GameResultContract.Results.COLUMN_USERNAME")
+            "GameResultRecorder must persist the gameplay username",
+            recorderSource.contains("val safeUsername = username.trim().ifEmpty") &&
+                recorderSource.contains("mUsername = safeUsername")
         )
     }
 

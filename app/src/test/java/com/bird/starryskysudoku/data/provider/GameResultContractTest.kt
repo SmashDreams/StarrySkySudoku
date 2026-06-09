@@ -1,9 +1,11 @@
 package com.bird.starryskysudoku.data.provider
 
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
+import java.io.File
 
 @RunWith(RobolectricTestRunner::class)
 class GameResultContractTest {
@@ -12,7 +14,6 @@ class GameResultContractTest {
     fun contentUriUsesStableAuthorityAndResultsPath() {
         assertEquals("com.bird.starryskysudoku.provider", GameResultContract.AUTHORITY)
         assertEquals("com.bird.starryskysudoku.permission.READ_RESULTS", GameResultContract.READ_PERMISSION)
-        assertEquals("com.bird.starryskysudoku.permission.WRITE_RESULTS", GameResultContract.WRITE_PERMISSION)
         assertEquals("results", GameResultContract.Results.PATH)
         assertEquals("content://com.bird.starryskysudoku.provider/results", GameResultContract.Results.CONTENT_URI_STRING)
         assertEquals("vnd.android.cursor.dir/vnd.com.bird.starryskysudoku.result", GameResultContract.Results.CONTENT_TYPE)
@@ -33,24 +34,9 @@ class GameResultContractTest {
     }
 
     @Test
-    fun toContentValuesCanIncludeUsernameWithoutBreakingDefaultGuest() {
-        val guestValues = GameResultContract.Results.toContentValues(
-            level = 1,
-            elapsedSeconds = 10,
-            remainingSeconds = 590,
-            completed = false,
-            createdAt = 1_800_000_000_000L
-        )
-        val userValues = GameResultContract.Results.toContentValues(
-            level = 2,
-            elapsedSeconds = 20,
-            remainingSeconds = 580,
-            completed = true,
-            createdAt = 1_800_000_000_001L,
-            username = "alice"
-        )
+    fun readOnlyContractDoesNotExposeWriteHelperFactory() {
+        val source = File("src/main/java/com/bird/starryskysudoku/data/provider/GameResultContract.kt").readText()
 
-        assertEquals("guest", guestValues.getAsString(GameResultContract.Results.COLUMN_USERNAME))
-        assertEquals("alice", userValues.getAsString(GameResultContract.Results.COLUMN_USERNAME))
+        assertFalse(source.contains("fun toContentValues("))
     }
 }

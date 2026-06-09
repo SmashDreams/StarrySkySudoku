@@ -8,7 +8,7 @@
     android:background="@drawable/background_night_sky">
 
     <LinearLayout
-        android:id="@+id/linearlayout3"
+        android:id="@+id/play_top_bar"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:orientation="horizontal"
@@ -20,7 +20,7 @@
         app:layout_constraintVertical_bias="0.09000002">
 
         <TextView
-            android:id="@+id/textview25"
+            android:id="@+id/play_star_label"
             android:layout_width="wrap_content"
             android:layout_height="35dp"
             android:gravity="center"
@@ -80,7 +80,7 @@
         />
 
     <LinearLayout
-        android:id="@+id/linearlayout2"
+        android:id="@+id/play_keypad"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="vertical"
@@ -96,7 +96,7 @@
             android:orientation="horizontal">
 
             <TextView
-                android:id="@+id/textview45"
+                android:id="@+id/keypad_spacer_1"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"/>
@@ -113,7 +113,7 @@
                 android:textStyle="bold"/>
 
             <TextView
-                android:id="@+id/textview56"
+                android:id="@+id/keypad_spacer_2"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"/>
@@ -130,7 +130,7 @@
                 android:textStyle="bold"/>
 
             <TextView
-                android:id="@+id/textview57"
+                android:id="@+id/keypad_spacer_3"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"/>
@@ -147,7 +147,7 @@
                 android:textStyle="bold"/>
 
             <TextView
-                android:id="@+id/textview58"
+                android:id="@+id/keypad_spacer_4"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"/>
@@ -164,7 +164,7 @@
                 android:textStyle="bold"/>
 
             <TextView
-                android:id="@+id/textview59"
+                android:id="@+id/keypad_spacer_5"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"/>
@@ -181,7 +181,7 @@
                 android:textStyle="bold"/>
 
             <TextView
-                android:id="@+id/textview60"
+                android:id="@+id/keypad_spacer_6"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"/>
@@ -194,14 +194,14 @@
                 app:srcCompat="@drawable/icon_notes_off"/>
 
             <TextView
-                android:id="@+id/textview53"
+                android:id="@+id/keypad_spacer_7"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"/>
         </LinearLayout>
 
         <TextView
-            android:id="@+id/textview61"
+            android:id="@+id/keypad_row_divider"
             android:layout_width="match_parent"
             android:layout_height="1dp" />
 
@@ -211,7 +211,7 @@
             android:orientation="horizontal">
 
             <TextView
-                android:id="@+id/textview62"
+                android:id="@+id/keypad_spacer_8"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"/>
@@ -228,7 +228,7 @@
                 android:textStyle="bold"/>
 
             <TextView
-                android:id="@+id/textview64"
+                android:id="@+id/keypad_spacer_9"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"/>
@@ -245,7 +245,7 @@
                 android:textStyle="bold"/>
 
             <TextView
-                android:id="@+id/textview67"
+                android:id="@+id/keypad_spacer_10"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"/>
@@ -262,7 +262,7 @@
                 android:textStyle="bold"/>
 
             <TextView
-                android:id="@+id/textview65"
+                android:id="@+id/keypad_spacer_11"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"/>
@@ -279,7 +279,7 @@
                 android:textStyle="bold"/>
 
             <TextView
-                android:id="@+id/textview69"
+                android:id="@+id/keypad_spacer_12"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"/>
@@ -294,7 +294,7 @@
                 app:srcCompat="@drawable/icon_undo"/>
 
             <TextView
-                android:id="@+id/textview71"
+                android:id="@+id/keypad_spacer_13"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"/>
@@ -302,13 +302,13 @@
     </LinearLayout>
 
     <LinearLayout
-        android:id="@+id/linearlayout"
+        android:id="@+id/play_timer_row"
         android:layout_width="100dp"
         android:layout_height="20dp"
         android:layout_marginTop="65dp"
         android:orientation="horizontal"
         app:layout_constraintEnd_toStartOf="@id/play_pause"
-        app:layout_constraintStart_toEndOf="@id/linearlayout3"
+        app:layout_constraintStart_toEndOf="@id/play_top_bar"
         app:layout_constraintTop_toTopOf="parent"
         app:layout_constraintHorizontal_bias="0.73">
 
@@ -324,7 +324,7 @@
             android:textStyle="bold"/>
 
         <TextView
-            android:id="@+id/textview74"
+            android:id="@+id/play_time_colon"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text=":"
@@ -353,8 +353,8 @@
         android:progressDrawable="@drawable/time_progressbar"
         android:visibility="visible"
         app:layout_constraintEnd_toStartOf="@id/play_pause"
-        app:layout_constraintStart_toEndOf="@id/linearlayout3"
-        app:layout_constraintTop_toBottomOf="@id/linearlayout"
+        app:layout_constraintStart_toEndOf="@id/play_top_bar"
+        app:layout_constraintTop_toBottomOf="@id/play_timer_row"
         app:layout_constraintHorizontal_bias="0.73"/>
 
 </androidx.constraintlayout.widget.ConstraintLayout>

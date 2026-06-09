@@ -14,8 +14,7 @@ object PlayBoardRules {
 
     fun createBoard(values: List<Int>): Array<Array<BoardCell>>? {
         if (values.size != BOARD_CELL_COUNT || values.any { it !in 0..9 }) return null
-        return Array(BOARD_SIZE) { row ->
-            Array(BOARD_SIZE) { col ->
+        return Array(BOARD_SIZE) { row -> Array(BOARD_SIZE) { col ->
                 // 题库是一维数组，进入界面前转换成按行列访问的二维棋盘。
                 val index = row * BOARD_SIZE + col
                 val value = values[index]
@@ -72,7 +71,7 @@ object PlayBoardRules {
         var wrongOrEmptyCount = 0
         for (i in 0 until BOARD_SIZE) {
             for (j in 0 until BOARD_SIZE) {
-                // 先刷新当前输入与其相关格子的状态，再顺手统计是否已完成整盘。
+                // 先刷新当前输入与其相关格子的状态，再统计是否已完成整盘。
                 if (i != row || j != col) {
                     refreshPeerStatus(board, row, col, number, cell.mBlock, i, j)
                 }
@@ -114,12 +113,14 @@ object PlayBoardRules {
         peerCol: Int
     ) {
         val peer = board[peerRow][peerCol]
+        val isConflict = peer.mValue == number &&
+            (peer.mRow == row || peer.mCol == col || peer.mBlock == block)
+        if (isConflict) {
+            // 当前输入格和冲突格同时标记为错误，便于棋盘上直观显示冲突。
+            board[row][col].mStatus = PlayViewModel.WRONG
+        }
         peer.mStatus = when {
-            // 同行、同列或同宫出现重复数字时，当前格和冲突格都标记为错误。
-            peer.mValue == number && (peer.mRow == row || peer.mCol == col || peer.mBlock == block) -> {
-                board[row][col].mStatus = PlayViewModel.WRONG
-                PlayViewModel.WRONG
-            }
+            isConflict -> PlayViewModel.WRONG
             peer.mValue == number -> PlayViewModel.SELECT_ON
             else -> PlayViewModel.SELECT_NONE
         }
@@ -171,7 +172,7 @@ object PlayBoardRules {
     }
 
     private const val BOARD_SIZE = 9
-    private const val BOARD_CELL_COUNT = BOARD_SIZE * BOARD_SIZE
+    private const val BOARD_CELL_COUNT = 81
     private const val BLOCK_SIZE = 3
     private const val EMPTY_VALUE = "0"
 }

@@ -1,6 +1,5 @@
 package com.bird.starrysky.contracts
 
-import android.content.ContentValues
 import android.net.Uri
 
 object SharedGameResultsContract {
@@ -9,7 +8,6 @@ object SharedGameResultsContract {
      */
     const val AUTHORITY = "${SharedGameEntryContract.PACKAGE_NAME}.provider"
     const val READ_PERMISSION = "com.bird.starryskysudoku.permission.READ_RESULTS"
-    const val WRITE_PERMISSION = "com.bird.starryskysudoku.permission.WRITE_RESULTS"
     const val CONTENT_URI_BASE = "content://$AUTHORITY"
 
     object Results {
@@ -43,26 +41,5 @@ object SharedGameResultsContract {
         )
 
         fun selectionForUsername(): String = "$COLUMN_USERNAME=?"
-
-        fun toContentValues(
-            level: Int,
-            elapsedSeconds: Int,
-            remainingSeconds: Int,
-            completed: Boolean,
-            createdAt: Long = System.currentTimeMillis(),
-            username: String = SharedSessionContract.GUEST_USERNAME
-        ): ContentValues {
-            /*
-             * 只负责按公开字段组装数据，字段合法性仍由 Provider/Entity 在写入前校验。
-             */
-            return ContentValues().apply {
-                put(COLUMN_LEVEL, level)
-                put(COLUMN_ELAPSED_SECONDS, elapsedSeconds)
-                put(COLUMN_REMAINING_SECONDS, remainingSeconds)
-                put(COLUMN_COMPLETED, if (completed) 1 else 0)
-                put(COLUMN_CREATED_AT, createdAt)
-                put(COLUMN_USERNAME, username)
-            }
-        }
     }
 }

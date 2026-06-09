@@ -35,7 +35,6 @@ import com.bird.starryskysudoku.ui.play.PlayRoute
 class MapActivity : BaseLocalizedActivity() {
 
     companion object {
-        private const val MAX_LEVEL = 40
         private const val MAP_PASS_ROW_HEIGHT_DP = 340
         private const val MAP_BOTTOM_STAR_REVEAL_DP = 96
         private const val MAP_STAR_VISUAL_HEIGHT_DP = 88
@@ -94,9 +93,7 @@ class MapActivity : BaseLocalizedActivity() {
         mBackgroundStars = mBinding.mapBgstar
         mSettings = mBinding.settings
         mLoginStatus = mBinding.loginStatus
-        mLoginStatus.setOnClickListener {
-            Toast.makeText(this, R.string.login_prompt_teahouse, Toast.LENGTH_SHORT).show()
-        }
+        mLoginStatus.setOnClickListener { Toast.makeText(this, R.string.login_prompt_teahouse, Toast.LENGTH_SHORT).show() }
 
         /*
          * 地图页只负责组装控制器，弹窗、设置和通知权限流程分别放到独立类里维护。
@@ -331,7 +328,8 @@ class MapActivity : BaseLocalizedActivity() {
         translateX: Float,
         translateY: Float
     ) {
-        val runnable = object : Runnable {
+        lateinit var loopRunnable: Runnable
+        loopRunnable = object : Runnable {
             override fun run() {
                 star.alpha = 0f
                 star.translationX = 0f
@@ -349,10 +347,10 @@ class MapActivity : BaseLocalizedActivity() {
                     interpolator = LinearInterpolator()
                     start()
                 }
-                mHandler.postDelayed(this, 6000L)
+                mHandler.postDelayed(loopRunnable, 6000L)
             }
         }
-        mHandler.postDelayed(runnable, delayMillis)
+        mHandler.postDelayed(loopRunnable, delayMillis)
     }
 
     private fun initBackHandler() {
@@ -404,7 +402,7 @@ class MapActivity : BaseLocalizedActivity() {
     }
 
     private fun parseLevel(raw: String?): Int? {
-        return raw?.toIntOrNull()?.takeIf { it in 1..MAX_LEVEL }
+        return raw?.toIntOrNull()?.takeIf { it in 1..PlayRoute.MAX_LEVEL }
     }
 
     private fun configureOverscrollLimit(recyclerView: RecyclerView, limitDp: Int) {

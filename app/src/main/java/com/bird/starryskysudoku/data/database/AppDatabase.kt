@@ -13,7 +13,7 @@ import com.bird.starryskysudoku.data.entity.UserMapEntity
 
 @Database(
     entities = [ProblemEntity::class, UserMapEntity::class, HistoryEntity::class, GameResultEntity::class],
-    version = 6,
+    version = 7,
     exportSchema = true
 )
 abstract class AppDatabase : RoomDatabase() {

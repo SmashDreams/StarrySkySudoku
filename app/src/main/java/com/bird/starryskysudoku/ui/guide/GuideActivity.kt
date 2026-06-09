@@ -43,7 +43,6 @@ class GuideActivity : BaseLocalizedActivity() {
         bindViews()
         initTouch()
         initBackHandler()
-        renderStep()
         loadLevelOneBoard()
     }
 
@@ -80,12 +79,9 @@ class GuideActivity : BaseLocalizedActivity() {
     private fun loadLevelOneBoard() {
         val db = DatabaseInitializer.getDatabase(this)
         lifecycleScope.launch {
-            // 本页固定借用第一关题面做演示，避免额外维护一套教程棋盘资源。
             val values = db.problemDao().getValuesForLevel(FIRST_LEVEL)
-            if (values.size == 81) {
-                mLevelOneValues = values
-                renderStep()
-            }
+            mLevelOneValues = values
+            renderStep()
         }
     }
 
@@ -104,13 +100,8 @@ class GuideActivity : BaseLocalizedActivity() {
     }
 
     private fun renderNumberKeys(step: GuideStep) {
-        for (index in mNumberKeys.indices) {
-            val key = mNumberKeys[index]
-            val isDemoNumber = step == GuideStep.ENTER_NUMBER && index == DEMO_NUMBER_INDEX
-            key.alpha = if (isDemoNumber) 1f else 0.72f
-            key.scaleX = 1f
-            key.scaleY = 1f
-        }
+        for (key in mNumberKeys) key.alpha = 0.72f
+        if (step == GuideStep.ENTER_NUMBER) mNumberKeys[DEMO_NUMBER_INDEX].alpha = 1f
     }
 
     private fun renderTimer(step: GuideStep) {
@@ -130,8 +121,8 @@ class GuideActivity : BaseLocalizedActivity() {
     }
 
     private fun ruleHighlights(): List<RectF> {
-        val row = demoCellIndex().first
-        val col = demoCellIndex().second
+        val row = CENTER_ROW
+        val col = CENTER_COL
         // 规则演示不是只框住一个格子，而是把同行、同列和同宫拆成多个聚焦区域。
         return GuideRuleHighlightCells.regionsFor(row, col).map { region ->
             boardAreaRect(
@@ -146,8 +137,7 @@ class GuideActivity : BaseLocalizedActivity() {
     }
 
     private fun boardCellRect(): RectF {
-        val (row, col) = demoCellIndex()
-        return cellAreaRect(row, col, 1f)
+        return cellAreaRect(CENTER_ROW, CENTER_COL, 1f)
     }
 
     private fun boardBorderRect(extraPadding: Float): RectF {
@@ -228,24 +218,6 @@ class GuideActivity : BaseLocalizedActivity() {
         return RectF(mLeft, mTop, mRight, mBottom)
     }
 
-    private fun demoCellIndex(): Pair<Int, Int> {
-        var bestCell: Pair<Int, Int>? = null
-        var bestDistance = Int.MAX_VALUE
-        // 教学页和棋盘工厂都优先使用中心附近空格，保证聚焦位置稳定。
-        for (index in mLevelOneValues.indices) {
-            if (mLevelOneValues[index] == 0) {
-                val row = index / 9
-                val col = index % 9
-                val distance = kotlin.math.abs(row - CENTER_INDEX) + kotlin.math.abs(col - CENTER_INDEX)
-                if (distance < bestDistance) {
-                    bestDistance = distance
-                    bestCell = row to col
-                }
-            }
-        }
-        return bestCell ?: (CENTER_INDEX to CENTER_INDEX)
-    }
-
     private fun goNext() {
         PlayMusic.getInstance().playButtonTap()
         if (mCurrentStep < mSteps.lastIndex) {
@@ -293,7 +265,8 @@ class GuideActivity : BaseLocalizedActivity() {
     companion object {
         private const val FIRST_LEVEL = 1
         private const val DEMO_NUMBER_INDEX = 6
-        private const val CENTER_INDEX = 4
+        private const val CENTER_ROW = 4
+        private const val CENTER_COL = 4
         private const val CELL_RIGHT_BOTTOM_ADJUST = 2f
         private const val NUMBER_KEY_HORIZONTAL_INSET = 2f
         private const val NUMBER_KEY_VERTICAL_INSET = 11f

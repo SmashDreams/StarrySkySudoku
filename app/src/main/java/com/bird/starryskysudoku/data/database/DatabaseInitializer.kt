@@ -111,6 +111,30 @@ object DatabaseInitializer {
         }
     }
 
+    internal val sMigration6To7 = object : Migration(6, 7) {
+        override fun migrate(db: SupportSQLiteDatabase) {
+            db.execSQL(
+                """
+                CREATE TABLE history_v7 (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
+                    row INTEGER NOT NULL,
+                    col INTEGER NOT NULL,
+                    type INTEGER NOT NULL,
+                    value INTEGER NOT NULL
+                )
+                """.trimIndent()
+            )
+            db.execSQL(
+                """
+                INSERT INTO history_v7(id, row, col, type, value)
+                SELECT id, row, col, type, value FROM history
+                """.trimIndent()
+            )
+            db.execSQL("DROP TABLE history")
+            db.execSQL("ALTER TABLE history_v7 RENAME TO history")
+        }
+    }
+
     @Volatile
     private var sInstance: AppDatabase? = null
 
@@ -124,7 +148,14 @@ object DatabaseInitializer {
     private fun buildDatabase(context: Context): AppDatabase {
         return Room.databaseBuilder(context.applicationContext, AppDatabase::class.java, DB_NAME)
             .createFromAsset(DB_NAME)
-            .addMigrations(sMigration1To2, sMigration2To3, sMigration3To4, sMigration4To5, sMigration5To6)
+            .addMigrations(
+                sMigration1To2,
+                sMigration2To3,
+                sMigration3To4,
+                sMigration4To5,
+                sMigration5To6,
+                sMigration6To7
+            )
             .build()
     }
 

@@ -111,11 +111,11 @@ class PassListAdapter(
 
         holder.cancelPendingAnimations()
         val context = holder.itemView.context
-        // 列表头部固定在最上方，数据行按视觉顺序需要从尾部倒着取。
-        val rowIndex = mPassList.size - position
+        // position 0 是列表头，position 1 对应数据列表的第一个元素（屏幕最上方行）。
+        val rowIndex = position - 1
         val item = mPassList[rowIndex]
-        val previousRowBelow = mPassList.getOrNull(rowIndex - 1)
-        val hasNextRowAbove = rowIndex < mPassList.lastIndex
+        val previousRowBelow = mPassList.getOrNull(rowIndex + 1)
+        val hasNextRowAbove = rowIndex > 0
         holder.mPathOverlay?.bind(holder.mStars, item, previousRowBelow, hasNextRowAbove)
 
         for (i in 0 until 4) {
@@ -184,20 +184,19 @@ class PassListAdapter(
     override fun getItemCount() = mPassList.size + 1
 
     fun getPosition(): Int {
-        // 默认滚动到第一个待通关关卡所在行，方便玩家继续当前进度。
-        for (i in mPassList.indices) {
+        // 从低关卡向高关卡搜索第一个待通关行，方便玩家继续当前进度。
+        for (i in mPassList.lastIndex downTo 0) {
             for (j in 0 until 4) {
-                if (mPassList[i][j]?.mStatus == PassStatus.TODO) return mPassList.size - i
+                if (mPassList[i][j]?.mStatus == PassStatus.TODO) return i + 1
             }
         }
         return 0
     }
 
     fun getPositionForLevel(level: Int): Int {
-        // 胜利、失败和通知返回都可能指定具体关卡，这里按关卡号直接反查所在行。
         for (i in mPassList.indices) {
             for (j in 0 until 4) {
-                if (mPassList[i][j]?.mPassNum == level) return mPassList.size - i
+                if (mPassList[i][j]?.mPassNum == level) return i + 1
             }
         }
         return getPosition()
@@ -210,9 +209,9 @@ class PassListAdapter(
     }
 
     fun getCurrentTodoLevel(): Int? {
-        // 当前待挑战关卡用于地图页首次定位和胜利返回后的默认落点。
-        for (row in mPassList) {
-            for (entity in row) {
+        // 从低关卡向高关卡搜索，确保返回的总是最靠前的待挑战关卡。
+        for (i in mPassList.lastIndex downTo 0) {
+            for (entity in mPassList[i]) {
                 if (entity?.mStatus == PassStatus.TODO) return entity.mPassNum
             }
         }

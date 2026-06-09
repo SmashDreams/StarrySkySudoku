@@ -1,45 +1,37 @@
 package com.bird.starryskysudoku.ui.play
 
-import android.content.ContentResolver
 import android.util.Log
-import com.bird.starryskysudoku.data.provider.GameResultContract
+import com.bird.starryskysudoku.account.LauncherSessionReader
+import com.bird.starryskysudoku.data.dao.GameResultDao
+import com.bird.starryskysudoku.data.entity.GameResultEntity
 import com.bird.starryskysudoku.timer.CountdownTimerContract
 
 class GameResultRecorder(
-    private val mContentResolver: ContentResolver
+    private val mGameResultDao: GameResultDao
 ) {
-    fun saveAndVerify(
+    fun save(
         level: Int,
         remainingSeconds: Int,
         completed: Boolean,
         username: String
     ): Boolean {
-        // 统一把剩余秒数换算成耗时秒数，便于外部应用直接展示战绩。
         val elapsedSeconds = (CountdownTimerContract.DEFAULT_TOTAL_SECONDS - remainingSeconds)
             .coerceAtLeast(0)
         return try {
-            // 战绩统一经由共享契约组装内容值，保证本应用和外部读取方字段完全一致。
-            val values = GameResultContract.Results.toContentValues(
-                level = level,
-                elapsedSeconds = elapsedSeconds,
-                remainingSeconds = remainingSeconds,
-                completed = completed,
-                username = username
+            val safeUsername = username.trim().ifEmpty { LauncherSessionReader.GUEST_USERNAME }
+            mGameResultDao.insert(
+                GameResultEntity(
+                    mLevel = level,
+                    mElapsedSeconds = elapsedSeconds,
+                    mRemainingSeconds = remainingSeconds,
+                    mCompleted = if (completed) 1 else 0,
+                    mCreatedAt = System.currentTimeMillis(),
+                    mUsername = safeUsername
+                )
             )
-            val insertedUri = mContentResolver.insert(GameResultContract.Results.CONTENT_URI, values)
-                ?: return false
-            // 再查一遍刚插入的数据，确认提供器和权限链路都真正可用。
-            mContentResolver.query(insertedUri, null, null, null, null)?.use { cursor ->
-                if (!cursor.moveToFirst()) return false
-                // 这里只验证关键字段都能正常读回，不在页面层重复解析完整业务对象。
-                cursor.getInt(cursor.getColumnIndexOrThrow(GameResultContract.Results.COLUMN_LEVEL))
-                cursor.getInt(cursor.getColumnIndexOrThrow(GameResultContract.Results.COLUMN_ELAPSED_SECONDS))
-                cursor.getInt(cursor.getColumnIndexOrThrow(GameResultContract.Results.COLUMN_COMPLETED))
-                cursor.getString(cursor.getColumnIndexOrThrow(GameResultContract.Results.COLUMN_USERNAME))
-            }
             true
         } catch (exception: RuntimeException) {
-            Log.w(TAG, "通过内容提供器保存战绩失败", exception)
+            Log.w(TAG, "保存战绩失败", exception)
             false
         }
     }

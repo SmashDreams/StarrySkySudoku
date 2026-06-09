@@ -6,6 +6,7 @@ import android.widget.ImageView
 import android.widget.TextView
 import androidx.lifecycle.LifecycleCoroutineScope
 import com.bird.starryskysudoku.R
+import com.bird.starryskysudoku.data.entity.HistoryEntity
 import com.bird.starryskysudoku.media.PlayMusic
 import kotlinx.coroutines.launch
 
@@ -91,7 +92,7 @@ class PlayInputController(
 
     @SuppressLint("ClickableViewAccessibility")
     private fun initRevokeButton() {
-        mRevoke.alpha = 0.55f
+        mRevoke.alpha = BoardCell.DIM_ALPHA
         mRevoke.setOnTouchListener { view, event ->
             if (!canAnimateSelectedCell()) return@setOnTouchListener false
             animatePress(view as ImageView, event)
@@ -134,7 +135,7 @@ class PlayInputController(
         // 重复输入相同数字会清空当前格，清空后笔记按钮需要立即恢复可用。
         val canUseTag = mViewModel.currentCellIsEmpty()
         mTag.isEnabled = canUseTag
-        mTag.alpha = if (canUseTag) 1f else 0.55f
+        mTag.alpha = if (canUseTag) 1f else BoardCell.DIM_ALPHA
     }
 
     private fun insertOrRemoveTag(
@@ -156,7 +157,7 @@ class PlayInputController(
                 number,
                 mTagData
             )
-            mNumbers[numberIndex]?.alpha = if (added) 0.55f else 1f
+            mNumbers[numberIndex]?.alpha = if (added) BoardCell.DIM_ALPHA else 1f
             mBroadView.initTagData(mTagData)
             mBroadView.invalidate()
         }
@@ -165,13 +166,13 @@ class PlayInputController(
     private fun clearSelectionAfterEmptyUndo() {
         PlayMusic.getInstance().playInputWrong()
         mRevoke.isEnabled = false
-        mRevoke.alpha = 0.55f
+        mRevoke.alpha = BoardCell.DIM_ALPHA
         mTag.isEnabled = false
-        mTag.alpha = 0.55f
+        mTag.alpha = BoardCell.DIM_ALPHA
         mTag.setImageResource(R.drawable.icon_notes_off)
         for (number in mNumbers) {
             number?.isEnabled = false
-            number?.alpha = 0.55f
+            number?.alpha = BoardCell.DIM_ALPHA
         }
         // 没有历史可撤销时，回到无选中基线状态并提示用户。
         mViewModel.clearSelectionAfterEmptyUndo()?.let { board ->
@@ -180,7 +181,7 @@ class PlayInputController(
         mBroadView.invalidate()
     }
 
-    private fun restoreHistory(history: com.bird.starryskysudoku.data.entity.HistoryEntity) {
+    private fun restoreHistory(history: HistoryEntity) {
         PlayMusic.getInstance().playButtonTap()
         // 视图模型负责还原数据，本控制器只把按钮透明度和棋盘视图同步回对应状态。
         val restored = mViewModel.restoreHistory(history, mTagData) ?: return
@@ -198,7 +199,7 @@ class PlayInputController(
         val tagData = mTagData[mViewModel.getCurrentRow()][mViewModel.getCurrentCol()]
         for (index in 0 until 9) {
             mNumbers[index]?.alpha = if (tagData != null && tagData.haveTag((index + 1).toString())) {
-                0.55f
+                BoardCell.DIM_ALPHA
             } else {
                 1f
             }

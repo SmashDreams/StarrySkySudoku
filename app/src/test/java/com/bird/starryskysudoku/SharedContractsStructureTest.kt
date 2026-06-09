@@ -1,6 +1,7 @@
 package com.bird.starryskysudoku
 
 import org.junit.Assert.assertTrue
+import org.junit.Assert.assertFalse
 import org.junit.Test
 import java.io.File
 
@@ -16,8 +17,10 @@ class SharedContractsStructureTest {
     fun localProviderContractsDelegateToSharedContracts() {
         val resultContract = File("src/main/java/com/bird/starryskysudoku/data/provider/GameResultContract.kt").readText()
         val sessionContract = File("src/main/java/com/bird/starryskysudoku/account/LauncherSessionContract.kt").readText()
+        val sharedResultsContract = File("../shared-contracts/src/main/java/com/bird/starrysky/contracts/SharedGameResultsContract.kt").readText()
 
         assertTrue(resultContract.contains("SharedGameResultsContract"))
         assertTrue(sessionContract.contains("SharedSessionContract"))
+        assertFalse(sharedResultsContract.contains("fun toContentValues("))
     }
 }

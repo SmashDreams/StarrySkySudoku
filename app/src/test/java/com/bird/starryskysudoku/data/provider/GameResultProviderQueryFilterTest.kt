@@ -6,7 +6,7 @@ import com.bird.starryskysudoku.data.database.AppDatabase
 import com.bird.starryskysudoku.data.database.DatabaseInitializer
 import org.junit.After
 import org.junit.Assert.assertEquals
-import org.junit.Assert.assertThrows
+import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
@@ -35,138 +35,105 @@ class GameResultProviderQueryFilterTest {
     }
 
     @Test
-    fun resolveResultsQueryAllowsUnfilteredCollectionQuery() {
-        assertEquals(ResultQueryFilter.All, GameResultProvider.resolveResultsQueryFilter(null, null))
-    }
-
-    @Test
-    fun queryRejectsSelectionArgsWithoutSelectionForCollectionUri() {
+    fun queryKeepsReturningResultsWhenOptionalArgumentsAreUnexpected() {
         val provider = Robolectric.buildContentProvider(GameResultProvider::class.java)
             .create()
             .get()
-
-        assertThrows(IllegalArgumentException::class.java) {
-            provider.query(
-                GameResultContract.Results.CONTENT_URI,
-                null,
-                null,
-                arrayOf("alice"),
-                null
-            )
-        }
-    }
-
-
-    @Test
-    fun queryRejectsUnsupportedSortOrderForCollectionUri() {
-        val provider = Robolectric.buildContentProvider(GameResultProvider::class.java)
-            .create()
-            .get()
-
-        assertThrows(IllegalArgumentException::class.java) {
-            provider.query(
-                GameResultContract.Results.CONTENT_URI,
-                null,
-                null,
-                null,
-                "level ASC"
-            )
-        }
-    }
-
-    @Test
-    fun resolveResultsQueryTrimsUsernameForUsernameSelection() {
-        assertEquals(
-            ResultQueryFilter.Username("alice"),
-            GameResultProvider.resolveResultsQueryFilter(
-                GameResultContract.Results.selectionForUsername(),
-                arrayOf(" alice ")
+        mDb.gameResultDao().insert(
+            com.bird.starryskysudoku.data.entity.GameResultEntity(
+                mLevel = 1,
+                mElapsedSeconds = 10,
+                mRemainingSeconds = 590,
+                mCompleted = 0,
+                mCreatedAt = 1_800_000_000_002L,
+                mUsername = "alice"
             )
         )
-    }
 
-    @Test
-    fun resolveResultsQueryRejectsBlankUsernameSelectionArg() {
-        assertThrows(IllegalArgumentException::class.java) {
-            GameResultProvider.resolveResultsQueryFilter(
-                GameResultContract.Results.selectionForUsername(),
-                arrayOf("   ")
-            )
-        }
-    }
-
-    @Test
-    fun resolveResultsQueryRejectsMissingUsernameSelectionArg() {
-        assertThrows(IllegalArgumentException::class.java) {
-            GameResultProvider.resolveResultsQueryFilter(
-                GameResultContract.Results.selectionForUsername(),
-                emptyArray()
-            )
-        }
-    }
-
-    @Test
-    fun resolveResultsQueryRejectsMultipleUsernameSelectionArgs() {
-        assertThrows(IllegalArgumentException::class.java) {
-            GameResultProvider.resolveResultsQueryFilter(
-                GameResultContract.Results.selectionForUsername(),
-                arrayOf("alice", "bob")
-            )
-        }
-    }
-
-    @Test
-    fun resolveResultsQueryRejectsUnsupportedSelection() {
-        assertThrows(IllegalArgumentException::class.java) {
-            GameResultProvider.resolveResultsQueryFilter("level=?", arrayOf("1"))
-        }
-    }
-
-    @Test
-    fun queryRejectsUsernameSelectionForItemUri() {
-        val provider = Robolectric.buildContentProvider(GameResultProvider::class.java)
-            .create()
-            .get()
-        val itemUri = ContentUris.withAppendedId(GameResultContract.Results.CONTENT_URI, 1L)
-
-        assertThrows(IllegalArgumentException::class.java) {
-            provider.query(
-                itemUri,
-                null,
-                GameResultContract.Results.selectionForUsername(),
-                arrayOf("alice"),
-                null
-            )
-        }
-    }
-
-    @Test
-    fun deleteRejectsSelectionForItemUriAndKeepsResult() {
-        val provider = Robolectric.buildContentProvider(GameResultProvider::class.java)
-            .create()
-            .get()
-        val itemUri = provider.insert(
+        provider.query(
             GameResultContract.Results.CONTENT_URI,
-            GameResultContract.Results.toContentValues(
-                level = 1,
-                elapsedSeconds = 10,
-                remainingSeconds = 590,
-                completed = false,
-                createdAt = 1_800_000_000_002L,
-                username = "alice"
+            null,
+            null,
+            arrayOf("ignored"),
+            "level ASC"
+        ).use { cursor ->
+            assertNotNull(cursor)
+            assertTrue(cursor.moveToFirst())
+            assertEquals("alice", cursor.getString(cursor.getColumnIndexOrThrow(GameResultContract.Results.COLUMN_USERNAME)))
+        }
+    }
+
+    @Test
+    fun insertIsRejectedBecauseProviderIsReadOnly() {
+        val provider = Robolectric.buildContentProvider(GameResultProvider::class.java)
+            .create()
+            .get()
+
+        try {
+            provider.insert(
+                GameResultContract.Results.CONTENT_URI,
+                null
+            )
+            throw AssertionError("Expected insert to reject writes")
+        } catch (_: UnsupportedOperationException) {
+        }
+    }
+
+    @Test
+    fun deleteIsRejectedBecauseProviderIsReadOnly() {
+        val provider = Robolectric.buildContentProvider(GameResultProvider::class.java)
+            .create()
+            .get()
+
+        try {
+            provider.delete(
+                ContentUris.withAppendedId(GameResultContract.Results.CONTENT_URI, 1L),
+                null,
+                null
+            )
+            throw AssertionError("Expected delete to reject writes")
+        } catch (_: UnsupportedOperationException) {
+        }
+    }
+
+    @Test
+    fun itemUriStillQueriesInsertedResult() {
+        val provider = Robolectric.buildContentProvider(GameResultProvider::class.java)
+            .create()
+            .get()
+        val id = mDb.gameResultDao().insert(
+            com.bird.starryskysudoku.data.entity.GameResultEntity(
+                mLevel = 3,
+                mElapsedSeconds = 30,
+                mRemainingSeconds = 570,
+                mCompleted = 1,
+                mCreatedAt = 1_800_000_000_003L,
+                mUsername = "bob"
             )
         )
 
-        assertThrows(IllegalArgumentException::class.java) {
-            provider.delete(
-                itemUri,
-                GameResultContract.Results.selectionForUsername(),
-                arrayOf("alice")
-            )
-        }
+        provider.query(ContentUris.withAppendedId(GameResultContract.Results.CONTENT_URI, id), null, null, null, null)
+            .use { cursor ->
+                assertTrue(cursor.moveToFirst())
+                assertEquals("bob", cursor.getString(cursor.getColumnIndexOrThrow(GameResultContract.Results.COLUMN_USERNAME)))
+            }
+    }
 
-        provider.query(itemUri, null, null, null, null).use { cursor ->
-            assertTrue(cursor.moveToFirst())
+    @Test
+    fun updateIsRejectedBecauseProviderIsReadOnly() {
+        val provider = Robolectric.buildContentProvider(GameResultProvider::class.java)
+            .create()
+            .get()
+
+        try {
+            provider.update(
+                GameResultContract.Results.CONTENT_URI,
+                null,
+                null,
+                null
+            )
+            throw AssertionError("Expected update to reject writes")
+        } catch (_: UnsupportedOperationException) {
         }
     }
 

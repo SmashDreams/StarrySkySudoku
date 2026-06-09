@@ -25,9 +25,9 @@ class PlayMusic private constructor() {
     }
 
     enum class MusicType {
-        BUTTONTAP, WRONG, DIALOGSHOW,
-        WINNING, LOSING, GETSTAR,
-        MAPLIGHTSTAR, TIMESUP
+        BUTTON_TAP, WRONG, DIALOG_SHOW,
+        WINNING, LOSING, GET_STAR,
+        MAP_LIGHT_STAR, TIMES_UP
     }
 
     // 资源映射、加载后的音效编号、以及正在播放的流编号分开缓存，便于按类型查找和停止。
@@ -68,43 +68,43 @@ class PlayMusic private constructor() {
 
     private fun initResource() {
         // 这里只登记资源映射，真正的加载统一交给后面的音效加载流程处理。
-        mMusicMap[MusicType.BUTTONTAP] = R.raw.button_tap
+        mMusicMap[MusicType.BUTTON_TAP] = R.raw.button_tap
         mMusicMap[MusicType.WRONG] = R.raw.wrong_placement
-        mMusicMap[MusicType.DIALOGSHOW] = R.raw.popup_appear
+        mMusicMap[MusicType.DIALOG_SHOW] = R.raw.popup_appear
         mMusicMap[MusicType.WINNING] = R.raw.puzzle_complete
         mMusicMap[MusicType.LOSING] = R.raw.puzzle_fail
-        mMusicMap[MusicType.GETSTAR] = R.raw.popup_star
-        mMusicMap[MusicType.MAPLIGHTSTAR] = R.raw.map_star_on
-        mMusicMap[MusicType.TIMESUP] = R.raw.time
+        mMusicMap[MusicType.GET_STAR] = R.raw.popup_star
+        mMusicMap[MusicType.MAP_LIGHT_STAR] = R.raw.map_star_on
+        mMusicMap[MusicType.TIMES_UP] = R.raw.time
     }
 
     private fun loadSounds(context: Context) {
         for ((type, resId) in mMusicMap) {
             // 倒计时结束提示音单独使用一个池，避免与普通音效抢占唯一流。
-            val id = if (type == MusicType.TIMESUP) {
+            val id = if (type == MusicType.TIMES_UP) {
                 mTimesUpPool.load(context, resId, 1)
             } else {
                 mSoundPool.load(context, resId, 1)
             }
             mSoundIdMap[type] = id
         }
-        Log.w(TAG, "音效资源加载完成")
+        Log.i(TAG, "音效资源加载完成")
     }
 
     private fun isOpened(type: String): Boolean = mPrefs.getBoolean(type, true)
 
     fun playButtonTap() {
         if (mInitialized && isOpened(AppSettings.KEY_AUDIO)) {
-            mSoundPool.play(mSoundIdMap[MusicType.BUTTONTAP] ?: return, 0.7f, 0.7f, 1, 0, 1f)
+            mSoundPool.play(mSoundIdMap[MusicType.BUTTON_TAP] ?: return, 0.7f, 0.7f, 1, 0, 1f)
         }
     }
 
-    fun playDialogShow() { if (isOpened(AppSettings.KEY_AUDIO)) playSound(MusicType.DIALOGSHOW) }
+    fun playDialogShow() { if (isOpened(AppSettings.KEY_AUDIO)) playSound(MusicType.DIALOG_SHOW) }
 
     fun stopDialogShow() {
         if (!mInitialized) return
         // 保持原有静音占位逻辑，立即打断弹窗出现音效。
-        mSoundPool.play(mSoundIdMap[MusicType.BUTTONTAP] ?: return, 0f, 0f, 1, 0, 1f)
+        mSoundPool.play(mSoundIdMap[MusicType.BUTTON_TAP] ?: return, 0f, 0f, 1, 0, 1f)
     }
 
     fun playWinning() {
@@ -119,7 +119,7 @@ class PlayMusic private constructor() {
 
     fun stopLosing() { if (mInitialized) mStreamMap[MusicType.LOSING]?.let { mSoundPool.stop(it) } }
 
-    fun playGetStar() { if (isOpened(AppSettings.KEY_AUDIO)) playSound(MusicType.GETSTAR) }
+    fun playGetStar() { if (isOpened(AppSettings.KEY_AUDIO)) playSound(MusicType.GET_STAR) }
 
     fun playInputWrong() {
         if (mInitialized && isOpened(AppSettings.KEY_AUDIO)) {
@@ -130,14 +130,18 @@ class PlayMusic private constructor() {
     fun playTimesUp() {
         if (mInitialized && isOpened(AppSettings.KEY_AUDIO)) {
             // 超时提示音需要支持中途手动停止，所以保留这次播放对应的流编号。
-            mStreamMap[MusicType.TIMESUP] = mTimesUpPool.play(
-                mSoundIdMap[MusicType.TIMESUP] ?: return, 1f, 1f, 1, 0, 1f)
+            mStreamMap[MusicType.TIMES_UP] = mTimesUpPool.play(
+                mSoundIdMap[MusicType.TIMES_UP] ?: return, 1f, 1f, 1, 0, 1f)
         }
     }
 
-    fun stopTimesUp() { if (mInitialized) mStreamMap[MusicType.TIMESUP]?.let { mTimesUpPool.stop(it) } }
+    fun stopTimesUp() {
+        if (mInitialized) mStreamMap[MusicType.TIMES_UP]?.let { mTimesUpPool.stop(it) }
+    }
 
-    fun playMapLightStar() { if (isOpened(AppSettings.KEY_AUDIO)) playSound(MusicType.MAPLIGHTSTAR) }
+    fun playMapLightStar() {
+        if (isOpened(AppSettings.KEY_AUDIO)) playSound(MusicType.MAP_LIGHT_STAR)
+    }
 
     fun release() {
         if (!mInitialized) return

@@ -24,12 +24,12 @@
             android:orientation="horizontal">
 
             <TextView
-                android:id="@+id/textview50"
+                android:id="@+id/win_spacer_left"
                 android:layout_width="15dp"
                 android:layout_height="wrap_content"/>
 
             <TextView
-                android:id="@+id/textview63"
+                android:id="@+id/win_title"
                 android:layout_width="wrap_content"
                 android:layout_height="60dp"
                 android:layout_weight="1"
@@ -47,7 +47,7 @@
                 app:srcCompat="@drawable/icon_close"/>
 
             <TextView
-                android:id="@+id/textview55"
+                android:id="@+id/win_spacer_right"
                 android:layout_width="15dp"
                 android:layout_height="wrap_content" />
         </LinearLayout>
@@ -58,7 +58,7 @@
             android:orientation="horizontal">
 
             <TextView
-                android:id="@+id/textview66"
+                android:id="@+id/win_star_spacer_left"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"/>
@@ -71,7 +71,7 @@
                 app:srcCompat="@drawable/star_empty"/>
 
             <TextView
-                android:id="@+id/textview68"
+                android:id="@+id/win_star_spacer_right"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"/>
@@ -89,7 +89,7 @@
             android:textStyle="bold"/>
 
         <TextView
-            android:id="@+id/textview72"
+            android:id="@+id/win_spacer_bottom"
             android:layout_width="match_parent"
             android:layout_height="16dp" />
     </LinearLayout>

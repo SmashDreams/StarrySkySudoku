@@ -25,12 +25,12 @@
             android:orientation="horizontal">
 
             <TextView
-                android:id="@+id/textview12"
+                android:id="@+id/passcheck_spacer_left"
                 android:layout_width="15dp"
                 android:layout_height="wrap_content"/>
 
             <TextView
-                android:id="@+id/textview14"
+                android:id="@+id/passcheck_star_label"
                 android:layout_width="wrap_content"
                 android:layout_height="60dp"
                 android:gravity="center"
@@ -51,7 +51,7 @@
                 android:textStyle="bold"/>
 
             <TextView
-                android:id="@+id/textview88"
+                android:id="@+id/passcheck_times_unit"
                 android:layout_width="wrap_content"
                 android:layout_height="60dp"
                 android:layout_gravity="center"
@@ -81,13 +81,13 @@
                 app:srcCompat="@drawable/icon_close"/>
 
             <TextView
-                android:id="@+id/textview16"
+                android:id="@+id/passcheck_spacer_right"
                 android:layout_width="15dp"
                 android:layout_height="wrap_content" />
         </LinearLayout>
 
         <TextView
-            android:id="@+id/textview17"
+            android:id="@+id/passcheck_divider"
             android:layout_width="match_parent"
             android:layout_height="10dp" />
 
@@ -96,7 +96,7 @@
             android:layout_height="72dp">
 
             <TextView
-                android:id="@+id/textview21"
+                android:id="@+id/passcheck_star_spacer_left"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"/>
@@ -109,7 +109,7 @@
                 app:srcCompat="@drawable/star_earned"/>
 
             <TextView
-                android:id="@+id/textview22"
+                android:id="@+id/passcheck_star_spacer_right"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"/>
@@ -127,7 +127,7 @@
             android:textStyle="bold"/>
 
         <TextView
-            android:id="@+id/textview20"
+            android:id="@+id/passcheck_spacer_bottom"
             android:layout_width="match_parent"
             android:layout_height="16dp" />
     </LinearLayout>

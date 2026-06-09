@@ -10,7 +10,7 @@ class MapRepository(private val mDb: AppDatabase) {
 
     suspend fun loadMapData(username: String): List<Array<MapEntity?>> {
         val safeUsername = mUserProgressRepository.ensureUserMap(username)
-        // 地图页按每行四关组织数据，直接转换成适配器当前使用的二维结构。
+        // 关卡数据按每行四关组织：列表首元素是最高关卡行（界面最上方），末元素是第一关行（界面最下方）。
         return mDb.userMapDao().getAllForUser(safeUsername)
             .map { it.toMapEntity() }
             .chunked(4)
@@ -20,6 +20,7 @@ class MapRepository(private val mDb: AppDatabase) {
                     chunk.getOrNull(2), chunk.getOrNull(3)
                 )
             }
+            .reversed()
     }
 
     suspend fun getPassStatus(username: String, passNum: Int): String? {

@@ -11,6 +11,7 @@ import android.view.View
 import android.widget.ImageView
 import com.bird.starryskysudoku.data.entity.MapEntity
 import com.bird.starryskysudoku.data.repository.PassStatus
+import com.bird.starryskysudoku.ui.play.PlayRoute
 import kotlin.math.hypot
 
 class MapPathOverlayView @JvmOverloads constructor(
@@ -47,7 +48,6 @@ class MapPathOverlayView @JvmOverloads constructor(
 
     override fun onDraw(canvas: Canvas) {
         super.onDraw(canvas)
-        if (mStars.size < 4 || mRow.size < 4) return
 
         val centers = mStars.map { star ->
             PointF(star.x + star.width / 2f, star.y + star.height / 2f)
@@ -84,7 +84,7 @@ class MapPathOverlayView @JvmOverloads constructor(
 
     private fun drawOutgoingConnector(canvas: Canvas, centers: List<PointF>) {
         val lastLevel = mRow.getOrNull(3)?.mPassNum ?: return
-        if (!mHasNextRowAbove || lastLevel >= MAX_LEVEL) return
+        if (!mHasNextRowAbove || lastLevel >= PlayRoute.MAX_LEVEL) return
 
         // 当前行最后一颗星如果不是最终关，就向上接到下一行入口形成连续路径。
         val boundary = PointF(crossRowBoundaryX(centers), 0f)
@@ -138,8 +138,6 @@ class MapPathOverlayView @JvmOverloads constructor(
         val dy = to.y - from.y
         val length = hypot(dx, dy)
         val inset = dpToPx(STAR_EDGE_INSET_DP)
-        val totalInset = (if (trimStart) inset else 0f) + (if (trimEnd) inset else 0f)
-        if (length <= totalInset) return null
 
         val ux = dx / length
         val uy = dy / length
@@ -158,7 +156,6 @@ class MapPathOverlayView @JvmOverloads constructor(
     }
 
     private companion object {
-        private const val MAX_LEVEL = 40
         private const val PATH_WIDTH_DP = 4f
         private const val DASH_DP = 10f
         private const val GAP_DP = 10f

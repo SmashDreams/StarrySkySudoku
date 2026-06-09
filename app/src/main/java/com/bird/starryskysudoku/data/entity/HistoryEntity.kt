@@ -12,7 +12,5 @@ data class HistoryEntity(
     @ColumnInfo(name = "row") val mRow: Int,
     @ColumnInfo(name = "col") val mCol: Int,
     @ColumnInfo(name = "type") val mType: Int,
-    @ColumnInfo(name = "value") val mValue: Int,
-    @ColumnInfo(name = "pass_num", defaultValue = "0") val mPassNum: Int,
-    @ColumnInfo(name = "game_session", defaultValue = "''") val mGameSession: String
+    @ColumnInfo(name = "value") val mValue: Int
 )

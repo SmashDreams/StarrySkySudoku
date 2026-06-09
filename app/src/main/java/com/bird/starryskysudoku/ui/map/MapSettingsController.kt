@@ -126,7 +126,7 @@ class MapSettingsController(
     }
 
     private fun refreshSettingsTexts(settingsBinding: DialogSettingsBinding) {
-        settingsBinding.textview5.setText(R.string.setting)
+        settingsBinding.settingsTitle.setText(R.string.setting)
         settingsBinding.settingsHowtoplay.setText(R.string.How)
         settingsBinding.settingsLanguage.setText(R.string.language)
     }

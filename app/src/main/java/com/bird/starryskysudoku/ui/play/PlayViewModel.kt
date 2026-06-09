@@ -4,12 +4,13 @@ import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import androidx.lifecycle.ViewModelProvider
 import com.bird.starryskysudoku.account.LauncherSessionReader
+import com.bird.starryskysudoku.data.database.AppDatabase
 import com.bird.starryskysudoku.data.entity.HistoryEntity
 import com.bird.starryskysudoku.data.repository.PlayRepository
 import com.bird.starryskysudoku.timer.CountdownTimerContract
 import kotlinx.coroutines.launch
-import java.util.UUID
 
 class PlayViewModel(private val mPlayRepository: PlayRepository) : ViewModel() {
 
@@ -62,9 +63,8 @@ class PlayViewModel(private val mPlayRepository: PlayRepository) : ViewModel() {
     }
 
     private var mCurrentPassNum = 0
-    private var mGameSession = UUID.randomUUID().toString()
     // 同一局只允许记录一次通关或失败结果，避免多个回调重复入库。
-    private val mGameResultRecordGate = GameResultRecordGate()
+    private var mGameResultRecorded = false
 
     private val mRemainingSecondsSource = MutableLiveData(CountdownTimerContract.DEFAULT_TOTAL_SECONDS)
     val mRemainingSeconds: LiveData<Int> = mRemainingSecondsSource
@@ -74,8 +74,6 @@ class PlayViewModel(private val mPlayRepository: PlayRepository) : ViewModel() {
     fun initBoard(levelNum: Int) {
         viewModelScope.launch {
             mCurrentPassNum = levelNum
-            // 每次进入新棋盘都生成新的对局标识，用来隔离撤销历史。
-            mGameSession = UUID.randomUUID().toString()
             mRemainingSecondsSource.value = CountdownTimerContract.DEFAULT_TOTAL_SECONDS
             mTimerFinishedSource.value = false
             mBoardSource.value = mPlayRepository.loadBoard(levelNum) ?: return@launch
@@ -114,7 +112,6 @@ class PlayViewModel(private val mPlayRepository: PlayRepository) : ViewModel() {
     }
 
     suspend fun insertNumber(x: Int, y: Int, number: String): Boolean {
-        if (!isValidCell(x, y) || !isValidNumber(number) || mCurrentPassNum == 0) return false
         val board = mBoardSource.value ?: return false
         val previousValue = mLastValue
         val result = PlayBoardRules.insertNumber(board, x, y, number, previousValue)
@@ -127,7 +124,10 @@ class PlayViewModel(private val mPlayRepository: PlayRepository) : ViewModel() {
             return false
         }
 
-        if (result.mIsWrong) { mIsWrongSource.value = true; return false }
+        if (result.mIsWrong) {
+            mIsWrongSource.value = true
+            return false
+        }
 
         recordHistory(x, y, TYPE_NUMBER, previousValue.toIntOrNull() ?: 0)
         mLastValue = result.mNewLastValue
@@ -137,7 +137,6 @@ class PlayViewModel(private val mPlayRepository: PlayRepository) : ViewModel() {
     }
 
     fun revertWrongInput(x: Int, y: Int) {
-        if (!isValidCell(x, y)) return
         val board = mBoardSource.value ?: return
         PlayBoardRules.revertWrongInput(board, x, y, mLastValue)
         mIsWrongSource.value = false
@@ -145,17 +144,21 @@ class PlayViewModel(private val mPlayRepository: PlayRepository) : ViewModel() {
     }
 
     suspend fun insertOrRemoveTag(x: Int, y: Int, number: String, tagData: Array<Array<TagData?>>): Boolean {
-        if (!isValidCell(x, y) || !isValidNumber(number) || mCurrentPassNum == 0) return false
         val td = tagData[x][y] ?: return false
         // 候选数的增删也走统一历史栈，这样撤销行为对数字和笔记一致。
         recordHistory(x, y, TYPE_TAG, number.toIntOrNull() ?: 0)
-        return if (!td.haveTag(number)) { td.setTag(number); true }
-        else { td.deleteTag(number); false }
+        return if (!td.haveTag(number)) {
+            td.setTag(number)
+            true
+        } else {
+            td.deleteTag(number)
+            false
+        }
     }
 
     suspend fun undo(): HistoryEntity? {
         if (mCurrentPassNum == 0) return null
-        return mPlayRepository.undo(mCurrentPassNum, mGameSession)
+        return mPlayRepository.undo()
     }
 
     fun clearSelectionAfterEmptyUndo(): Array<Array<BoardCell>>? {
@@ -189,7 +192,7 @@ class PlayViewModel(private val mPlayRepository: PlayRepository) : ViewModel() {
     }
 
     suspend fun clearHistory() {
-        if (mCurrentPassNum != 0) mPlayRepository.clearHistory(mCurrentPassNum, mGameSession)
+        if (mCurrentPassNum != 0) mPlayRepository.clearHistory()
     }
 
     suspend fun updatePassStatus(
@@ -211,16 +214,17 @@ class PlayViewModel(private val mPlayRepository: PlayRepository) : ViewModel() {
     fun clearWinState() { mHasWonSource.value = false }
 
     fun markGameResultRecordStarted(levelNum: Int, completed: Boolean): Boolean {
-        return mGameResultRecordGate.markIfFirst(levelNum, completed)
+        if (mGameResultRecorded) return false
+        mGameResultRecorded = true
+        return true
     }
 
     fun clearGameResultRecordMark(levelNum: Int, completed: Boolean) {
-        mGameResultRecordGate.unmark()
+        mGameResultRecorded = false
     }
 
     private suspend fun recordHistory(row: Int, col: Int, type: Int, value: Int) {
-        // 历史记录统一带上关卡和局标识，确保撤销永远只作用在当前这一局。
-        mPlayRepository.recordHistory(newHistory(row, col, type, value), mCurrentPassNum, mGameSession)
+        mPlayRepository.recordHistory(newHistory(row, col, type, value))
     }
 
     private fun restoreNumberHistory(
@@ -233,9 +237,9 @@ class PlayViewModel(private val mPlayRepository: PlayRepository) : ViewModel() {
         board[history.mRow][history.mCol].mValue = history.mValue.toString()
         board[history.mRow][history.mCol].mStatus = BE_SELECTED
         selectCell(history.mRow, history.mCol)
-        val tagAlpha = if (history.mValue == 0) 1f else 0.55f
+        val tagAlpha = if (history.mValue == 0) 1f else BoardCell.DIM_ALPHA
         return RestoredHistoryState(
-            mBoard = requireNotNull(mBoardSource.value),
+            mBoard = board,
             mTagEnabled = false,
             mTagAlpha = tagAlpha,
             mNumberAlphas = FloatArray(BOARD_SIZE) { 1f }
@@ -265,24 +269,31 @@ class PlayViewModel(private val mPlayRepository: PlayRepository) : ViewModel() {
             mTagEnabled = true,
             mTagAlpha = 1f,
             mNumberAlphas = FloatArray(BOARD_SIZE) { index ->
-                if (cellTags.haveTag((index + 1).toString())) 0.55f else 1f
+                if (cellTags.haveTag((index + 1).toString())) BoardCell.DIM_ALPHA else 1f
             }
         )
     }
-
-    private fun isValidCell(x: Int, y: Int) = x in 0..8 && y in 0..8
-
-    private fun isValidNumber(number: String) = number.toIntOrNull() in 1..9
 
     private fun newHistory(row: Int, col: Int, type: Int, value: Int): HistoryEntity {
         return HistoryEntity(
             mRow = row,
             mCol = col,
             mType = type,
-            mValue = value,
-            mPassNum = mCurrentPassNum,
-            mGameSession = mGameSession
+            mValue = value
         )
     }
 
+}
+
+// 与地图页保持同样的工厂注入方式，避免在页面中直接拼装数据仓储细节。
+class PlayViewModelFactory(
+    private val mDb: AppDatabase
+) : ViewModelProvider.Factory {
+    @Suppress("UNCHECKED_CAST")
+    override fun <T : ViewModel> create(modelClass: Class<T>): T {
+        if (modelClass.isAssignableFrom(PlayViewModel::class.java)) {
+            return PlayViewModel(PlayRepository(mDb)) as T
+        }
+        throw IllegalArgumentException("未知的 ViewModel 类型")
+    }
 }

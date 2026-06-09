@@ -6,24 +6,25 @@ import com.bird.starryskysudoku.ui.play.PlayViewModel
 object GuideBoardFactory {
     private const val BOARD_SIZE = 9
     private const val DEMO_NUMBER = "7"
-    private const val CENTER_INDEX = 4
+    private const val CENTER_ROW = 4
+    private const val CENTER_COL = 4
 
     fun createBoard(values: List<Int>, step: GuideStep): Array<Array<BoardCell>> {
         // 教学棋盘始终从真实题面复制一份，再按当前步骤叠加演示高亮和示例数字。
         val board = createBaseBoard(values)
-        val selectedCell = findDemoEmptyCell(board)
+        val selectedRow = CENTER_ROW
+        val selectedCol = CENTER_COL
 
         when (step) {
             GuideStep.WELCOME -> Unit
             GuideStep.RULE_UNIQUE,
             GuideStep.SELECT_CELL,
-            GuideStep.TIMER -> highlightRelatedCells(board, selectedCell.first, selectedCell.second)
+            GuideStep.TIMER -> highlightRelatedCells(board, selectedRow, selectedCol)
             GuideStep.ENTER_NUMBER -> {
-                // 教学输入步骤固定把演示数字写入当前高亮空格。
-                highlightRelatedCells(board, selectedCell.first, selectedCell.second)
-                board[selectedCell.first][selectedCell.second].mValue = DEMO_NUMBER
+                highlightRelatedCells(board, selectedRow, selectedCol)
+                board[selectedRow][selectedCol].mValue = DEMO_NUMBER
             }
-            GuideStep.GOOD_LUCK -> markDemoProgress(board)
+            GuideStep.GOOD_LUCK -> Unit
         }
 
         return board
@@ -32,8 +33,7 @@ object GuideBoardFactory {
     private fun createBaseBoard(values: List<Int>): Array<Array<BoardCell>> {
         return Array(BOARD_SIZE) { row ->
             Array(BOARD_SIZE) { col ->
-                // 题库异常或缺值时统一按空格兜底，避免教学页因为坏数据直接崩溃。
-                val value = values.getOrNull(row * BOARD_SIZE + col)?.takeIf { it in 0..9 } ?: 0
+                val value = values[row * BOARD_SIZE + col]
                 BoardCell(
                     mRow = row,
                     mCol = col,
@@ -43,24 +43,6 @@ object GuideBoardFactory {
                 )
             }
         }
-    }
-
-    private fun findDemoEmptyCell(board: Array<Array<BoardCell>>): Pair<Int, Int> {
-        var bestCell: Pair<Int, Int>? = null
-        var bestDistance = Int.MAX_VALUE
-        // 优先找离棋盘中心最近的空格，让教程聚焦位置更稳定也更自然。
-        for (row in 0 until BOARD_SIZE) {
-            for (col in 0 until BOARD_SIZE) {
-                if (board[row][col].mValue == "0") {
-                    val distance = kotlin.math.abs(row - CENTER_INDEX) + kotlin.math.abs(col - CENTER_INDEX)
-                    if (distance < bestDistance) {
-                        bestDistance = distance
-                        bestCell = row to col
-                    }
-                }
-            }
-        }
-        return bestCell ?: (0 to 0)
     }
 
     private fun highlightRelatedCells(
@@ -77,21 +59,6 @@ object GuideBoardFactory {
                     row == selectedRow && col == selectedCol -> PlayViewModel.BE_SELECTED
                     row == selectedRow || col == selectedCol || cell.mBlock == selectedBlock -> PlayViewModel.SELECT_ON
                     else -> PlayViewModel.SELECT_NONE
-                }
-            }
-        }
-    }
-
-    private fun markDemoProgress(board: Array<Array<BoardCell>>) {
-        var filled = 0
-        // 结束页只演示“棋盘逐步填满”的效果，不要求生成真实可解局面。
-        for (row in 0 until BOARD_SIZE) {
-            for (col in 0 until BOARD_SIZE) {
-                val cell = board[row][col]
-                if (cell.mValue == "0" && filled < 6) {
-                    cell.mValue = ((col + row) % BOARD_SIZE + 1).toString()
-                    cell.mStatus = PlayViewModel.SELECT_ON
-                    filled++
                 }
             }
         }
