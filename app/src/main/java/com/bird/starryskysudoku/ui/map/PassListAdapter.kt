@@ -132,10 +132,12 @@ class PassListAdapter(
 
                     if (entity.mPassNum == mLightStar) {
                         // 新拿到的星星延迟一点再点亮，让滚动和音效更有层次感。
+                        val targetStar = holder.mStars[idx]
                         holder.setLightStarRunnable(idx, Runnable {
                             PlayMusic.getInstance().playMapLightStar()
-                            animateStar(holder.mStars[idx])
+                            animateStar(targetStar)
                         })
+                        mLightStar = 0  // 标记已消费，避免滚动回收后重复触发
                     }
 
                     holder.mStars[i].setOnClickListener {
